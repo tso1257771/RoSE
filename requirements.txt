@@ -1,0 +1,16 @@
+# Pinned to the versions used to produce the published dataset
+# (Python 3.11). For CUDA torch, install separately with the matching
+# CUDA wheel from https://download.pytorch.org/whl/.
+
+seisbench==0.10.2
+obspy==1.4.0
+h5py==3.9.0
+pandas==2.1.4
+numpy==1.25.2
+scipy>=1.10
+matplotlib==3.8.0
+tqdm>=4.65
+
+# Training (tutorial 02). For CUDA, install a matching wheel from
+# https://download.pytorch.org/whl/cu121/ instead of the public PyPI build.
+torch>=2.1,<3

@@ -1,0 +1,13 @@
+# Keep the image small — the dataset (~35 GB) and any local caches must be
+# mounted, not baked in.
+data/
+**/__pycache__/
+**/*.pyc
+.git/
+.gitignore
+.idea/
+.vscode/
+*.png
+*.pdf
+*.log
+.DS_Store

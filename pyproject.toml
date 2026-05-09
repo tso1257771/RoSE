@@ -1,0 +1,60 @@
+[project]
+name = "rose-seismic"
+version = "0.1.0"
+description = "RoSE — a ROMPLUS-enhanced Romanian seismic dataset for ML and seismological applications, in SeisBench format"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "CC-BY-4.0" }
+authors = [{ name = "RoSE dataset contributors" }]
+
+# Core runtime — everything the rose loader and examples need EXCEPT torch.
+dependencies = [
+    "seisbench>=0.10,<0.11",
+    "obspy>=1.4",
+    "h5py>=3.8",
+    "pandas>=2.0",
+    "numpy>=1.24,<2.0",
+    "scipy>=1.10",        # examples/04: scipy.signal.hilbert for envelopes
+    "matplotlib>=3.7",
+    "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+# Training tutorial 02. Pick the variant matching your hardware:
+#   uv pip install -e ".[cpu]"   # CPU-only torch
+#   uv pip install -e ".[cuda]"  # CUDA wheel (configured below)
+cpu = ["torch>=2.1"]
+cuda = ["torch>=2.1"]
+dev = ["pytest>=7", "ruff>=0.4"]
+
+[project.urls]
+# TODO: replace with the published Zenodo / GitHub URL before release.
+Source = "https://example.invalid/rose-seismic"
+
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["rose"]
+
+# uv-specific configuration -------------------------------------------------
+# Route the [cuda] extra at the official PyTorch CUDA index instead of PyPI.
+[tool.uv]
+constraint-dependencies = []
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu121", extra = "cuda" },
+    { index = "pytorch-cpu",   extra = "cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url  = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url  = "https://download.pytorch.org/whl/cpu"
+explicit = true

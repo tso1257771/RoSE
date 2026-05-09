@@ -1,0 +1,105 @@
+# ---------------------------------------------------------------------------
+# Project data & generated artifacts
+# ---------------------------------------------------------------------------
+# Published SeisBench dataset (~35 GB) and StationXML response archive
+# (~80 MB) — distributed separately on Zenodo, not in git.
+data/
+
+# Run outputs: figures, per-event tables, MiniSEED exports.
+outputs/
+
+# ---------------------------------------------------------------------------
+# Excluded from the public dataset-companion repository
+# (kept on disk locally; not pushed to GitHub)
+# NOTE: .gitignore does NOT support inline comments — keep patterns alone.
+# ---------------------------------------------------------------------------
+# Manuscript and figures
+draft/
+# Third-party supplementary PDFs
+reference/
+# Internal data-prep pipeline (not user-facing)
+scripts/
+# Raw StationXML / dataless dumps. Keep only the SC3ML→StationXML
+# conversion script for reproducibility of the response-archive build.
+# (Negation works only when the parent dir itself isn't ignored, so we
+# exclude the contents instead of the directory.)
+stationxml_sources/*
+!stationxml_sources/sc3ml_niep
+stationxml_sources/sc3ml_niep/*
+!stationxml_sources/sc3ml_niep/sc3ml_to_stationxml.py
+# Engineering ground-motion DB pipeline (separate scope)
+gmdb/
+# Deprecated tutorial
+examples/02_train_phasenet.py
+# gmdb tests
+tests/test_intensity.py
+tests/test_io_rose.py
+tests/test_response.py
+# gmdb docs
+docs/gmdb/
+# Internal review artifact
+docs/PYTHON_REVIEW.md
+
+# Raw station-inventory dumps. Only the sc3ml_to_stationxml.py script is
+# versioned; the source XML archives are derived / re-downloadable.
+stationxml_sources/fdsn/
+stationxml_sources/sc3ml_niep/*/
+stationxml_sources/sc3ml_niep/*.tar.gz*
+stationxml_sources/sc3ml_niep/inventory.*
+
+# Generic large-artifact safety net
+*.hdf5
+*.h5
+*.mseed
+*.sac
+*.npz
+*.pt
+*.pth
+*.ckpt
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+build/
+dist/
+.eggs/
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.python-version
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ---------------------------------------------------------------------------
+# Editors / OS
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ---------------------------------------------------------------------------
+# Secrets & local config
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials*.json
