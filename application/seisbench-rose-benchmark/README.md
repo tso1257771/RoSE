@@ -50,14 +50,22 @@ export STEAD_DIR=/path/to/STEAD/benchmark_stead          # flat .npy layout
 bash scripts/reproduce_all.sh --rose-dir "$ROSE_DIR" --stead-dir "$STEAD_DIR"
 ```
 
-This writes `results/runs/{rose,stead}_{picking,detection}.csv`. The
-**EQT-RoSE / PhaseNet-RoSE / RED-PAN-60s** rows there should match the
-committed `results/{rose,stead}_{picking,detection}.csv` to floating-point
-precision. (The committed CSVs additionally carry the off-the-shelf
-`instance` / `ethz` / `stead` baselines and a `*_residual_stats.csv`; those
-come from the main repo's full benchmark suite — `benchmark/build_*` — and are
-not re-run by this self-contained release. `reproduce_all.sh` writes only under
-`results/runs/` and never overwrites the committed reference files.)
+This writes `results/runs/{rose,stead}_{picking,detection}.csv` — an
+**independent re-score** of the three bundled checkpoints using this release's
+own self-contained `pickerbench/` code. It is **not** a bit-for-bit copy of
+the committed `results/*.csv`: those were produced by the main repo's full
+benchmark suite (`benchmark/build_*`), which uses a richer schema, a separate
+dedicated-noise pass, and the "FP on dedicated-noise traces only" convention
+for the RoSE pool (RoSE event labels are incomplete, so unmatched picks on
+event traces are kept only as a diagnostic, not counted as FP — `pickerbench`
+counts them, so its RoSE precision reads lower; and without the separate noise
+pass the RoSE detection precision/F1 here are `nan`). Use `reproduce_all.sh`
+to confirm the checkpoints load and pick sanely and to get ballpark numbers —
+the STEAD rows track the committed values closely at full scale, the RoSE
+precision/FP figures differ by construction. The committed CSVs also carry the
+off-the-shelf `instance` / `ethz` / `stead` baselines and a
+`*_residual_stats.csv`, which `reproduce_all.sh` doesn't re-run. It writes only
+under `results/runs/` and never overwrites the committed reference files.
 
 To run a single model on a single pool:
 

@@ -69,6 +69,9 @@ and reproducible; only the waveform arrays themselves need to be fetched.
 | STEAD noise  |  23 526 |  ~6 GB | `stead_noise_index.csv` (0.6 MB) |
 | **Total**    | **158 940** | **~49 GB** | |
 
-If disk is tight, run a representative subset: `--num-test 2000` on the RoSE
-benchmark or `--num-events N --num-noise N` on STEAD. The 2 000-trace subset
-reproduces all model rankings (F1 CIs < 0.005 in the development study).
+If disk is tight, run a subset with `--num-test N` (caps each pool at `N`
+traces — for the RoSE pool it draws a random sample; for the STEAD pools it
+takes the *first* `N` traces, so a small slice can be unrepresentative). A
+few-thousand-trace subset is enough to spot-check that the checkpoints load
+and pick sanely; for the published numbers use the full pools (the committed
+`results/*.csv`).

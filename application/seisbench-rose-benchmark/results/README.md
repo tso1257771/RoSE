@@ -7,10 +7,14 @@ the RoSE training split from INSTANCE init) and **RED-PAN-60s** (RED-PAN
 retrained on Taiwan + STEAD + INSTANCE + RoSE, warm-started from the published
 RED-PAN(60 s) weights — see `models/README.md`) — plus six off-the-shelf
 SeisBench baselines (EQT / PhaseNet × `instance` / `ethz` / `stead`).
-`scripts/reproduce_all.sh` re-runs just the three bundled checkpoints (it
-needs the RoSE + STEAD test datasets) and writes its own copies under
-`results/runs/`; the EQT-RoSE / PhaseNet-RoSE / RED-PAN-60s rows there should
-match the corresponding rows here to floating-point precision.
+`scripts/reproduce_all.sh` re-scores just the three bundled checkpoints (it
+needs the RoSE + STEAD test datasets) with this release's own self-contained
+`pickerbench/` code, writing `results/runs/*.csv` — close to, but **not** a
+bit-for-bit copy of, the rows here: the committed CSVs come from the main
+repo's full benchmark suite (richer schema; "FP on dedicated-noise only" for
+the RoSE pool; a separate residual-stats CSV). STEAD rows track closely; RoSE
+precision/FP differ by construction. Treat `reproduce_all.sh` as a sanity
+check of the checkpoints, not as the source of the published numbers.
 
 ## RoSE pool (32 374 events + 23 526 STEAD noise)
 
