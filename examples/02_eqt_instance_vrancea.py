@@ -44,9 +44,16 @@ DATA_DIR = os.environ.get(
     str(Path(__file__).resolve().parents[1] / "data" / "rose"),
 )
 EVENT_ID = "2018_0000140"
-OUT_PNG = str(
-    Path(__file__).resolve().parents[1] / "outputs" / "02_eqt_instance_vrancea.png"
-)
+REPO_ROOT = Path(__file__).resolve().parents[1]
+OUT_PNG = str(REPO_ROOT / "outputs" / "02_eqt_instance_vrancea.png")
+
+
+def _rel(p):
+    """Format ``p`` for log output, relative to the repo root."""
+    try:
+        return str(Path(p).resolve().relative_to(REPO_ROOT))
+    except ValueError:
+        return str(p)
 
 
 def _str_or_none(v):
@@ -220,7 +227,7 @@ def plot_record_section(sta_meta, event_attrs, picks, n_show=24, save_path=OUT_P
 
     fig.tight_layout()
     fig.savefig(save_path, dpi=170)
-    print(f"saved {save_path}")
+    print(f"saved {_rel(save_path)}")
 
 
 def main():

@@ -56,6 +56,14 @@ RELEASE = REPO_ROOT / "application" / "seisbench-rose-benchmark"
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(RELEASE))  # so `from benchmarks.models import ...` resolves
 
+
+def _rel(p):
+    """Format ``p`` for log output, relative to the repo root when possible."""
+    try:
+        return str(Path(p).resolve().relative_to(REPO_ROOT))
+    except ValueError:
+        return str(p)
+
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
@@ -514,7 +522,7 @@ def main() -> None:
         plot_event(stream_pp, meta, true_p, true_s, model_outputs,
                    png_path, filter_str=flabel)
 
-    print(f"\nsaved {n} PNGs under {out_dir}")
+    print(f"\nsaved {n} PNGs under {_rel(out_dir)}")
 
     # --- summary table ---
     print("\nSummary (residuals = predicted − catalog, in seconds)")

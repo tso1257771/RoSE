@@ -32,7 +32,8 @@ import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -46,12 +47,28 @@ logger = logging.getLogger(__name__)
 
 DATA_DIR = os.environ.get(
     "ROSE_DATA_DIR",
-    str(Path(__file__).resolve().parents[1] / "data" / "rose"),
+    str(REPO_ROOT / "data" / "rose"),
 )
 STATIONXML_DIR = os.environ.get(
     "ROSE_STATIONXML_DIR",
-    str(Path(__file__).resolve().parents[1] / "data" / "rose_stationxml"),
+    str(REPO_ROOT / "data" / "rose_stationxml"),
 )
+
+
+def _rel(p) -> str:
+    """Format ``p`` for log output relative to the repo root when possible.
+
+    Keeps internal I/O paths absolute (so the script works from any CWD)
+    but prints them as e.g. ``outputs/03_event_2018_…`` instead of
+    ``/home/<user>/…/RoSE/outputs/03_event_2018_…`` — friendlier in logs
+    and avoids leaking the developer's filesystem layout into the README.
+    """
+    try:
+        return str(Path(p).resolve().relative_to(REPO_ROOT))
+    except ValueError:
+        return str(p)
+
+
 HIGHPASS_HZ = 0.1
 PRE_FILT = (0.05, 0.1, 40.0, 45.0)
 GRAVITY = 9.81
@@ -128,7 +145,7 @@ def write_miniseed(stream, out_dir):
     for tr in stream:
         fname = f"{tr.id}_{tr.stats.starttime.strftime('%Y%m%dT%H%M%S')}.mseed"
         tr.write(str(out_dir / fname), format="MSEED")
-    print(f"  wrote {len(stream)} MiniSEED files to {out_dir}/")
+    print(f"  wrote {len(stream)} MiniSEED files to {_rel(out_dir)}/")
 
 
 # ========================================================================
@@ -344,7 +361,7 @@ def plot_record_section(stream, station_info, model_picks, event_id,
     ax.set_xlim(0, max(tmax, 50.0)); ax.grid(alpha=0.2, ls=":")
     fig.tight_layout()
     fig.savefig(out_png, dpi=200)
-    print(f"  saved {out_png}")
+    print(f"  saved {_rel(out_png)}")
     plt.close(fig)
 
 
@@ -394,7 +411,7 @@ def plot_ground_motion(gm_table, event_id, event_attrs, husid_demo, out_png):
                  f"Ground motion in D5-95 window", fontsize=13, fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_png, dpi=180)
-    print(f"  saved {out_png}")
+    print(f"  saved {_rel(out_png)}")
     plt.close(fig)
 
 
@@ -471,7 +488,7 @@ def plot_qc_summary(stream, station_info, out_png):
     fig.suptitle("Waveform Quality Control", fontsize=14, fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_png, dpi=180)
-    print(f"  saved {out_png}")
+    print(f"  saved {_rel(out_png)}")
     plt.close(fig)
     return reports
 
@@ -574,7 +591,7 @@ def plot_coda_robustness(stream, station_info, inv_cache, data, out_png):
                  fontsize=14, fontweight="bold")
     fig.tight_layout()
     fig.savefig(out_png, dpi=180)
-    print(f"  saved {out_png}")
+    print(f"  saved {_rel(out_png)}")
     plt.close(fig)
 
 
@@ -590,7 +607,7 @@ def main():
     args = parser.parse_args()
     event_id = args.event
 
-    out_dir = Path(__file__).resolve().parents[1] / "outputs" / f"03_event_{event_id}"
+    out_dir = REPO_ROOT / "outputs" / f"03_event_{event_id}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     data = RoSE(DATA_DIR)
@@ -651,7 +668,7 @@ def main():
     gm_table = pd.DataFrame(gm_rows)
     csv_path = str(out_dir / "ground_motion.csv")
     gm_table.to_csv(csv_path, index=False)
-    print(f"  wrote {csv_path} ({len(gm_table)} rows)")
+    print(f"  wrote {_rel(csv_path)} ({len(gm_table)} rows)")
     for src in ["catalog"]:
         sub = gm_table[gm_table["pick_source"] == src]
         if sub.empty: continue
@@ -672,7 +689,7 @@ def main():
     plot_coda_robustness(stream, station_info, inv_cache, data,
                          str(out_dir / "fig_coda_robustness.png"))
 
-    print("\nDone. Outputs in:", out_dir)
+    print("\nDone. Outputs in:", _rel(out_dir))
 
 
 if __name__ == "__main__":
