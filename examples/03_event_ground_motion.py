@@ -1,27 +1,63 @@
-"""Tutorial 3 — Event workflow: QC, picking, coda analysis, ground motion.
+"""Tutorial 3 — A single-event workflow, end to end.
 
-Complete pipeline for a single event. Generates multiple figures:
+Pick *one* RoSE earthquake, walk through everything you'd do with it as
+a working seismologist, and produce four figures plus a CSV. This is the
+longest example — it pulls together the dataset loader from tutorial 1,
+ObsPy's signal-processing tools, the bundled StationXML response
+archive, and a couple of small algorithms (`rose.qc`, Arias intensity)
+to answer four questions about the event:
 
-    fig_record_section.png   Record section with manual/RED-PAN/model picks
-                             and D5-95 coda windows per station.
-    fig_qc_summary.png       Per-station waveform QC (clipping, gaps, spikes).
-    fig_coda_robustness.png  Pulse-injection stress test comparing D5-95 vs
-                             envelope-decay coda windows.
-    ground_motion.csv        PGA/PGV/PGD table by pick source.
+    Q1. What does the data look like — is any of it broken?
+        →  ``fig_qc_summary.png``  (per-station waveform quality control:
+                                    clipping, dead channels, gaps, spikes,
+                                    plus SNR distribution and SNR-vs-distance)
 
-Steps:
-    1. Load event from RoSE, export per-station MiniSEED.
-    2. QC all stations (rose.qc: clipping, dead, gaps, spikes, SNR).
-    3. Phase picks: catalog (manual + RED-PAN) only. Other DL pickers are
-       excluded by project policy — use RED-PAN 60s for machine picks.
-    4. Define S-coda window via Arias intensity D5-95.
-    5. Extract PGA/PGV/PGD in that window.
-    6. Stress-test coda algorithms with 12x synthetic pulse injection.
+    Q2. When did the seismic energy actually arrive at each station?
+        →  ``fig_record_section.png``  (waveforms stacked by hypocentral
+                                        distance, with the catalog picks
+                                        and the D5-95 *coda window* — the
+                                        "shake duration" — overlaid)
+
+    Q3. How much did the ground actually move?
+        →  ``ground_motion.csv``        (per-station peak ground acceleration
+                                         / velocity / displacement, plus
+                                         Arias intensity, computed inside
+                                         the coda window from each station)
+        →  ``fig_ground_motion.png``    (PGA / PGV vs distance + a Husid
+                                         "energy build-up" demo plot)
+
+    Q4. Is our coda-window definition robust if a station picks up a
+        random non-earthquake glitch?
+        →  ``fig_coda_robustness.png``  (a stress test that injects three
+                                         synthetic 12× spikes into one
+                                         station's record and re-measures
+                                         the D5-95 window — the Arias-based
+                                         method should barely move; an
+                                         envelope-decay method moves a lot)
+
+What's a *coda window*? After an earthquake's S-wave arrives, the
+ground keeps shaking for tens of seconds as energy bounces around the
+crust — this trailing tail is the "coda". To measure peak ground
+motion fairly, you need to integrate / search over a defined window.
+We use **Arias-intensity D5-95**: the time interval that contains 5 %
+to 95 % of the cumulative seismic energy. It's standard in earthquake
+engineering and is robust to outliers (spikes barely move it).
+
+What's *PGA / PGV / PGD*? Peak Ground Acceleration / Velocity /
+Displacement — the largest absolute value of each kinematic field
+inside the chosen window. Used directly in seismic hazard maps,
+ShakeMaps, and structural-response calculations.
+
+Defaults pick the well-recorded *M*ₙ 5.8 Vrancea slab event of
+2018-10-28 (event id ``2018_0000140``, ~153 km depth, ~68 stations).
+Pass ``--event YYYY_NNNNNNN`` to use a different one;
+``data/rose/metadata*.csv`` lists every available ``source_id``.
 
 Usage:
-    python 03_event_ground_motion.py
-    python 03_event_ground_motion.py --event 2022_0000708
-    python 03_event_ground_motion.py --coda-method envelope
+    python examples/03_event_ground_motion.py
+    python examples/03_event_ground_motion.py --event 2022_0000708
+    python examples/03_event_ground_motion.py --coda-method envelope
+    python examples/03_event_ground_motion.py --quick    # skip Q4 robustness test
 """
 
 from __future__ import annotations
@@ -599,39 +635,85 @@ def plot_coda_robustness(stream, station_info, inv_cache, data, out_png):
 # Main
 # ========================================================================
 
+def _section(title: str, why: str = "") -> None:
+    """Print a uniform section header followed by an optional rationale line."""
+    bar = "─" * len(title)
+    print(f"\n{title}\n{bar}")
+    if why:
+        print(f"  {why}")
+
+
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--event", default="2018_0000140")
-    parser.add_argument("--n-show", type=int, default=20)
-    parser.add_argument("--coda-method", default="arias", choices=["arias", "envelope"])
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--event", default="2018_0000140",
+                        help="RoSE source_id (default: the M5.8 Vrancea slab event of 2018-10-28).")
+    parser.add_argument("--n-show", type=int, default=20,
+                        help="How many of the closest stations to draw on the record section.")
+    parser.add_argument("--coda-method", default="arias", choices=["arias", "envelope"],
+                        help="How to define the coda window per station "
+                             "(default: 'arias' = Arias-intensity D5-95).")
+    parser.add_argument("--quick", action="store_true",
+                        help="Skip Q4 — the synthetic-pulse coda-robustness test.")
     args = parser.parse_args()
     event_id = args.event
 
     out_dir = REPO_ROOT / "outputs" / f"03_event_{event_id}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    print(f"Tutorial 3 — single-event workflow on RoSE {event_id}")
+    print(f"Output directory: {_rel(out_dir)}")
+
+    # ────────────────────────────────────────────────────────────
+    # Step 1 / 4   Load the earthquake and dump per-station MiniSEED files
+    # ────────────────────────────────────────────────────────────
+    _section(
+        f"Step 1/4: load event {event_id} from RoSE",
+        "Open the SeisBench dataset, find every trace whose source_id matches the "
+        "event, and rebuild a 3-component ObsPy Stream + per-station bookkeeping. "
+        "Also export each Trace as a MiniSEED file so you can poke at the raw data "
+        "with ObsPy/SAC/PQLX/etc. outside Python.",
+    )
+
     data = RoSE(DATA_DIR)
     inv_cache = StationXMLCache(STATIONXML_DIR)
 
-    # 1. Load & export
-    print(f"Loading event {event_id} ...")
     stream, station_info = load_event(data, event_id)
     md = data.metadata
     event_row = md[md["source_id"] == event_id].iloc[0]
     event_attrs = {c: event_row[c] for c in md.columns if c.startswith("source_")}
-    print(f"  {len(station_info)} stations, {len(stream)} traces")
+    print(f"  loaded {len(station_info)} stations, {len(stream)} traces  "
+          f"(M{event_attrs['source_magnitude']:.1f}, "
+          f"{event_attrs['source_depth_km']:.0f} km depth, "
+          f"origin {event_attrs['source_origin_time']})")
     write_miniseed(stream, out_dir / "mseed")
 
-    # 2. QC
-    print("\n--- QC ---")
+    # ────────────────────────────────────────────────────────────
+    # Step 2 / 4   Quality-control every station's waveform
+    # ────────────────────────────────────────────────────────────
+    _section(
+        "Step 2/4: waveform quality control (Q1)",
+        "rose.qc runs five cheap checks per channel — clipping, dead-channel, "
+        "gaps, isolated spikes, and signal-to-noise ratio in the P-pick window. "
+        "Stations that fail any check are flagged in the figure with a coloured "
+        "marker; the first panel is a scoreboard, the second a P-SNR histogram, "
+        "the third SNR vs hypocentral distance.",
+    )
     plot_qc_summary(stream, station_info, str(out_dir / "fig_qc_summary.png"))
 
-    # 3. Picks (catalog only — RED-PAN is the sanctioned DL picker; other DL
-    #    pickers are excluded by project policy).
-    print("\n--- Phase Picks (catalog only) ---")
-
-    # 4 & 5. Coda + ground motion
-    print(f"\n--- Ground Motion (method={args.coda_method}) ---")
+    # ────────────────────────────────────────────────────────────
+    # Step 3 / 4   Coda window + ground-motion measurements
+    # ────────────────────────────────────────────────────────────
+    _section(
+        f"Step 3/4: coda window + PGA/PGV/PGD per station (Q2 + Q3)",
+        f"For every station with a valid response we (a) deconvolve to ground "
+        f"velocity using the bundled StationXML, (b) define the coda window "
+        f"with {args.coda_method!r} on the catalog P/S picks, and (c) measure "
+        f"PGA / PGV / PGD inside that window. Catalog picks are the manual + "
+        f"RED-PAN catalog labels; other DL pickers are deliberately not used "
+        f"here (run example 04 for that comparison).",
+    )
     gm_rows = []; coda_windows = {}; husid_demo = None
     for info in station_info:
         sta = info["station"]
@@ -672,24 +754,62 @@ def main():
     for src in ["catalog"]:
         sub = gm_table[gm_table["pick_source"] == src]
         if sub.empty: continue
-        print(f"  {src:16s}  n={len(sub):3d}  PGA={sub['pga_cms2'].median():.2g} cm/s²  "
-              f"PGV={sub['pgv_cms'].median():.2g} cm/s  D5-95={sub['d595_s'].median():.1f} s")
+        print(f"  median across {len(sub)} stations:  "
+              f"PGA = {sub['pga_cms2'].median():.2g} cm/s²    "
+              f"PGV = {sub['pgv_cms'].median():.2g} cm/s    "
+              f"shake duration (D5-95) = {sub['d595_s'].median():.1f} s")
 
     # Plot record section (no DL overlay picks — RED-PAN is the sanctioned picker
     # and its picks live in the catalog via trace_p/s_status).
-    print("\n--- Plotting ---")
+    print("  rendering plots ...")
     plot_record_section(stream, station_info, {},
                         event_id, event_attrs, coda_windows,
                         str(out_dir / "fig_record_section.png"))
     plot_ground_motion(gm_table, event_id, event_attrs, husid_demo,
                        str(out_dir / "fig_ground_motion.png"))
 
-    # 6. Robustness test
-    print("\n--- Coda Robustness Test ---")
-    plot_coda_robustness(stream, station_info, inv_cache, data,
-                         str(out_dir / "fig_coda_robustness.png"))
+    # ────────────────────────────────────────────────────────────
+    # Step 4 / 4   Coda-window robustness test  (Q4 — optional with --quick)
+    # ────────────────────────────────────────────────────────────
+    if args.quick:
+        _section(
+            "Step 4/4: SKIPPED (--quick)",
+            "Pass without --quick to run the synthetic-pulse coda stress test.",
+        )
+    else:
+        _section(
+            "Step 4/4: synthetic-pulse coda-window robustness test (Q4)",
+            "Pick the cleanest-looking horizontal-component station, inject 3 "
+            "synthetic 12× spikes at random times after the catalog S, and "
+            "remeasure the D5-95 window. The Arias method should barely move "
+            "(it's an integral — outliers are dampened); an envelope-decay "
+            "method jumps because a spike pushes the envelope's 'last 5 %' "
+            "tail far away. The figure overlays both methods side-by-side.",
+        )
+        plot_coda_robustness(stream, station_info, inv_cache, data,
+                             str(out_dir / "fig_coda_robustness.png"))
 
-    print("\nDone. Outputs in:", _rel(out_dir))
+    # ────────────────────────────────────────────────────────────
+    # Recap — what each output file actually contains
+    # ────────────────────────────────────────────────────────────
+    print("\n" + "=" * 64)
+    print(f"Done.  All outputs are under {_rel(out_dir)}/")
+    print("=" * 64)
+    summary_lines = [
+        ("mseed/",                     "one MiniSEED file per channel — open in any obspy/SAC pipeline"),
+        ("fig_qc_summary.png",         "Q1: which stations are clean? P-SNR distribution + SNR vs distance"),
+        ("fig_record_section.png",     "Q2: waveforms vs distance, with catalog picks + coda windows"),
+        ("ground_motion.csv",          "Q3: per-station PGA/PGV/PGD + coda-window times + Arias intensity"),
+        ("fig_ground_motion.png",      "Q3: same numbers, plotted vs distance + Husid energy demo"),
+    ]
+    if not args.quick:
+        summary_lines.append(
+            ("fig_coda_robustness.png", "Q4: D5-95 vs envelope under synthetic-pulse contamination")
+        )
+    width = max(len(name) for name, _ in summary_lines)
+    for name, what in summary_lines:
+        print(f"  {name:<{width}}    {what}")
+    print()
 
 
 if __name__ == "__main__":

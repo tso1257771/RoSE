@@ -66,6 +66,7 @@ def _rel(p):
 
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
 from obspy import Stream, Trace, UTCDateTime  # noqa: E402
 
@@ -130,8 +131,26 @@ GUIDE_LW    = 0.35   # threshold + zero baselines
 # ---------------------------------------------------------------------------
 # Data selection + Stream construction
 # ---------------------------------------------------------------------------
-def select_test_traces(data: RoSE, n: int, seed: int) -> np.ndarray:
-    """Return indices of `n` test-split traces with both P and S in window."""
+def select_test_traces(data: RoSE, n: int, seed: int, *,
+                       min_snr_db: float = 5.0,
+                       min_magnitude: float = 2.5,
+                       max_distance_km: float = 200.0,
+                       edge_margin_s: float = 5.0) -> np.ndarray:
+    """Return indices of `n` *unambiguous* test-split traces.
+
+    Random sampling over the raw test split easily lands on noisy / weak /
+    edge-clipped waveforms where you can't visually separate the signal from
+    the picks — useless for a tutorial. This helper applies a quality gate
+    before sampling so the chosen traces have clear P and S arrivals:
+
+      * test split (catalog-held-out)
+      * source magnitude ≥ ``min_magnitude``
+      * epicentral distance ≤ ``max_distance_km``  (closer ⇒ stronger signal)
+      * trace_p_snr_db AND trace_s_snr_db ≥ ``min_snr_db``
+      * both P and S sample positions ≥ ``edge_margin_s`` from the window edges
+
+    Pass any threshold as ``0`` to disable that gate.
+    """
     md = data.metadata
     if "split" in md.columns:
         eligible = md.index[md["split"] == "test"].to_numpy()
@@ -142,21 +161,53 @@ def select_test_traces(data: RoSE, n: int, seed: int) -> np.ndarray:
             "full dataset (no `split` column found — run "
             "`python training/build_rose_split_index.py` to materialise one)"
         )
-    p_in = (
-        md.loc[eligible, "trace_p_arrival_sample"]
-        .astype(float).between(0, 5999, inclusive="both")
-    )
-    s_in = (
-        md.loc[eligible, "trace_s_arrival_sample"]
-        .astype(float).between(0, 5999, inclusive="both")
-    )
-    eligible = eligible[(p_in & s_in).to_numpy()]
+    n_test = len(eligible)
+
+    sub = md.loc[eligible].copy()
+    # cast everything to numeric; missing → NaN → fails the > comparisons.
+    for col in ("trace_p_arrival_sample", "trace_s_arrival_sample",
+                "trace_p_snr_db", "trace_s_snr_db",
+                "source_magnitude", "path_ep_distance_km"):
+        sub[col] = pd.to_numeric(sub[col], errors="coerce")
+
+    # 60-s window @ 100 Hz = 6000 samples; require both picks at least
+    # `edge_margin_s` from each edge so the model sees full context.
+    edge = float(edge_margin_s) * 100.0  # samples
+    in_win = lambda col: sub[col].between(edge, 6000 - 1 - edge, inclusive="both")
+    mask = in_win("trace_p_arrival_sample") & in_win("trace_s_arrival_sample")
+    if min_snr_db > 0:
+        mask &= (sub["trace_p_snr_db"] >= min_snr_db) & (sub["trace_s_snr_db"] >= min_snr_db)
+    if min_magnitude > 0:
+        mask &= sub["source_magnitude"] >= min_magnitude
+    if max_distance_km > 0:
+        mask &= sub["path_ep_distance_km"] <= max_distance_km
+    eligible = eligible[mask.to_numpy()]
     if len(eligible) == 0:
-        raise RuntimeError(f"no eligible traces in {scope}")
+        raise RuntimeError(
+            f"no traces in {scope} pass the quality gate "
+            f"(SNR≥{min_snr_db} dB, M≥{min_magnitude}, "
+            f"epi≤{max_distance_km} km, edge≥{edge_margin_s}s). "
+            f"Loosen with --min-snr-db / --min-magnitude / --max-distance-km."
+        )
     rng = np.random.default_rng(seed)
     n = min(n, len(eligible))
     chosen = rng.choice(eligible, size=n, replace=False)
-    print(f"selected {n} of {len(eligible)} candidate traces from the {scope}.")
+    print(
+        f"selected {n} of {len(eligible)} clean traces "
+        f"({len(eligible)}/{n_test} = {100*len(eligible)/n_test:.1f}% of the {scope} "
+        f"pass SNR≥{min_snr_db} dB & M≥{min_magnitude} & epi≤{max_distance_km} km "
+        f"& edge≥{edge_margin_s}s)"
+    )
+    # Print one-line context for each chosen trace so the user knows why
+    # the picks are (or aren't) clear.
+    for idx in np.sort(chosen):
+        r = sub.loc[idx]
+        print(
+            f"    idx {int(idx):6d}  {r['station_network_code']}.{r['station_code']:5s}  "
+            f"M{r['source_magnitude']:.1f}  "
+            f"epi {r['path_ep_distance_km']:5.1f} km  "
+            f"P-SNR {r['trace_p_snr_db']:5.1f} dB  S-SNR {r['trace_s_snr_db']:5.1f} dB"
+        )
     return np.sort(chosen)
 
 
@@ -424,10 +475,22 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--rose-dir", default=DATA_DIR,
-                    help=f"RoSE SeisBench dataset dir (default: {DATA_DIR}).")
+                    help=f"RoSE SeisBench dataset dir "
+                         f"(default: $ROSE_DATA_DIR or {_rel(DATA_DIR)}).")
     ap.add_argument("--n-traces", type=int, default=4,
                     help="Number of test traces to evaluate + plot (default: 4).")
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--min-snr-db", type=float, default=5.0,
+                    help="Reject traces with P or S SNR below this (dB). "
+                         "Default 5.0; pass 0 to disable.")
+    ap.add_argument("--min-magnitude", type=float, default=2.5,
+                    help="Minimum source magnitude (default 2.5; 0 disables).")
+    ap.add_argument("--max-distance-km", type=float, default=200.0,
+                    help="Maximum epicentral distance (km). Default 200; 0 disables.")
+    ap.add_argument("--edge-margin-s", type=float, default=5.0,
+                    help="Required margin (seconds) between each pick and the "
+                         "60-s window edges, so the model sees full context. "
+                         "Default 5.0; pass 0 to disable.")
     ap.add_argument("--device", default="cpu", help='"cpu" (default) or "cuda".')
     ap.add_argument("--no-redpan", action="store_true",
                     help="Skip RED-PAN-60s (avoids the TensorFlow dependency).")
@@ -441,7 +504,7 @@ def main() -> None:
                          "(matches the published-benchmark band-pass high corner; "
                          "this matches EQT-RoSE's training-time pre-filter).")
     ap.add_argument("--out-dir", default=str(OUT_DIR),
-                    help=f"Directory for per-trace PNGs (default: {OUT_DIR}).")
+                    help=f"Directory for per-trace PNGs (default: {_rel(OUT_DIR)}).")
     args = ap.parse_args()
 
     print(f"Opening {args.rose_dir} ...")
@@ -472,7 +535,13 @@ def main() -> None:
         models["RED-PAN-60s"] = load_redpan_tf60()
 
     # --- pick test traces and run inference ---
-    indices = select_test_traces(data, args.n_traces, args.seed)
+    indices = select_test_traces(
+        data, args.n_traces, args.seed,
+        min_snr_db=args.min_snr_db,
+        min_magnitude=args.min_magnitude,
+        max_distance_km=args.max_distance_km,
+        edge_margin_s=args.edge_margin_s,
+    )
     n = len(indices)
 
     print()
