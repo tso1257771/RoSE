@@ -68,9 +68,13 @@ def main():
     axes[-1].set_xlabel("Time (s) since reference start")
     axes[0].legend(loc="upper right")
     fig.tight_layout()
-    out = Path(__file__).resolve().parents[1] / "outputs" / "01_load_and_browse.png"
+    REPO_ROOT = Path(__file__).resolve().parents[1]
+    out = REPO_ROOT / "outputs" / "01_load_and_browse.png"
     fig.savefig(out, dpi=150)
-    print(f"saved {out}")
+    try:
+        print(f"saved {out.relative_to(REPO_ROOT)}")
+    except ValueError:
+        print(f"saved {out}")
 
 
 if __name__ == "__main__":
