@@ -32,5 +32,5 @@ six-point sweep `{0.05, 0.10, 0.20, 0.30, 0.50, 0.70}`.
 
 | Pool  | Best phase F1 (P / S)             | Best detection F1                  |
 |---|---|---|
-| RoSE  | RED-PAN-60s **0.822 / 0.827**     | EQT-RoSE-v3 **0.977** (MCC 0.945)  |
-| STEAD | RED-PAN-60s **0.972 / 0.980**     | EQT-stead **0.998** (MCC 0.988) — see RoSE-fine-tuned counterpart EQT-RoSE-v3 at 0.991 |
+| RoSE  | RED-PAN-60s **0.822 / 0.827**     | EQT-RoSE **0.977** (MCC 0.945)  |
+| STEAD | RED-PAN-60s **0.972 / 0.980**     | EQT-stead **0.998** (MCC 0.988) — see RoSE-fine-tuned counterpart EQT-RoSE at 0.991 |

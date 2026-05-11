@@ -31,7 +31,7 @@ fi
 torchrun --standalone --nproc_per_node="${NPROC_PER_NODE:-4}" \
   training/train_phasenet_rose.py \
   --rose-dir "${ROSE_DIR:-/home/u2140647/RoSE/data/rose}" \
-  --out-dir  "${OUT_DIR:-/home/u2140647/RoSE/checkpoints/seisbench_rose/phasenet_v2}" \
+  --out-dir  "${OUT_DIR:-${ROSE_TRAIN_OUT_DIR:-checkpoints}/phasenet_rose}" \
   --epochs        "${EPOCHS:-30}" \
   --batch-size    "${BATCH:-256}" \
   --lr            "${LR:-1e-4}" \

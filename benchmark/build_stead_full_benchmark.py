@@ -36,8 +36,8 @@ def model_paths(eval_dir: Path) -> list[tuple[str, Path, bool]]:
     pt = eval_dir / "bench_stead_full_pytorch"
     rp = eval_dir / "bench_stead_full"
     return [
-        ("EQT-RoSE-v3",       pt / "eqt_rose_v3"       / "eqt_rose_v3.json",       True),
-        ("PhaseNet-RoSE-v2",  pt / "phasenet_rose_v2"  / "phasenet_rose_v2.json",  False),
+        ("EQT-RoSE",       pt / "eqt_rose"       / "eqt_rose.json",       True),
+        ("PhaseNet-RoSE",  pt / "phasenet_rose"  / "phasenet_rose.json",  False),
         ("EQT-instance",      pt / "eqt_instance"      / "eqt_instance.json",      True),
         ("PhaseNet-instance", pt / "phasenet_instance" / "phasenet_instance.json", False),
         ("EQT-ethz",          pt / "eqt_ethz"          / "eqt_ethz.json",          True),

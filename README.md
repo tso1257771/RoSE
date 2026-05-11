@@ -50,7 +50,7 @@ RoSE/
 │   └── redpan_inference/    # minimal RED-PAN-60s TF inference (vendored)
 ├── application/             # self-contained published benchmark release
 │   └── seisbench-rose-benchmark/
-│       ├── models/          # EQT-RoSE-v3, PhaseNet-RoSE-v2, RED-PAN-60s ckpts
+│       ├── models/          # EQT-RoSE, PhaseNet-RoSE, RED-PAN-60s ckpts
 │       │                    # + SHA256SUMS for verification
 │       ├── benchmarks/      # unified loaders + runners + table builders
 │       ├── pickerbench/     # matching / residual stats / leaderboard
@@ -219,9 +219,9 @@ export ROSE_EVAL_DIR=eval                # where benchmark outputs land
   them with `python benchmark/build_test_indices.py [--stead-dir $STEAD_DIR]`.
 
 * **`application/seisbench-rose-benchmark/`** — the self-contained release:
-  the three model checkpoints (EQT-RoSE-v3, PhaseNet-RoSE-v2, RED-PAN-60s) +
+  the three model checkpoints (EQT-RoSE, PhaseNet-RoSE, RED-PAN-60s) +
   `models/SHA256SUMS` (verify with `cd application/seisbench-rose-benchmark/models && sha256sum -c SHA256SUMS`),
-  unified loaders (`benchmarks/models.py` → `load_eqt_rose_v3()` etc.), the
+  unified loaders (`benchmarks/models.py` → `load_eqt_rose()` etc.), the
   `pickerbench` scoring module, the bundled `redpan_inference` subset, the
   published `results/*.csv`, and `scripts/reproduce_all.sh`. It has its own
   `README.md` and per-framework `env/requirements*.txt`. See

@@ -1,4 +1,4 @@
-"""Joint detector+picker benchmark on RoSE for EQT-RoSE-v3 and RED-PAN-60s.
+"""Joint detector+picker benchmark on RoSE for EQT-RoSE and RED-PAN-60s.
 
 Both models have a detection head and a phase-pick head. Production
 deployment uses the detector to gate the picker — a pick is only
@@ -271,7 +271,7 @@ def main() -> None:
     ap.add_argument("--num-test", type=int, default=2000)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--eqt-ckpt",
-                    default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "eqt_rose_v3" / "eqt_rose_v3.pt"))
+                    default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "eqt_rose" / "eqt_rose.pt"))
     ap.add_argument("--redpan-tf",
                     default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "redpan_tf60" / "train.hdf5"))
     ap.add_argument("--eqt-p", type=float, default=0.20)
@@ -309,8 +309,8 @@ def main() -> None:
     indices = np.sort(rng.choice(len(test), size=cfg.num_test, replace=False))
     logger.info("evaluating %d traces", len(indices))
 
-    # -------- EQT-RoSE-v3 --------
-    logger.info("=== EQT-RoSE-v3 ===")
+    # -------- EQT-RoSE --------
+    logger.info("=== EQT-RoSE ===")
     state = safe_torch_load(args.eqt_ckpt, map_location="cpu")
     cfg_ckpt = state.get("config", {})
     eqt = sbm.EQTransformer(
@@ -351,7 +351,7 @@ def main() -> None:
     )
 
     rows = []
-    for model_name, results in (("EQT-RoSE-v3", eqt_results),
+    for model_name, results in (("EQT-RoSE", eqt_results),
                                 ("RED-PAN-60s", rp_results)):
         for mode, summary in results.items():
             det = summary.get("detection", {}) or {}
@@ -383,7 +383,7 @@ def main() -> None:
     logger.info("\n%s", df.to_string(index=False))
 
     with (out_dir / "summary.json").open("w") as fh:
-        json.dump({"EQT-RoSE-v3": eqt_results,
+        json.dump({"EQT-RoSE": eqt_results,
                    "RED-PAN-60s": rp_results}, fh, indent=2, default=str)
 
 

@@ -5,15 +5,15 @@ earthquakes) and on STEAD. Loaders live in `benchmarks/models.py`.
 
 | Model | Framework | Pre-training | Fine-tuning | Input | Heads | Checkpoint |
 |---|---|---|---|---|---|---|
-| **EQT-RoSE-v3** | PyTorch / SeisBench `EQTransformer` | INSTANCE (Italy) | RoSE train split | ZNE, 6000 @ 100 Hz (60 s) | P, S, detection | `eqt_rose_v3/eqt_rose_v3.pt` (1.6 MB) |
-| **PhaseNet-RoSE-v2** | PyTorch / SeisBench `PhaseNet` | INSTANCE (Italy) | RoSE train split | ZNE, 3001 @ 100 Hz (30 s) | P, S, Noise | `phasenet_rose_v2/phasenet_rose_v2.pt` (1.1 MB) |
+| **EQT-RoSE** | PyTorch / SeisBench `EQTransformer` | INSTANCE (Italy) | RoSE train split | ZNE, 6000 @ 100 Hz (60 s) | P, S, detection | `eqt_rose/eqt_rose.pt` (1.6 MB) |
+| **PhaseNet-RoSE** | PyTorch / SeisBench `PhaseNet` | INSTANCE (Italy) | RoSE train split | ZNE, 3001 @ 100 Hz (30 s) | P, S, Noise | `phasenet_rose/phasenet_rose.pt` (1.1 MB) |
 | **RED-PAN-60s** | TensorFlow / Keras | — | TaiwanCWB (no STEAD/RoSE) | ENZ, 6000 @ 100 Hz (60 s) | P / S / Noise + event mask | `redpan_tf60/train.hdf5` (6.0 MB) |
 
 Each PyTorch checkpoint is a dict `{model: state_dict, config: {...}, epoch, dev_loss}`.
 
 ---
 
-## EQT-RoSE-v3
+## EQT-RoSE
 
 * **Architecture** — EQTransformer (Mousavi et al., 2020): bidirectional
   attention encoder with three sequence-prediction heads (P, S, detection),
@@ -23,10 +23,10 @@ Each PyTorch checkpoint is a dict `{model: state_dict, config: {...}, epoch, dev
 * **Fine-tuning** — RoSE training split. 30 epochs, Adam (lr 1e-4), 1–45 Hz
   bandpass, per-channel peak normalisation (`norm="peak"`), weighted BCE per head
   (detection 0.05 / P 0.40 / S 0.55), detection-label width factor 0.7.
-* **Checkpoint** — `eqt_rose_v3.pt`, selected at epoch 30 (dev loss 0.016).
-* **Tag** — v3, released 2026-04-30; supersedes the v2 freeze-backbone variant.
+* **Checkpoint** — `eqt_rose.pt`, selected at epoch 30 (dev loss 0.016).
+* **Released** — 2026-04-30.
 
-## PhaseNet-RoSE-v2
+## PhaseNet-RoSE
 
 * **Architecture** — PhaseNet (Zhu & Beroza, 2019): U-Net with 3-class output
   (P, S, Noise), ~270 K parameters.
@@ -35,8 +35,7 @@ Each PyTorch checkpoint is a dict `{model: state_dict, config: {...}, epoch, dev
 * **Fine-tuning** — RoSE training split. 30 epochs, Adam (lr 1e-4), per-channel
   peak normalisation (`norm="peak"`), Gaussian label width σ = 10 samples,
   blinding `(200, 200)` samples at inference.
-* **Checkpoint** — `phasenet_rose_v2.pt`, selected at epoch 29 (dev loss 0.032).
-* **Tag** — v2.
+* **Checkpoint** — `phasenet_rose.pt`, selected at epoch 29 (dev loss 0.032).
 
 ## RED-PAN-60s (TaiwanCWB-trained)
 
@@ -60,16 +59,16 @@ SeisBench-style `.classify(stream, ...)`. Streams are passed in ZNE order
 
 ```python
 from benchmarks.models import (
-    load_eqt_rose_v3, load_phasenet_rose_v2, load_redpan_tf60,
+    load_eqt_rose, load_phasenet_rose, load_redpan_tf60,
 )
 
-# EQT-RoSE-v3 — SeisBench EQTransformer (has a detection head)
-model = load_eqt_rose_v3()
+# EQT-RoSE — SeisBench EQTransformer (has a detection head)
+model = load_eqt_rose()
 out = model.classify(stream, P_threshold=0.3, S_threshold=0.3,
                      detection_threshold=0.3)
 
-# PhaseNet-RoSE-v2 — SeisBench PhaseNet (picks only)
-model = load_phasenet_rose_v2()
+# PhaseNet-RoSE — SeisBench PhaseNet (picks only)
+model = load_phasenet_rose()
 out = model.classify(stream, P_threshold=0.3, S_threshold=0.3)
 
 # RED-PAN-60s — TF/Keras, sliding-window wrapper (has a detection head)
@@ -88,8 +87,8 @@ matches the published artifacts before loading:
 ```bash
 cd application/seisbench-rose-benchmark/models
 sha256sum -c SHA256SUMS
-# eqt_rose_v3/eqt_rose_v3.pt: OK
-# phasenet_rose_v2/phasenet_rose_v2.pt: OK
+# eqt_rose/eqt_rose.pt: OK
+# phasenet_rose/phasenet_rose.pt: OK
 # redpan_tf60/train.hdf5: OK
 ```
 

@@ -20,7 +20,7 @@ published numbers are pinned under
 ``application/seisbench-rose-benchmark/data/stead_{test,noise}_index.csv``.
 
 Models evaluated:
-  * EQT-RoSE-v3              (PyTorch / SeisBench)
+  * EQT-RoSE              (PyTorch / SeisBench)
   * RED-PAN-60s              (TF Keras, ENZ-native)
   * EQT-instance pretrained  (SeisBench, optional pretrained reference)
 
@@ -29,7 +29,7 @@ Usage:
     python benchmark/bench_stead_test.py \\
         --out-dir eval/bench_stead_test \\
         --num-events 2000 --num-noise 1000 \\
-        --models eqt_rose_v3 redpan eqt_instance
+        --models eqt_rose redpan eqt_instance
 """
 from __future__ import annotations
 
@@ -433,15 +433,15 @@ def main() -> None:
     ap.add_argument("--bandpass-low", type=float, default=1.0)
     ap.add_argument("--bandpass-high", type=float, default=45.0)
     ap.add_argument("--models", nargs="+",
-                    default=["eqt_rose_v3", "redpan", "eqt_instance"],
-                    choices=["eqt_rose_v3", "redpan", "eqt_instance",
-                             "phasenet_rose_v2", "phasenet_instance",
+                    default=["eqt_rose", "redpan", "eqt_instance"],
+                    choices=["eqt_rose", "redpan", "eqt_instance",
+                             "phasenet_rose", "phasenet_instance",
                              "eqt_ethz", "phasenet_ethz",
                              "eqt_stead", "phasenet_stead"])
-    ap.add_argument("--eqt-rose-v3-ckpt",
-                    default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "eqt_rose_v3" / "eqt_rose_v3.pt"))
-    ap.add_argument("--phasenet-rose-v2-ckpt",
-                    default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "phasenet_rose_v2" / "phasenet_rose_v2.pt"))
+    ap.add_argument("--eqt-rose-ckpt",
+                    default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "eqt_rose" / "eqt_rose.pt"))
+    ap.add_argument("--phasenet-rose-ckpt",
+                    default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "phasenet_rose" / "phasenet_rose.pt"))
     ap.add_argument("--redpan-tf",
                     default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "redpan_tf60" / "train.hdf5"))
     ap.add_argument("--p-threshold", type=float, default=0.30,
@@ -488,8 +488,8 @@ def main() -> None:
     for model_id in args.models:
         logger.info("=== %s ===", model_id)
         try:
-            if model_id == "eqt_rose_v3":
-                state = safe_torch_load(args.eqt_rose_v3_ckpt, map_location="cpu")
+            if model_id == "eqt_rose":
+                state = safe_torch_load(args.eqt_rose_ckpt, map_location="cpu")
                 cfg_ckpt = state.get("config", {})
                 m = sbm.EQTransformer(
                     in_samples=int(cfg_ckpt.get("model_window", 6000)),
@@ -499,8 +499,8 @@ def main() -> None:
                 m.load_state_dict(state["model"]); m.norm = "peak"
                 m.to("cpu").eval()
                 kind = "seisbench"
-            elif model_id == "phasenet_rose_v2":
-                state = safe_torch_load(args.phasenet_rose_v2_ckpt, map_location="cpu")
+            elif model_id == "phasenet_rose":
+                state = safe_torch_load(args.phasenet_rose_ckpt, map_location="cpu")
                 m = sbm.PhaseNet(phases="PSN", norm="peak",
                                  default_args={"blinding": (200, 200)})
                 m.load_state_dict(state["model"]); m.norm = "peak"

@@ -4,14 +4,14 @@ Usage:
     # RoSE event traces
     python benchmarks/run_benchmark.py \\
         --dataset rose --rose-dir /path/to/rose \\
-        --model eqt_rose_v3 \\
-        --out-dir results/runs/eqt_rose_v3_rose
+        --model eqt_rose \\
+        --out-dir results/runs/eqt_rose_rose
 
     # STEAD test set (events + noise) for one of the three models
     python benchmarks/run_benchmark.py \\
         --dataset stead --stead-dir /path/to/STEAD/benchmark_stead \\
-        --model phasenet_rose_v2 \\
-        --out-dir results/runs/phasenet_rose_v2_stead
+        --model phasenet_rose \\
+        --out-dir results/runs/phasenet_rose_stead
 
     # Just noise traces (false-positive characterisation)
     python benchmarks/run_benchmark.py \\

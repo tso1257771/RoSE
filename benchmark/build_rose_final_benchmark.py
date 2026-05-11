@@ -33,8 +33,8 @@ from pathlib import Path
 THRESHOLDS = ["0.05", "0.1", "0.2", "0.3", "0.5", "0.7"]
 
 MODEL_TO_NOISE_KEY = {
-    "EQT-RoSE-v3": "eqt_rose_v3",
-    "PhaseNet-RoSE-v2": "phasenet_rose_v2",
+    "EQT-RoSE": "eqt_rose",
+    "PhaseNet-RoSE": "phasenet_rose",
     "EQT-instance": "eqt_instance",
     "PhaseNet-instance": "phasenet_instance",
     "EQT-ethz": "eqt_ethz",
@@ -45,10 +45,10 @@ MODEL_TO_NOISE_KEY = {
 }
 
 MODEL_HAS_DETECTION_HEAD = {
-    "EQT-RoSE-v3": True, "EQT-instance": True,
+    "EQT-RoSE": True, "EQT-instance": True,
     "EQT-ethz": True, "EQT-stead": True,
     "REDPAN-60s": True,
-    "PhaseNet-RoSE-v2": False, "PhaseNet-instance": False,
+    "PhaseNet-RoSE": False, "PhaseNet-instance": False,
     "PhaseNet-ethz": False, "PhaseNet-stead": False,
 }
 

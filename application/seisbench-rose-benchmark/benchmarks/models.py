@@ -1,9 +1,9 @@
 """Unified model loader for the three published pickers.
 
 Identifiers:
-    eqt_rose_v3        — PyTorch / SeisBench EQTransformer fine-tuned on RoSE (v3)
-    phasenet_rose_v2   — PyTorch / SeisBench PhaseNet fine-tuned on RoSE (v2)
-    redpan_tf60        — TensorFlow / Keras RED-PAN-60s (TaiwanCWB-trained)
+    eqt_rose      — PyTorch / SeisBench EQTransformer fine-tuned on RoSE
+    phasenet_rose — PyTorch / SeisBench PhaseNet fine-tuned on RoSE
+    redpan_tf60   — TensorFlow / Keras RED-PAN-60s (TaiwanCWB-trained)
 
 Each loader returns a callable ``predict(stream, threshold)`` → (picks, detections)
 where the obspy Stream input is in ZNE order (SeisBench native).
@@ -16,7 +16,7 @@ from pathlib import Path
 
 DEFAULT_MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 
-# ---------------------------------------------------------------- EQT-RoSE-v3
+# ---------------------------------------------------------------- EQT-RoSE
 def _safe_torch_load(path: str, device: str):
     """Load a checkpoint with `weights_only=True` when supported (PyTorch >= 2.0).
 
@@ -31,12 +31,12 @@ def _safe_torch_load(path: str, device: str):
         return torch.load(path, map_location=device)
 
 
-def load_eqt_rose_v3(ckpt: Path | str | None = None, device: str = "cpu"):
+def load_eqt_rose(ckpt: Path | str | None = None, device: str = "cpu"):
     """Return an object with .classify(stream, P_threshold=, S_threshold=,
     detection_threshold=)."""
     import seisbench.models as sbm
     if ckpt is None:
-        ckpt = DEFAULT_MODELS_DIR / "eqt_rose_v3" / "eqt_rose_v3.pt"
+        ckpt = DEFAULT_MODELS_DIR / "eqt_rose" / "eqt_rose.pt"
     state = _safe_torch_load(str(ckpt), device)
     cfg = state.get("config", {})
     model = sbm.EQTransformer(
@@ -49,11 +49,11 @@ def load_eqt_rose_v3(ckpt: Path | str | None = None, device: str = "cpu"):
     model.to(device).eval()
     return model
 
-# ----------------------------------------------------------- PhaseNet-RoSE-v2
-def load_phasenet_rose_v2(ckpt: Path | str | None = None, device: str = "cpu"):
+# ----------------------------------------------------------- PhaseNet-RoSE
+def load_phasenet_rose(ckpt: Path | str | None = None, device: str = "cpu"):
     import seisbench.models as sbm
     if ckpt is None:
-        ckpt = DEFAULT_MODELS_DIR / "phasenet_rose_v2" / "phasenet_rose_v2.pt"
+        ckpt = DEFAULT_MODELS_DIR / "phasenet_rose" / "phasenet_rose.pt"
     state = _safe_torch_load(str(ckpt), device)
     model = sbm.PhaseNet(
         phases="PSN", norm="peak",
@@ -169,13 +169,13 @@ class _RP60Wrapper:
 
 
 LOADERS = {
-    "eqt_rose_v3":      load_eqt_rose_v3,
-    "phasenet_rose_v2": load_phasenet_rose_v2,
+    "eqt_rose":      load_eqt_rose,
+    "phasenet_rose": load_phasenet_rose,
     "redpan_tf60":      load_redpan_tf60,
 }
 
 HAS_DETECTION_HEAD = {
-    "eqt_rose_v3":      True,
-    "phasenet_rose_v2": False,
+    "eqt_rose":      True,
+    "phasenet_rose": False,
     "redpan_tf60":      True,
 }

@@ -3,11 +3,11 @@
 Standalone release for three published deep-learning earthquake phase pickers
 benchmarked on the **RoSE** (Romanian local-earthquake) and **STEAD** test sets:
 
-| Model | Framework | Description | Tag |
-|---|---|---|---|
-| **EQT-RoSE-v3**       | PyTorch (SeisBench) | EQTransformer fine-tuned on the RoSE training split | v3 |
-| **PhaseNet-RoSE-v2**  | PyTorch (SeisBench) | PhaseNet fine-tuned on the RoSE training split | v2 |
-| **RED-PAN-60s**       | TensorFlow / Keras  | RED-PAN multi-task attention R2U-Net (60 s window, TaiwanCWB-trained) | 240107 |
+| Model | Framework | Description |
+|---|---|---|
+| **EQT-RoSE**       | PyTorch (SeisBench) | EQTransformer fine-tuned on the RoSE training split (released 2026-04-30) |
+| **PhaseNet-RoSE**  | PyTorch (SeisBench) | PhaseNet fine-tuned on the RoSE training split |
+| **RED-PAN-60s**    | TensorFlow / Keras  | RED-PAN multi-task attention R2U-Net (60 s window, TaiwanCWB `240107` retraining) |
 
 The RED-PAN-60s model lives in a separate Keras pipeline and **is not
 SeisBench-compatible**. To keep this release self-contained, a minimal
@@ -25,8 +25,8 @@ seisbench-rose-benchmark/
 │   ├── requirements-pytorch.txt    # PyTorch + seisbench (EQT/PhaseNet)
 │   └── requirements-tf.txt         # TensorFlow (RED-PAN-60s)
 ├── models/
-│   ├── eqt_rose_v3/eqt_rose_v3.pt          (1.6 MB, PyTorch state dict)
-│   ├── phasenet_rose_v2/phasenet_rose_v2.pt (1.1 MB, PyTorch state dict)
+│   ├── eqt_rose/eqt_rose.pt          (1.6 MB, PyTorch state dict)
+│   ├── phasenet_rose/phasenet_rose.pt (1.1 MB, PyTorch state dict)
 │   ├── redpan_tf60/train.hdf5               (6.0 MB, Keras model)
 │   └── README.md                            # model cards
 ├── data/
@@ -65,7 +65,7 @@ The PyTorch (SeisBench) and TensorFlow (RED-PAN) stacks are best installed
 in **separate conda environments** to avoid CUDA/cuDNN conflicts:
 
 ```bash
-# SeisBench environment (EQT-RoSE-v3, PhaseNet-RoSE-v2)
+# SeisBench environment (EQT-RoSE, PhaseNet-RoSE)
 conda create -n picker-pt python=3.10 -y
 conda activate picker-pt
 pip install -r env/requirements.txt -r env/requirements-pytorch.txt
@@ -95,8 +95,8 @@ To run a single model on a single dataset:
 
 ```bash
 python benchmarks/run_benchmark.py \
-    --model eqt_rose_v3 --dataset rose --rose-dir "$ROSE_DIR" \
-    --out-dir results/runs/eqt_rose_v3_rose
+    --model eqt_rose --dataset rose --rose-dir "$ROSE_DIR" \
+    --out-dir results/runs/eqt_rose_rose
 ```
 
 ## Pre-computed result files
@@ -150,7 +150,7 @@ window for detection-box IoU follows Mousavi 2020:
 
 ## Models published with this release
 
-The two RoSE-fine-tuned PyTorch checkpoints (`eqt_rose_v3.pt`, `phasenet_rose_v2.pt`)
+The two RoSE-fine-tuned PyTorch checkpoints (`eqt_rose.pt`, `phasenet_rose.pt`)
 contain the model state dict plus a small training-config dict. They are
 loaded via SeisBench's `EQTransformer` / `PhaseNet` constructors with
 `norm="peak"` and `default_args={"blinding": (200, 200)}` — see

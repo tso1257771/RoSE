@@ -19,8 +19,8 @@ from benchmarks.models import HAS_DETECTION_HEAD
 
 THRESHOLDS = ["0.05", "0.1", "0.2", "0.3", "0.5", "0.7"]
 DEFAULT_NAME_MAP = {
-    "eqt_rose_v3":      "EQT-RoSE-v3",
-    "phasenet_rose_v2": "PhaseNet-RoSE-v2",
+    "eqt_rose":      "EQT-RoSE",
+    "phasenet_rose": "PhaseNet-RoSE",
     "redpan_tf60":      "RED-PAN-60s",
 }
 

@@ -9,8 +9,8 @@ For each chosen test trace, runs every model in the lineup and plots:
 
 Models compared:
   - SeisBench pretrained: PhaseNet-instance, EQT-instance
-  - Custom SeisBench: PhaseNet-RoSE-v2, EQT-RoSE-v2
-  - TF RED-PAN: REDPAN-60s, with two preprocessing variants:
+  - Custom SeisBench:     PhaseNet-RoSE,  EQT-RoSE
+  - TF RED-PAN:           REDPAN-60s, with two preprocessing variants:
        a) bandpass 1-45 Hz + internal z-score
        b) raw + internal z-score (probably matches training)
 
@@ -245,19 +245,14 @@ def main() -> None:
     ap.add_argument("--n-traces", type=int, default=4)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument(
-        "--eqt-rose-v2",
-        default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "eqt_rose_v3" / "eqt_rose_v3.pt"),
+        "--eqt-rose",
+        default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "eqt_rose" / "eqt_rose.pt"),
+        help="Path to the EQT-RoSE checkpoint.",
     )
     ap.add_argument(
-        "--eqt-rose-v3",
-        default=None,
-        help="Optional EQT-RoSE-v3 checkpoint (factor=0.7 retrain). "
-             "If provided, adds a v3 panel between v2 and RED-PAN to "
-             "show the detection-mask overfit fix side-by-side.",
-    )
-    ap.add_argument(
-        "--phasenet-rose-v2",
-        default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "phasenet_rose_v2" / "phasenet_rose_v2.pt"),
+        "--phasenet-rose",
+        default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "phasenet_rose" / "phasenet_rose.pt"),
+        help="Path to the PhaseNet-RoSE checkpoint.",
     )
     ap.add_argument(
         "--redpan-tf-model",
@@ -292,15 +287,10 @@ def main() -> None:
     print("loading models...")
     pn_inst = load_seisbench_model("PhaseNet", "instance", None)
     eqt_inst = load_seisbench_model("EQTransformer", "instance", None)
-    pn_v2 = load_seisbench_model("PhaseNet", None, args.phasenet_rose_v2,
-                                  norm_override="peak")
-    eqt_v2 = load_seisbench_model("EQTransformer", None, args.eqt_rose_v2,
+    pn_rose = load_seisbench_model("PhaseNet", None, args.phasenet_rose,
                                    norm_override="peak")
-    eqt_v3 = None
-    if args.eqt_rose_v3:
-        eqt_v3 = load_seisbench_model("EQTransformer", None,
-                                       args.eqt_rose_v3,
-                                       norm_override="peak")
+    eqt_rose = load_seisbench_model("EQTransformer", None, args.eqt_rose,
+                                    norm_override="peak")
     redpan = load_redpan(args.redpan_tf_model)
 
     # ----- one figure per trace ---------------------------------------------
@@ -325,16 +315,12 @@ def main() -> None:
         print(f"             EQT-instance ...")
         results.append(("EQT-instance",
                         run_seisbench(eqt_inst, stream_band_zne)))
-        print(f"             PhaseNet-RoSE-v2 ...")
-        results.append(("PhaseNet-RoSE-v2",
-                        run_seisbench(pn_v2, stream_band_zne)))
-        print(f"             EQT-RoSE-v2 ...")
-        results.append(("EQT-RoSE-v2",
-                        run_seisbench(eqt_v2, stream_band_zne)))
-        if eqt_v3 is not None:
-            print(f"             EQT-RoSE-v3 (factor=0.7) ...")
-            results.append(("EQT-RoSE-v3",
-                            run_seisbench(eqt_v3, stream_band_zne)))
+        print(f"             PhaseNet-RoSE ...")
+        results.append(("PhaseNet-RoSE",
+                        run_seisbench(pn_rose, stream_band_zne)))
+        print(f"             EQT-RoSE ...")
+        results.append(("EQT-RoSE",
+                        run_seisbench(eqt_rose, stream_band_zne)))
         print(f"             RED-PAN-60s ...")
         results.append(("RED-PAN-60s",
                         run_redpan(redpan, stream_enz_raw)))

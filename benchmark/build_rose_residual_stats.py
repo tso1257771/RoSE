@@ -46,7 +46,7 @@ DEFAULT_EVAL = Path(os.environ.get("ROSE_EVAL_DIR", "eval"))
 
 MODELS = [
     "REDPAN-60s",
-    "EQT-RoSE-v3", "PhaseNet-RoSE-v2",
+    "EQT-RoSE", "PhaseNet-RoSE",
     "EQT-instance", "PhaseNet-instance",
     "EQT-ethz", "PhaseNet-ethz",
     "EQT-stead", "PhaseNet-stead",
