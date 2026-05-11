@@ -31,7 +31,7 @@ from datetime import timedelta
 from pathlib import Path
 
 # Allow `from rose.checkpoint_io import safe_torch_load` when run as a script.
-_REPO_ROOT = Path(__file__).resolve().parents[1]
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPO_ROOT))
 
 from rose.checkpoint_io import safe_torch_load  # noqa: E402

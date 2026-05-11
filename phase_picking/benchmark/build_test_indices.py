@@ -26,8 +26,8 @@ import shutil
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = REPO_ROOT / "benchmark" / "data"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = REPO_ROOT / "phase_picking" / "benchmark" / "data"
 SPLIT_INDEX = REPO_ROOT / "rose_split_index.csv"
 TEST_SPLIT_NAME = "test"  # SeisBench vocabulary (RED-PAN "test" -> SeisBench "test")
 

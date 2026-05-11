@@ -1,6 +1,6 @@
 """Tutorial 4 — Run all three published RoSE pickers on test traces.
 
-End-to-end demo of the released checkpoints under ``models/``:
+End-to-end demo of the released checkpoints under ``phase_picking/models/``:
 
     1. Open `data/rose` with `RoSE`.
     2. Filter to the held-out test split (falls back to the full dataset
@@ -80,7 +80,7 @@ from rose import (  # noqa: E402
 )
 
 DATA_DIR = os.environ.get("ROSE_DATA_DIR", str(REPO_ROOT / "data" / "rose"))
-MODELS_DIR = REPO_ROOT / "models"
+MODELS_DIR = REPO_ROOT / "phase_picking" / "models"
 OUT_DIR = REPO_ROOT / "outputs" / "04_picker_inference"
 
 # RoSE waveform geometry (the dataset is fixed at these values).
@@ -118,7 +118,7 @@ _RPPick = namedtuple("_RPPick", ["phase", "peak_time", "peak_value"])
 #
 # We *do* preprocess the input by demean + linear-detrend + (optional)
 # Butterworth band-pass via `preprocess()`; the published benchmark
-# (`benchmark/bench_pickers_rose.py`) defaults to 1-45 Hz bandpass to match
+# (`phase_picking/benchmark/bench_pickers_rose.py`) defaults to 1-45 Hz bandpass to match
 # the 1-45 Hz pre-augment filter EQT-RoSE was trained with — so the same
 # default is used here.
 # ---------------------------------------------------------------------------
@@ -174,7 +174,7 @@ def select_test_traces(
         eligible = md.index.to_numpy()
         scope = (
             "full dataset (no `split` column found — run "
-            "`python training/build_rose_split_index.py` to materialise one)"
+            "`python phase_picking/training/build_rose_split_index.py` to materialise one)"
         )
     n_test = len(eligible)
 

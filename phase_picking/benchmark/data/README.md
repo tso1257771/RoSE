@@ -12,7 +12,7 @@ waveforms with `--rose-dir` / `--stead-dir` (or set `ROSE_DATA_DIR` / `STEAD_DIR
 # 1. download both datasets (see RoSE waveforms / STEAD waveforms below)
 export ROSE_DATA_DIR=/path/to/rose
 export STEAD_DIR=/path/to/STEAD/benchmark_stead
-# 2. run the benchmark (writes results/*.csv)
+# 2. run the benchmark (writes phase_picking/results/*.csv)
 bash ../regenerate_results.sh                # or: --num-test 200 for a quick subset
 ```
 
@@ -20,8 +20,8 @@ bash ../regenerate_results.sh                # or: --num-test 200 for a quick su
 
 | File | Rows | Columns | Description |
 |---|---:|---|---|
-| `rose_test_index.csv`   | 32 374  | `trace_name, source_id, split, year` | RoSE traces assigned to the **test** split. Derived from the repo-root `rose_split_index.csv` (the full deterministic train/dev/test assignment produced by `training/build_rose_split_index.py`, salt `ROMPLUS-singleEQ-v1`). All rows have `split == test`; `trace_name` is the SeisBench bucket key into `waveforms*.hdf5`. |
-| `stead_test_index.csv`  | 103 040 | `trace_name, p_sample, s_sample, p_sample_original, s_sample_original, ps_residual_sec, ps_group` | STEAD **event** test traces with P/S sample positions (in the 27 000-sample, 100 Hz, ENZ window used by `benchmark/bench_stead_test.py`). |
+| `rose_test_index.csv`   | 32 374  | `trace_name, source_id, split, year` | RoSE traces assigned to the **test** split. Derived from the repo-root `rose_split_index.csv` (the full deterministic train/dev/test assignment produced by `phase_picking/training/build_rose_split_index.py`, salt `ROMPLUS-singleEQ-v1`). All rows have `split == test`; `trace_name` is the SeisBench bucket key into `waveforms*.hdf5`. |
+| `stead_test_index.csv`  | 103 040 | `trace_name, p_sample, s_sample, p_sample_original, s_sample_original, ps_residual_sec, ps_group` | STEAD **event** test traces with P/S sample positions (in the 27 000-sample, 100 Hz, ENZ window used by `phase_picking/benchmark/bench_stead_test.py`). |
 | `stead_noise_index.csv` | 23 526  | `trace_name` | STEAD **noise** test traces — the real-negative pool for trace-level event-vs-noise (T1) metrics. |
 
 These files are versioned with the code so the benchmark composition is fixed
@@ -34,7 +34,7 @@ and reproducible; only the waveform arrays themselves need to be fetched.
   60 s / 6000-sample windows).
 * **Source**: published RoSE bundle (TRANSFORM² consortium release / Zenodo).
 * **Build the split column yourself**: after downloading, run
-  `python training/build_rose_split_index.py --rose-dir /path/to/rose`. It
+  `python phase_picking/training/build_rose_split_index.py --rose-dir /path/to/rose`. It
   writes the `split` column into each `metadata{YEAR}.csv` (read directly by
   `WaveformDataset.train_dev_test()`) and re-emits `rose_split_index.csv` /
   `rose_split_index.json`. Re-running with the same salt is idempotent.
@@ -74,4 +74,4 @@ traces — for the RoSE pool it draws a random sample; for the STEAD pools it
 takes the *first* `N` traces, so a small slice can be unrepresentative). A
 few-thousand-trace subset is enough to spot-check that the checkpoints load
 and pick sanely; for the published numbers use the full pools (the committed
-`../../results/*.csv`).
+`../../phase_picking/results/*.csv`).

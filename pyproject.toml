@@ -28,11 +28,11 @@ dependencies = [
 #   uv pip install -e ".[cuda]"  # CUDA wheel (configured below)
 cpu = ["torch>=2.1"]
 cuda = ["torch>=2.1"]
-# SeisBench training + benchmarking (training/, benchmark/). Needs a torch
+# SeisBench training + benchmarking (phase_picking/training/, phase_picking/benchmark/). Needs a torch
 # extra above as well; install e.g.  uv pip install -e ".[cuda,bench]"
 bench = ["torch>=2.1", "scikit-learn>=1.2"]
 # RED-PAN-60s Keras inference (rose/redpan_inference, the TF model in
-# models/redpan_tf60/).
+# phase_picking/models/redpan_tf60/).
 tf = ["tensorflow>=2.13"]
 dev = ["pytest>=7", "ruff>=0.4"]
 

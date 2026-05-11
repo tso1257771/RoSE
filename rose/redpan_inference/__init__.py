@@ -4,13 +4,13 @@ Self-contained subset of the upstream `redpan` package
 (https://github.com/tso1257771/RED-PAN) sufficient to run RED-PAN-60s
 inference on a single trace via the `REDPAN` class. The training,
 data-loading, and TF-Keras model-construction modules are not vendored
-because the published `models/redpan_tf60/train.hdf5` is the inference target.
-Used by `rose.pickers.load_redpan_tf60` and the `benchmark/` scripts.
+because the published `phase_picking/models/redpan_tf60/train.hdf5` is the inference target.
+Used by `rose.pickers.load_redpan_tf60` and the `phase_picking/benchmark/` scripts.
 
 Usage:
     import tensorflow as tf
     from rose.redpan_inference import REDPAN
-    tf_model = tf.keras.models.load_model("models/redpan_tf60/train.hdf5",
+    tf_model = tf.keras.models.load_model("phase_picking/models/redpan_tf60/train.hdf5",
                                           compile=False)
     rp = REDPAN(model=tf_model, pred_npts=6000, dt=0.01,
                 pred_interval_sec=10.0, batch_size=32,

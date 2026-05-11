@@ -3,7 +3,7 @@
 Vendored from the RED-PAN data-builder (`redpan.data.builder.splits`) so the
 RoSE training/benchmark pipeline is self-contained. The RoSE SeisBench split
 column was produced with :func:`hash_split` using the salt
-``"ROMPLUS-singleEQ-v1"`` (see ``training/build_rose_split_index.py``); keeping
+``"ROMPLUS-singleEQ-v1"`` (see ``phase_picking/training/build_rose_split_index.py``); keeping
 the implementation here guarantees the assignment can be reproduced bit-for-bit
 without depending on the RED-PAN repository.
 
@@ -20,7 +20,7 @@ Three helpers:
 Default proportions: 70 % train / 15 % val / 15 % test. These helpers return the
 RED-PAN split vocabulary (``"train"`` / ``"val"`` / ``"test"``); SeisBench uses
 ``"dev"`` for the validation split, so callers must remap ``"val" -> "dev"``
-(``training/build_rose_split_index.py`` does this).
+(``phase_picking/training/build_rose_split_index.py`` does this).
 """
 
 from __future__ import annotations
