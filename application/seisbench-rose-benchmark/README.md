@@ -46,13 +46,20 @@ pip install -r env/requirements.txt -r env/requirements-pytorch.txt
 export ROSE_DIR=/path/to/rose                            # SeisBench format
 export STEAD_DIR=/path/to/STEAD/benchmark_stead          # flat .npy layout
 
-# 3. run all three models on both pools
+# 3. run the three bundled RoSE checkpoints on both pools
 bash scripts/reproduce_all.sh --rose-dir "$ROSE_DIR" --stead-dir "$STEAD_DIR"
 ```
 
-Output `results/{rose,stead}_{picking,detection}.csv` should match the
-committed CSVs to floating-point precision. To run a single model on a single
-pool:
+This writes `results/runs/{rose,stead}_{picking,detection}.csv`. The
+**EQT-RoSE / PhaseNet-RoSE / RED-PAN-60s** rows there should match the
+committed `results/{rose,stead}_{picking,detection}.csv` to floating-point
+precision. (The committed CSVs additionally carry the off-the-shelf
+`instance` / `ethz` / `stead` baselines and a `*_residual_stats.csv`; those
+come from the main repo's full benchmark suite — `benchmark/build_*` — and are
+not re-run by this self-contained release. `reproduce_all.sh` writes only under
+`results/runs/` and never overwrites the committed reference files.)
+
+To run a single model on a single pool:
 
 ```bash
 python benchmarks/run_benchmark.py --model eqt_rose --dataset rose \

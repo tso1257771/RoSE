@@ -18,6 +18,11 @@ checkpoints/
 # application/seisbench-rose-benchmark/results/.
 eval/
 
+# Output of application/seisbench-rose-benchmark/scripts/reproduce_all.sh
+# (per-model JSONs + aggregated CSVs). The committed reference numbers are the
+# *.csv files directly under results/; only results/runs/ is generated.
+results/runs/
+
 # Derived split index (full train/dev/test assignment for the local copy of the
 # RoSE dataset). Regenerated idempotently by
 # training/build_rose_split_index.py; the pinned test-set composition is
@@ -35,8 +40,10 @@ rose_split_index.json
 draft/
 # Third-party supplementary PDFs
 reference/
-# Internal data-prep pipeline (not user-facing)
-scripts/
+# Internal data-prep pipeline (not user-facing).
+# Anchored to the repo root so it does NOT also swallow
+# application/seisbench-rose-benchmark/scripts/ (the published reproducer).
+/scripts/
 # Raw StationXML / dataless dumps. Keep only the SC3ML→StationXML
 # conversion script for reproducibility of the response-archive build.
 # (Negation works only when the parent dir itself isn't ignored, so we

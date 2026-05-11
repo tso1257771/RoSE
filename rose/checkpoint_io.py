@@ -72,7 +72,14 @@ def safe_torch_load(
             "safe_torch_load(trusted=True) — using unrestricted pickle for %s",
             path,
         )
-        return torch.load(path, map_location=map_location)
+        try:
+            # Be explicit: PyTorch >= 2.6 defaults `weights_only` to True, so a
+            # bare torch.load() would *not* be the unrestricted loader the
+            # caller asked for.
+            return torch.load(path, map_location=map_location, weights_only=False)
+        except TypeError:
+            # PyTorch < 1.13 does not accept the `weights_only` keyword.
+            return torch.load(path, map_location=map_location)
 
     try:
         return torch.load(path, map_location=map_location, weights_only=True)

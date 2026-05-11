@@ -1,9 +1,13 @@
 # Pre-computed benchmark results
 
-These CSVs are the canonical numbers from the TRANSFORM² Deliverable 3.4
-study. Reproducing them requires the RoSE and STEAD test datasets and the
-three model checkpoints under `models/`. Run `scripts/reproduce_all.sh`
-and compare against these files.
+These CSVs are the canonical benchmark numbers reported in the RoSE picker
+paper (TRANSFORM² Deliverable 3.4). They cover nine pickers: the three
+RoSE-trained checkpoints in `models/` plus six off-the-shelf SeisBench
+baselines (EQT / PhaseNet × `instance` / `ethz` / `stead`).
+`scripts/reproduce_all.sh` re-runs just the three bundled checkpoints (it
+needs the RoSE + STEAD test datasets) and writes its own copies under
+`results/runs/`; the EQT-RoSE / PhaseNet-RoSE / RED-PAN-60s rows there should
+match the corresponding rows here to floating-point precision.
 
 ## RoSE pool (32 374 events + 23 526 STEAD noise)
 

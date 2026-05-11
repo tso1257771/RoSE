@@ -286,7 +286,7 @@ def main() -> None:
     ap.add_argument("--tf-threads", type=int, default=0,
                     help="Cap TF intra/inter op threads (0 = no cap). "
                          "Set to 2 when running alongside other CPU jobs.")
-    ap.add_argument("--model-name", default="REDPAN-60s",
+    ap.add_argument("--model-name", default="RED-PAN-60s",
                     help="Display name in the output CSV.")
     args = ap.parse_args()
     if args.rose_dir is None:

@@ -41,13 +41,13 @@ MODEL_TO_NOISE_KEY = {
     "PhaseNet-ethz": "phasenet_ethz",
     "EQT-stead": "eqt_stead",
     "PhaseNet-stead": "phasenet_stead",
-    "REDPAN-60s": "redpan",
+    "RED-PAN-60s": "redpan",
 }
 
 MODEL_HAS_DETECTION_HEAD = {
     "EQT-RoSE": True, "EQT-instance": True,
     "EQT-ethz": True, "EQT-stead": True,
-    "REDPAN-60s": True,
+    "RED-PAN-60s": True,
     "PhaseNet-RoSE": False, "PhaseNet-instance": False,
     "PhaseNet-ethz": False, "PhaseNet-stead": False,
 }
