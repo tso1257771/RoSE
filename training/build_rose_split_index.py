@@ -105,6 +105,8 @@ def main() -> None:
         help="Compute split counts but do not modify metadata{year}.csv.",
     )
     args = ap.parse_args()
+    if args.rose_dir is None:
+        ap.error("--rose-dir is required (or set the ROSE_DATA_DIR environment variable)")
 
     rose_dir = Path(args.rose_dir)
     rng = np.random.default_rng(args.noise_seed)

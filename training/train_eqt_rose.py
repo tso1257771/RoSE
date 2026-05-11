@@ -249,7 +249,7 @@ def main() -> None:
     ap.add_argument("--rose-dir",
                     default=os.environ.get("ROSE_DATA_DIR"))
     ap.add_argument("--out-dir",
-                    default=os.environ.get("ROSE_TRAIN_OUT_DIR"))
+                    default=os.environ.get("ROSE_TRAIN_OUT_DIR", "checkpoints/eqt"))
     ap.add_argument("--epochs", type=int, default=30)
     ap.add_argument("--batch-size", type=int, default=128)
     ap.add_argument("--lr", type=float, default=1e-3)
@@ -281,6 +281,8 @@ def main() -> None:
                          "physics (avoids the long-tail detection overfit "
                          "diagnosed in v2).")
     args = ap.parse_args()
+    if args.rose_dir is None:
+        ap.error("--rose-dir is required (or set the ROSE_DATA_DIR environment variable)")
 
     cfg = Config(
         rose_dir=args.rose_dir,

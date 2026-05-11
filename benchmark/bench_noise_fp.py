@@ -243,6 +243,8 @@ def main() -> None:
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--total-shards", type=int, default=1)
     args = ap.parse_args()
+    if args.stead_dir is None:
+        ap.error("--stead-dir is required (or set the STEAD_DIR environment variable)")
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
