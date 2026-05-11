@@ -75,12 +75,13 @@ data = RoSE("/path/to/data/rose", component_order="ZNE")  # PhaseNet/EQT order
 print(len(data), "traces")
 
 wf_counts, meta = data.get_sample(0)            # raw counts, shape (3, npts)
-wf_phys,   meta = data.get_sample_physical(0)   # M/S or M/S**2 — divides by per-trace sensitivity
+wf_phys,   meta = data.get_sample_physical(1)   # M/S or M/S**2 — divides by per-trace sensitivity
+                                                # (index 0 happens to lack a response; see below)
 ```
 
 The dataset stores **counts** on disk and the per-component sensitivity values
-in metadata; `get_sample_physical` does the divide for you and raises on traces
-with no usable response (~4 %). Why this design? See
+in metadata; `get_sample_physical` does the divide for you and raises
+`ValueError` on traces with no usable response (~4 %). Why this design? See
 [`docs/SEISBENCH_FORMAT.md#units--instrument-response`](docs/SEISBENCH_FORMAT.md).
 
 ---
@@ -151,9 +152,13 @@ The scripts read default paths from environment variables (see `.env.example`)
 and accept explicit `--rose-dir` / `--stead-dir` / `--out-dir` overrides:
 
 ```bash
-pip install -e ".[cuda,bench]"              # torch + scikit-learn
+pip install -e ".[cuda,bench]"              # torch + scikit-learn  (or ".[cpu,bench]")
 cp .env.example .env && $EDITOR .env        # set ROSE_DATA_DIR, STEAD_DIR, …
+set -a; source .env; set +a                 # export them — the scripts don't auto-load .env
 ```
+
+(Equivalently, pass `--rose-dir` / `--stead-dir` / `--out-dir` on each command;
+without one of these or the matching env var the scripts exit with a clear error.)
 
 * **`training/`** — fine-tune SeisBench `EQTransformer` / `PhaseNet` from
   the INSTANCE pretrained weights on the RoSE training split (DDP, AMP, Adam):
@@ -228,7 +233,7 @@ split partition remains bit-for-bit reproducible.
 ```
 RoSE/
 ├── rose/                          # importable package (loader + helpers)
-├── examples/                      # 01, 03, 04 — runnable tutorials
+├── examples/                      # 01, 02, 03, 04 — runnable tutorials
 ├── docs/                          # DATASET.md, SEISBENCH_FORMAT.md (schemas)
 ├── training/                      # SeisBench EQT / PhaseNet RoSE training
 ├── benchmark/                     # multi-model benchmark suite (RoSE + STEAD)

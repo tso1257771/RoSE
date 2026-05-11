@@ -226,6 +226,7 @@ def plot_record_section(sta_meta, event_attrs, picks, n_show=24, save_path=OUT_P
     ax.grid(alpha=0.25, ls=":")
 
     fig.tight_layout()
+    Path(save_path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(save_path, dpi=170)
     print(f"saved {_rel(save_path)}")
 
