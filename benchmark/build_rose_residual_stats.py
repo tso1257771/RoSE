@@ -83,17 +83,27 @@ def main() -> None:
 
     rows = load_sweep(args.eval_dir)
 
+    def _f(x, default=float("nan")):
+        try:
+            return float(x)
+        except (TypeError, ValueError):
+            return default
+
     out_rows = []
     for model in MODELS:
         for phase in ("P", "S"):
             r = find(rows, model, args.threshold, phase)
             if r is None:
                 continue
-            n = int(r["n_residuals"])
-            mae = float(r["mae_s"])
-            rmse = float(r["rmse_s"])
-            median = float(r["median_s"])
-            iqr = float(r["iqr_s"])
+            n = int(_f(r["n_residuals"], 0))
+            if n == 0:
+                # no matched picks at this threshold -> nothing to report
+                # (the sweep CSV leaves the residual cells blank in that case)
+                continue
+            mae = _f(r["mae_s"])
+            rmse = _f(r["rmse_s"])
+            median = _f(r["median_s"])
+            iqr = _f(r["iqr_s"])
             # std exact (variance = RMSE^2 - mean^2, mean ≈ median for symmetric)
             variance = max(0.0, rmse * rmse - median * median)
             std = math.sqrt(variance)
@@ -113,12 +123,20 @@ def main() -> None:
                 "IQR_seconds": f"{iqr:.4f}",
             })
 
+    _fields = [
+        "model", "phase", "threshold", "n_matched", "MAE_seconds",
+        "median_residual_seconds", "std_seconds", "MAD_lower_iqr_over_2",
+        "MAD_upper_0p6745_std", "RMSE_seconds", "IQR_seconds",
+    ]
     with args.out_csv.open("w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(out_rows[0].keys()))
+        w = csv.DictWriter(f, fieldnames=_fields)
         w.writeheader()
         for r in out_rows:
             w.writerow(r)
-    print(f"wrote {args.out_csv}")
+    print(f"wrote {args.out_csv} ({len(out_rows)} rows)")
+    if not out_rows:
+        print("  (no model matched any picks at this threshold — empty table)")
+        return
 
     print()
     print("=" * 116)
