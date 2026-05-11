@@ -4,7 +4,17 @@ The benchmark runs on two test sets — **RoSE** (Romanian local earthquakes) an
 the **STEAD test split** (Mousavi et al., 2019). The raw waveforms are external
 and multi-GB, so this directory ships only the **index files** that pin down
 exactly which traces make up each test set. Point the benchmark scripts at the
-waveforms with `--rose-dir` / `--stead-dir`.
+waveforms with `--rose-dir` / `--stead-dir` (or set `ROSE_DIR` / `STEAD_DIR`).
+
+**TL;DR**:
+
+```bash
+# 1. download both datasets (see RoSE waveforms / STEAD waveforms below)
+export ROSE_DIR=/path/to/rose
+export STEAD_DIR=/path/to/STEAD/benchmark_stead
+# 2. run the benchmark
+bash ../scripts/reproduce_all.sh --rose-dir "$ROSE_DIR" --stead-dir "$STEAD_DIR"
+```
 
 ## Index files in this directory
 

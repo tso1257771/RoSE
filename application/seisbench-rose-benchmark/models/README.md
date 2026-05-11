@@ -1,13 +1,22 @@
 # Model cards
 
 Three published pickers, all evaluated on the RoSE test split (Romanian local
-earthquakes) and on STEAD. Loaders live in `benchmarks/models.py`.
+earthquakes) and on STEAD. Loaders live in `benchmarks/models.py`
+(`load_eqt_rose`, `load_phasenet_rose`, `load_redpan_tf60`).
+
+## Pick a model
+
+| If you want…                                      | Choose          | Has a detection head? | Window     |
+|---|---|---|---|
+| Best phase-pick F1 on local Romanian earthquakes  | **EQT-RoSE**     | yes                    | 60 s |
+| Smaller / faster, picks-only                      | **PhaseNet-RoSE**| no                     | 30 s |
+| Cross-region baseline trained on TaiwanCWB only   | **RED-PAN-60s**  | yes                    | 60 s |
 
 | Model | Framework | Pre-training | Fine-tuning | Input | Heads | Checkpoint |
 |---|---|---|---|---|---|---|
-| **EQT-RoSE** | PyTorch / SeisBench `EQTransformer` | INSTANCE (Italy) | RoSE train split | ZNE, 6000 @ 100 Hz (60 s) | P, S, detection | `eqt_rose/eqt_rose.pt` (1.6 MB) |
-| **PhaseNet-RoSE** | PyTorch / SeisBench `PhaseNet` | INSTANCE (Italy) | RoSE train split | ZNE, 3001 @ 100 Hz (30 s) | P, S, Noise | `phasenet_rose/phasenet_rose.pt` (1.1 MB) |
-| **RED-PAN-60s** | TensorFlow / Keras | — | TaiwanCWB (no STEAD/RoSE) | ENZ, 6000 @ 100 Hz (60 s) | P / S / Noise + event mask | `redpan_tf60/train.hdf5` (6.0 MB) |
+| **EQT-RoSE**       | PyTorch / SeisBench `EQTransformer` | INSTANCE (Italy)         | RoSE train split          | ZNE, 6000 @ 100 Hz (60 s) | P, S, detection                | `eqt_rose/eqt_rose.pt`           (1.6 MB) |
+| **PhaseNet-RoSE**  | PyTorch / SeisBench `PhaseNet`      | INSTANCE (Italy)         | RoSE train split          | ZNE, 3001 @ 100 Hz (30 s) | P, S, Noise                    | `phasenet_rose/phasenet_rose.pt` (1.1 MB) |
+| **RED-PAN-60s**    | TensorFlow / Keras                  | —                        | TaiwanCWB (no STEAD/RoSE) | ENZ, 6000 @ 100 Hz (60 s) | P / S / Noise + event mask     | `redpan_tf60/train.hdf5`         (5.8 MB) |
 
 Each PyTorch checkpoint is a dict `{model: state_dict, config: {...}, epoch, dev_loss}`.
 

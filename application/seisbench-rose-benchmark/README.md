@@ -1,116 +1,131 @@
 # SeisBench-RoSE phase-picker benchmark
 
-Standalone release for three published deep-learning earthquake phase pickers
-benchmarked on the **RoSE** (Romanian local-earthquake) and **STEAD** test sets:
+Self-contained release of three deep-learning earthquake phase pickers
+benchmarked on the **RoSE** (Romanian local-earthquake) and **STEAD** test
+sets — bundled checkpoints, unified loaders, scoring code, and the
+pre-computed result tables reported in the paper.
 
-| Model | Framework | Description |
+| Model              | Framework          | What it does                                                                                       |
 |---|---|---|
-| **EQT-RoSE**       | PyTorch (SeisBench) | EQTransformer fine-tuned on the RoSE training split (released 2026-04-30) |
-| **PhaseNet-RoSE**  | PyTorch (SeisBench) | PhaseNet fine-tuned on the RoSE training split |
-| **RED-PAN-60s**    | TensorFlow / Keras  | RED-PAN multi-task attention R2U-Net (60 s window, TaiwanCWB `240107` retraining) |
+| **EQT-RoSE**       | PyTorch (SeisBench) | EQTransformer fine-tuned on the RoSE training split (released 2026-04-30)                          |
+| **PhaseNet-RoSE**  | PyTorch (SeisBench) | PhaseNet fine-tuned on the RoSE training split                                                     |
+| **RED-PAN-60s**    | TensorFlow / Keras  | RED-PAN multi-task attention R2U-Net, 60 s window, TaiwanCWB `240107` retraining (no RoSE/STEAD exposure) |
 
-The RED-PAN-60s model lives in a separate Keras pipeline and **is not
-SeisBench-compatible**. To keep this release self-contained, a minimal
-inference subset of the upstream `redpan` package is bundled under
-`redpan_inference/`. The two RoSE-fine-tuned models are stock SeisBench
-checkpoints loaded with custom inference-norm settings.
+Per-model details (architecture, pretraining, fine-tuning recipe, dev loss):
+see [`models/README.md`](models/README.md).
 
-## Directory layout
+---
+
+## Use the models in five lines
+
+```python
+from benchmarks.models import load_eqt_rose, load_phasenet_rose, load_redpan_tf60
+
+model = load_eqt_rose()                                              # 1.6 MB checkpoint
+out   = model.classify(stream,                                       # ObsPy Stream, ZNE order
+                       P_threshold=0.3, S_threshold=0.3,
+                       detection_threshold=0.3)
+```
+
+All three loaders return a SeisBench-style object with `.classify(stream, ...)`.
+RED-PAN-60s reorders ZNE → ENZ internally. PyTorch checkpoints are loaded
+with `weights_only=True` (safe pickle); see the security note in
+[`models/README.md#verifying-the-bundled-weights`](models/README.md#verifying-the-bundled-weights).
+
+---
+
+## Reproduce the paper
+
+```bash
+# 1. install (separate envs for the two stacks — CUDA/cuDNN don't co-exist cleanly)
+conda create -n picker-pt python=3.10 -y && conda activate picker-pt
+pip install -r env/requirements.txt -r env/requirements-pytorch.txt
+#                  (or for RED-PAN: -r env/requirements-tf.txt in a sibling env)
+
+# 2. fetch the test data — see data/README.md
+export ROSE_DIR=/path/to/rose                            # SeisBench format
+export STEAD_DIR=/path/to/STEAD/benchmark_stead          # flat .npy layout
+
+# 3. run all three models on both pools
+bash scripts/reproduce_all.sh --rose-dir "$ROSE_DIR" --stead-dir "$STEAD_DIR"
+```
+
+Output `results/{rose,stead}_{picking,detection}.csv` should match the
+committed CSVs to floating-point precision. To run a single model on a single
+pool:
+
+```bash
+python benchmarks/run_benchmark.py --model eqt_rose --dataset rose \
+    --rose-dir "$ROSE_DIR" --out-dir results/runs/eqt_rose_rose
+```
+
+---
+
+## Verify the bundled weights
+
+```bash
+cd models && sha256sum -c SHA256SUMS
+# eqt_rose/eqt_rose.pt: OK
+# phasenet_rose/phasenet_rose.pt: OK
+# redpan_tf60/train.hdf5: OK
+```
+
+---
+
+## Layout
 
 ```
 seisbench-rose-benchmark/
 ├── README.md                       # this file
-├── env/
-│   ├── requirements.txt            # core deps (numpy, obspy, sklearn, ...)
-│   ├── requirements-pytorch.txt    # PyTorch + seisbench (EQT/PhaseNet)
-│   └── requirements-tf.txt         # TensorFlow (RED-PAN-60s)
-├── models/
-│   ├── eqt_rose/eqt_rose.pt          (1.6 MB, PyTorch state dict)
-│   ├── phasenet_rose/phasenet_rose.pt (1.1 MB, PyTorch state dict)
-│   ├── redpan_tf60/train.hdf5               (6.0 MB, Keras model)
-│   └── README.md                            # model cards
-├── data/
-│   └── README.md                   # download instructions for RoSE + STEAD
-├── pickerbench/                    # Python module: matching, scoring, residuals
-│   ├── matching.py
-│   ├── residual_stats.py
-│   ├── trace_io.py
-│   └── leaderboard.py
+├── env/                            # per-framework requirement files
+│   ├── requirements.txt            #   core (numpy, obspy, sklearn, …)
+│   ├── requirements-pytorch.txt    #   PyTorch + seisbench (EQT/PhaseNet)
+│   └── requirements-tf.txt         #   TensorFlow (RED-PAN-60s)
+├── models/                         # checkpoints + SHA256SUMS + model cards
+│   ├── eqt_rose/eqt_rose.pt                  (1.6 MB, PyTorch state dict)
+│   ├── phasenet_rose/phasenet_rose.pt        (1.1 MB, PyTorch state dict)
+│   ├── redpan_tf60/train.hdf5                (5.8 MB, Keras model)
+│   ├── SHA256SUMS                            (verify with `sha256sum -c`)
+│   └── README.md                             (per-model cards)
+├── data/                           # test-set index files + waveform-download notes
+│   ├── rose_test_index.csv         (32 374 rows, the RoSE test split)
+│   ├── stead_test_index.csv        (103 040 rows, STEAD events)
+│   ├── stead_noise_index.csv       (23 526 rows, STEAD noise)
+│   └── README.md
+├── benchmarks/                     # unified loaders + runners
+│   ├── models.py                   #   load_eqt_rose, load_phasenet_rose, load_redpan_tf60
+│   ├── run_benchmark.py            #   one model × one pool
+│   ├── run_stead.py                #   STEAD inner loop
+│   └── build_tables.py             #   aggregate JSONs → publication CSVs
+├── pickerbench/                    # scoring (pure-Python module)
+│   ├── matching.py  residual_stats.py  trace_io.py  leaderboard.py
 ├── redpan_inference/               # bundled minimal RED-PAN inference subset
-│   ├── core.py
-│   ├── picks.py
-│   └── utils.py
-├── benchmarks/
-│   ├── models.py                   # unified model loader
-│   ├── run_benchmark.py            # main entrypoint (RoSE / STEAD / noise)
-│   ├── run_stead.py                # STEAD-format inner loop
-│   └── build_tables.py             # aggregate JSONs → publication CSVs
-├── results/                        # pre-computed CSVs (ground truth)
-│   ├── rose_picking.csv
-│   ├── rose_detection.csv
-│   ├── rose_residual_stats.csv
-│   ├── stead_picking.csv
-│   └── stead_detection.csv
-└── scripts/
-    └── reproduce_all.sh            # top-level reproducer
+│   ├── core.py  picks.py  utils.py
+├── results/                        # canonical numbers (rose_*.csv, stead_*.csv)
+└── scripts/reproduce_all.sh        # one-shot reproducer
 ```
 
-Total size: ~9 MB (3 model checkpoints + inference code + results CSVs).
+Total size: ~16 MB (3 model checkpoints + index CSVs + inference code +
+results CSVs).
 
-## Quick start
-
-### 1 · Install dependencies
-
-The PyTorch (SeisBench) and TensorFlow (RED-PAN) stacks are best installed
-in **separate conda environments** to avoid CUDA/cuDNN conflicts:
-
-```bash
-# SeisBench environment (EQT-RoSE, PhaseNet-RoSE)
-conda create -n picker-pt python=3.10 -y
-conda activate picker-pt
-pip install -r env/requirements.txt -r env/requirements-pytorch.txt
-
-# RED-PAN-60s environment (TensorFlow / Keras)
-conda create -n picker-tf python=3.10 -y
-conda activate picker-tf
-pip install -r env/requirements.txt -r env/requirements-tf.txt
-```
-
-### 2 · Download test datasets
-
-Follow `data/README.md` to fetch the RoSE SeisBench dataset and the STEAD test
-split. Set `ROSE_DIR=/path/to/rose` and `STEAD_DIR=/path/to/STEAD/benchmark_stead`.
-
-### 3 · Reproduce the benchmark
-
-```bash
-bash scripts/reproduce_all.sh --rose-dir "$ROSE_DIR" --stead-dir "$STEAD_DIR"
-```
-
-This produces `results/rose_{picking,detection}.csv` and `results/stead_{picking,detection}.csv`.
-Compare against the pre-computed `results/*.csv` to confirm reproduction (numbers
-should match to floating-point precision).
-
-To run a single model on a single dataset:
-
-```bash
-python benchmarks/run_benchmark.py \
-    --model eqt_rose --dataset rose --rose-dir "$ROSE_DIR" \
-    --out-dir results/runs/eqt_rose_rose
-```
+---
 
 ## Pre-computed result files
 
 The `results/` directory contains the canonical benchmark numbers reported in
-the paper, identical to the upstream development repository's outputs:
+the paper:
 
 | File | What it contains |
 |---|---|
-| `rose_picking.csv`        | RoSE per-phase TP/FP/FN, precision/recall/F1, MAE, MAD, std, median, RMSE, IQR; 9 models × 6 thresholds = 54 rows. FP counted on STEAD-noise traces only because RoSE labels are incomplete (an unlabelled aftershock would otherwise be miscounted as a false positive). |
-| `rose_detection.csv`      | RoSE trace-level detection (event-vs-noise) — TP/FN/FP/TN, precision/recall/F1, Matthews correlation coefficient, AUC, plus detection-box IoU + start/end MAE for the EQT family and RED-PAN-60s. |
-| `rose_residual_stats.csv` | Detailed residual statistics at threshold 0.30, 18 rows = 9 models × 2 phases. |
-| `stead_picking.csv`       | Same as `rose_picking.csv` but on the full STEAD test pool (103 040 events + 23 526 noise). FP uses canonical pick-benchmark convention (events + noise pooled) because STEAD labels are clean. |
-| `stead_detection.csv`     | Same as `rose_detection.csv` but on STEAD. |
+| `rose_picking.csv`        | RoSE per-phase TP/FP/FN, precision/recall/F1, MAE, MAD, std, median, RMSE, IQR; 9 models × 6 thresholds = 54 rows. **FP counted on STEAD-noise traces only** because RoSE labels are incomplete (an unlabelled aftershock would otherwise be miscounted as a false positive). |
+| `rose_detection.csv`      | RoSE trace-level event-vs-noise TP/FN/FP/TN, precision/recall/F1, Matthews correlation, AUC, plus detection-box IoU and start/end MAE for the EQT family and RED-PAN-60s. |
+| `rose_residual_stats.csv` | Detailed residual statistics at threshold 0.30 — 18 rows = 9 models × 2 phases. |
+| `stead_picking.csv`       | Same shape as `rose_picking.csv` but on the full STEAD test pool (103 040 events + 23 526 noise). FP uses canonical pick-benchmark convention (events + noise pooled) because STEAD labels are clean. |
+| `stead_detection.csv`     | Same shape as `rose_detection.csv` but on STEAD. |
+
+Headline numbers and threshold-sweep details: [`results/README.md`](results/README.md).
+
+---
 
 ## Confusion-matrix conventions
 
@@ -130,7 +145,7 @@ labelled pick exists          │  (hallucination)    │  (silence; correct) �
 ```
 
 Tolerance: P = 0.5 s, S = 1.0 s (RED-PAN paper convention).
-False positives counted on **dedicated noise traces only** for RoSE
+False positives are counted on **dedicated noise traces only** for RoSE
 (label-incompleteness) and on the full pool (events + noise) for STEAD.
 
 ### Earthquake detection (trace-level, event-vs-noise)
@@ -144,26 +159,13 @@ This trace is NOISE           │  FALSE POSITIVE     │  TRUE NEGATIVE      �
                               └─────────────────────┴─────────────────────┘
 ```
 
-For models with detection heads (the EQT family and RED-PAN-60s), the true
+For models with detection heads (the EQT family and RED-PAN-60s) the true
 window for detection-box IoU follows Mousavi 2020:
 `[T_P, T_S + 1.4 · (T_S − T_P)]`.
 
-## Models published with this release
-
-The two RoSE-fine-tuned PyTorch checkpoints (`eqt_rose.pt`, `phasenet_rose.pt`)
-contain the model state dict plus a small training-config dict. They are
-loaded via SeisBench's `EQTransformer` / `PhaseNet` constructors with
-`norm="peak"` and `default_args={"blinding": (200, 200)}` — see
-`benchmarks/models.py` for the exact loader.
-
-The `redpan_tf60/train.hdf5` file is the published RED-PAN-60s Keras model
-(20240107 retraining checkpoint, ~200 K parameters). It is loaded via
-`tf.keras.models.load_model(..., compile=False)` and wrapped with the
-sliding-window `REDPAN` class from `redpan_inference/`.
+---
 
 ## Citation
-
-If you use these models or benchmarks, please cite:
 
 * This release: *(insert DOI)*
 * RED-PAN: Liao et al., 2022 — *RED-PAN: Real-time Earthquake Detection and Phase-picking with multi-task Attention Network*

@@ -1,16 +1,15 @@
 # RoSE native HDF5 schema (ROMPLUS-derived)
 
-This document describes the *intermediate* yearly HDF5 files that
-`romania/scripts/create_HDF5.py` writes from the relocated ROMPLUS catalog.
-The published dataset (`data/rose/`) is built from these by
-`romania/scripts/convert_HDF5_to_seisbench.py`. See `SEISBENCH_FORMAT.md`
-for the published-format schema.
-
-
-
-Reference for the files at
-`outputs/hdf5_romplus/{YEAR}_ROMPLUS_{counts,physical}.h5`, written by
-`scripts/create_HDF5.py`.
+> **Most users want [`SEISBENCH_FORMAT.md`](SEISBENCH_FORMAT.md), not this.**
+>
+> This document describes the **intermediate** yearly HDF5 files that the
+> upstream RoSE build pipeline writes from the relocated ROMPLUS catalog (one
+> file per year, e.g. `outputs/hdf5_romplus/{YEAR}_ROMPLUS_{counts,physical}.h5`).
+> The published dataset under `data/rose/` is the result of running
+> [`rose.convert.convert_all`](../rose/convert.py) over these intermediate
+> files — once converted, you don't need this schema. It's kept here so anyone
+> rebuilding the published bundle from a fresh ROMPLUS catalog can match the
+> input layout `convert_all` expects.
 
 ## Hierarchy
 
