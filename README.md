@@ -1,12 +1,12 @@
-# RoSE — Romanian Seismic Events
+# RoSE — Romanian SEismic Dataset
 
 > A ROMPLUS-enhanced Romanian seismic dataset for machine learning and
 > seismological applications, plus three published phase pickers benchmarked
 > on it.
 
 End-to-end glue for the **RoSE Romanian seismic dataset** (2014–2024) in
-[SeisBench](https://github.com/seisbench/seisbench) format: ~19 230 events and
-~416 000 picks, distributed as yearly chunks of bucketed HDF5 plus per-trace
+[SeisBench](https://github.com/seisbench/seisbench) format: ~19,230 events and
+~416,000 picks, distributed as yearly chunks of bucketed HDF5 plus per-trace
 metadata. Built from the NIEP **ROMPLUS** catalog, relocated with hypoDD3D and
 repicked with RED-PAN. *ROMPLUS* names the source bulletin (a registered NIEP
 product); *RoSE* names the derived, ML-ready dataset that we publish.
