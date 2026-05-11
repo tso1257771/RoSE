@@ -58,6 +58,7 @@ sys.path.insert(0, str(RELEASE))  # so `from benchmarks.models import ...` resol
 
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from matplotlib.lines import Line2D  # noqa: E402
 from obspy import Stream, Trace, UTCDateTime  # noqa: E402
 
 from rose import RoSE  # noqa: E402
@@ -111,8 +112,11 @@ PHASE_COLORS = {
     "Detection": "tab:green",     # EQT detection / RED-PAN event mask
 }
 WAVEFORM_COLOR = "black"
-CATALOG_LW = 1.5
-PRED_LW = 0.9
+WAVEFORM_LW = 0.4    # waveform Z/N/E trace
+CATALOG_LW  = 1.0    # ground-truth (catalog) P/S vertical lines
+PRED_LW     = 0.6    # model-predicted P/S vertical lines (dashed)
+PROB_LW     = 0.85   # model probability curves
+GUIDE_LW    = 0.35   # threshold + zero baselines
 
 
 # ---------------------------------------------------------------------------
@@ -324,15 +328,31 @@ def plot_event(stream: Stream, meta, true_p: UTCDateTime, true_s: UTCDateTime,
     for ax, comp in zip(axes[:3], "ZNE"):
         tr = stream.select(channel=f"*{comp}")[0]
         d = tr.data.astype(float)
-        ax.plot(t_wf, d, color=WAVEFORM_COLOR, lw=0.55)
+        ax.plot(t_wf, d, color=WAVEFORM_COLOR, lw=WAVEFORM_LW)
         ax.set_ylabel(comp, fontsize=11, rotation=0, labelpad=12, va="center")
         ax.tick_params(axis="both", labelsize=8)
         amax = max(np.max(np.abs(d)), 1.0)
         ax.set_ylim(-1.08 * amax, 1.08 * amax)
-        ax.axhline(0, color="0.85", lw=0.4, zorder=0)
+        ax.axhline(0, color="0.85", lw=GUIDE_LW, zorder=0)
         # catalog picks across the waveform
         ax.axvline(p_offset_s, color=PHASE_COLORS["P"], lw=CATALOG_LW, alpha=0.85)
         ax.axvline(s_offset_s, color=PHASE_COLORS["S"], lw=CATALOG_LW, alpha=0.85)
+
+    # Ground-truth legend on the top (Z) row — uses proxy artists so the
+    # legend correctly represents both catalog (solid, drawn here) and the
+    # model-predicted picks (dashed, drawn on the model rows below).
+    pick_legend = [
+        Line2D([0], [0], color=PHASE_COLORS["P"], lw=CATALOG_LW,
+               alpha=0.85, label="catalog P  (ground truth)"),
+        Line2D([0], [0], color=PHASE_COLORS["S"], lw=CATALOG_LW,
+               alpha=0.85, label="catalog S  (ground truth)"),
+        Line2D([0], [0], color=PHASE_COLORS["P"], lw=PRED_LW, ls="--",
+               alpha=0.7, label="model P pick"),
+        Line2D([0], [0], color=PHASE_COLORS["S"], lw=PRED_LW, ls="--",
+               alpha=0.7, label="model S pick"),
+    ]
+    axes[0].legend(handles=pick_legend, loc="upper right", fontsize=7,
+                   ncol=4, frameon=False, handlelength=1.6, columnspacing=1.0)
 
     # --- model-output rows ---
     legend_handles_done = False
@@ -340,17 +360,17 @@ def plot_event(stream: Stream, meta, true_p: UTCDateTime, true_s: UTCDateTime,
         for ch_name, prob in result["curves"].items():
             offset = result["offsets"].get(ch_name, 0.0)
             t_curve = offset + np.arange(len(prob)) / result["sampling_rate"]
-            label = ch_name if not legend_handles_done else None
+            label = f"{ch_name} prob." if not legend_handles_done else None
             ax.plot(
                 t_curve, prob, color=PHASE_COLORS.get(ch_name, "0.4"),
-                lw=1.2, alpha=0.95, label=label,
+                lw=PROB_LW, alpha=0.95, label=label,
             )
         # threshold guide line
-        ax.axhline(P_THRESHOLD, color="0.7", lw=0.5, ls=":", zorder=0)
-        # catalog picks for vertical alignment
+        ax.axhline(P_THRESHOLD, color="0.7", lw=GUIDE_LW, ls=":", zorder=0)
+        # catalog picks (ground truth) — also drawn here for vertical alignment
         ax.axvline(p_offset_s, color=PHASE_COLORS["P"], lw=CATALOG_LW, alpha=0.85)
         ax.axvline(s_offset_s, color=PHASE_COLORS["S"], lw=CATALOG_LW, alpha=0.85)
-        # predicted picks (model-coloured dashed verticals)
+        # model-predicted picks (dashed verticals, phase-coloured)
         for p in result["p_picks"]:
             ax.axvline(
                 float(p.peak_time - starttime),
@@ -366,8 +386,8 @@ def plot_event(stream: Stream, meta, true_p: UTCDateTime, true_s: UTCDateTime,
         ax.set_ylabel(model_name, fontsize=10)
         ax.tick_params(axis="both", labelsize=8)
         if not legend_handles_done:
-            ax.legend(loc="upper right", fontsize=8, ncol=len(result["curves"]),
-                      frameon=False, handlelength=1.5, columnspacing=1.0)
+            ax.legend(loc="upper right", fontsize=7, ncol=len(result["curves"]),
+                      frameon=False, handlelength=1.6, columnspacing=1.0)
             legend_handles_done = True
 
     axes[-1].set_xlabel("time (s) since trace start", fontsize=10)
