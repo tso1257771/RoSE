@@ -69,7 +69,8 @@ def copy_stead_indices(stead_dir: Path, data_dir: Path) -> None:
         if not src.exists():
             raise FileNotFoundError(f"{src} not found under --stead-dir {stead_dir}")
         shutil.copyfile(src, dst)
-        n_rows = sum(1 for _ in dst.open()) - 1  # minus header
+        with dst.open() as fh:
+            n_rows = sum(1 for _ in fh) - 1  # minus header
         print(f"  {dst.name}: {n_rows} rows  (copied from {src})")
 
 

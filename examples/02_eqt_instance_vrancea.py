@@ -48,7 +48,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 OUT_PNG = str(REPO_ROOT / "outputs" / "02_eqt_instance_vrancea.png")
 
 
-def _rel(p):
+def _rel(p: str | Path) -> str:
     """Format ``p`` for log output, relative to the repo root."""
     try:
         return str(Path(p).resolve().relative_to(REPO_ROOT))
