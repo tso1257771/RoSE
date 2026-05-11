@@ -87,21 +87,37 @@ with no usable response (~4 %). Why this design? See
 
 ## Tutorials (`examples/`)
 
-Three runnable examples, each end-to-end against the published dataset:
+Four runnable examples, each end-to-end against the published dataset:
 
 1. **`01_load_and_browse.py`** — open the bundle, filter on
    `trace_p_snr_db` / `source_magnitude`, plot a random pick.
-2. **`03_eqt_instance_vrancea.py`** — full demo on the *M*<sub>w</sub> 5.8
+2. **`02_eqt_instance_vrancea.py`** — full demo on the *M*<sub>w</sub> 5.8
    Vrancea slab event (2018-10-28, 153 km depth, 68 stations): rebuild an
-   ObsPy `Stream` from SeisBench, run `EQTransformer.from_pretrained("instance")`,
-   plot a record section with catalog and model picks plus residuals.
-3. **`04_event_ground_motion.py`** — single-event ground-motion workflow:
+   ObsPy `Stream` from SeisBench, run `EQTransformer.from_pretrained("instance")`
+   for an off-the-shelf-picker comparison, plot a record section with catalog
+   and model picks plus residuals.
+3. **`03_event_ground_motion.py`** — single-event ground-motion workflow:
    waveform QC (`rose.qc`), Arias-intensity D5–95 coda window, instrument
    response removal from the bundled StationXML, PGA / PGV / PGD per pick
    source. Requires `data/rose_stationxml/`.
+4. **`04_picker_inference.py`** — load all three published checkpoints
+   (PhaseNet-RoSE, EQT-RoSE, RED-PAN-60s) via the release loaders and run
+   them on a few held-out test traces. Input is in **Z, N, E** order;
+   each model applies its own internal normalisation (`norm="peak"` for the
+   SeisBench checkpoints, per-window Z-score for RED-PAN), so the script
+   does NOT pre-normalise — it only demeans, detrends, and (by default)
+   1–45 Hz Butterworth band-passes the stream (`--highpass` / `--lowpass`
+   to override; pass `0` to disable either leg). Saves one 6-panel PNG per
+   trace under `outputs/04_picker_inference/trace_<idx>.png` (Z, N, E
+   waveforms on top; PhaseNet, EQTransformer, RED-PAN probability curves
+   below, each `ylim=[-0.1, 1.1]`, all sharing the same time axis so
+   timestamps line up vertically) plus a per-model residual table on
+   stdout. RED-PAN-60s needs `.[tf]` (TensorFlow) — pass `--no-redpan` to
+   skip it.
 
 ```bash
-python examples/01_load_and_browse.py    # produces outputs/01_*.png
+python examples/01_load_and_browse.py     # outputs/01_load_and_browse.png
+python examples/04_picker_inference.py    # outputs/04_picker_inference/trace_*.png
 ```
 
 ---
