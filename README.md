@@ -271,3 +271,17 @@ accompanies this compilation. See `docs/DATASET.md` for the native HDF5
 schema and `docs/SEISBENCH_FORMAT.md` for the column reference; the picker
 release has its own citation block in
 [`application/seisbench-rose-benchmark/README.md#citation`](application/seisbench-rose-benchmark/README.md#citation).
+
+---
+
+## License
+
+| What | License | File |
+|---|---|---|
+| **Code** — the `rose` package, `training/`, `benchmark/`, `examples/`, the bundled picker release under `application/`, scripts, and everything else in this repo | **MIT** | [`LICENSE`](LICENSE) (and [`application/seisbench-rose-benchmark/LICENSE`](application/seisbench-rose-benchmark/LICENSE) for the release subtree) |
+| **The RoSE dataset** — the SeisBench-format waveforms + per-trace metadata distributed on Zenodo and mounted at `data/rose/` (not in this repo) | **CC-BY-4.0** | [`LICENSE-DATA`](LICENSE-DATA) |
+
+The dataset is derived from the NIEP **ROMPLUS** bulletin (a registered NIEP
+product); cite ROMPLUS as well — see [Citation](#citation) above. Third-party
+StationXML responses under `data/rose_stationxml/` carry their providers'
+terms (FDSN data centres / NIEP).

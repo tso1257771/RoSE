@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "RoSE — a ROMPLUS-enhanced Romanian seismic dataset for ML and seismological applications, in SeisBench format"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "CC-BY-4.0" }
+# Code in this repo is MIT (see LICENSE). The published RoSE *dataset* itself
+# (the HDF5 + metadata distributed on Zenodo, mounted at data/rose/) is
+# CC-BY-4.0 — see LICENSE-DATA and the "License" section of the README.
+license = { text = "MIT" }
 authors = [{ name = "RoSE dataset contributors" }]
 
 # Core runtime — everything the rose loader and examples need EXCEPT torch.
