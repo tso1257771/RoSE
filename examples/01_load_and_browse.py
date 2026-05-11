@@ -70,6 +70,7 @@ def main():
     fig.tight_layout()
     REPO_ROOT = Path(__file__).resolve().parents[1]
     out = REPO_ROOT / "outputs" / "01_load_and_browse.png"
+    out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=150)
     try:
         print(f"saved {out.relative_to(REPO_ROOT)}")
