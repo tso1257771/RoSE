@@ -1,5 +1,22 @@
 # `benchmark/` — how the published numbers are produced
 
+> ### `benchmark/` vs `application/seisbench-rose-benchmark/` — two different things
+> The names are similar; the directories are not:
+> - **`benchmark/` (this directory)** — the *internal* benchmark **pipeline**.
+>   Depends on the `rose` package and the RoSE dataset, runs **all 9 pickers**
+>   (the 3 RoSE-trained checkpoints + 6 off-the-shelf EQT/PhaseNet baselines),
+>   and **produces** the `results/*.csv` numbers reported in the paper.
+> - **`application/seisbench-rose-benchmark/`** — the *shipped, self-contained
+>   release bundle*: the 3 bundled checkpoints + `SHA256SUMS`, unified loaders
+>   (`benchmarks/models.py`), the **pre-computed** `results/*.csv` (copied from
+>   here), pinned test-index CSVs, and a quick `scripts/reproduce_all.sh`
+>   sanity-re-scorer. It imports **nothing** from `benchmark/` or `rose`, so it
+>   can be distributed on its own (e.g. alongside the Zenodo dataset).
+>
+> In short: `benchmark/` *makes* the numbers; `application/seisbench-rose-benchmark/`
+> *ships* them. See `application/seisbench-rose-benchmark/README.md` for the
+> release bundle.
+
 This directory holds the **canonical** benchmark suite: the scripts that
 produce `application/seisbench-rose-benchmark/results/*.csv` (the numbers
 reported in the paper). One command runs the whole pipeline:

@@ -1,5 +1,16 @@
 # SeisBench-RoSE phase-picker benchmark
 
+> **Not the same as the repo's top-level `benchmark/` directory** (the names
+> are similar; the directories are not). This — `application/seisbench-rose-benchmark/`
+> — is the **self-contained release bundle**: the 3 bundled checkpoints +
+> `SHA256SUMS`, unified loaders, **pre-computed** `results/*.csv`, pinned
+> test-index CSVs, and a quick `scripts/reproduce_all.sh` sanity-re-scorer. It
+> imports **nothing** from the rest of the RoSE repo, so it can be distributed
+> on its own. The repo's `benchmark/` directory is the full *internal* pipeline
+> (all 9 pickers, the RoSE dataset, the `rose` package) and is what actually
+> **produces** the `results/*.csv` shipped here — `bash benchmark/regenerate_results.sh`;
+> see [`benchmark/README.md`](../../benchmark/README.md).
+
 Self-contained release of three deep-learning earthquake phase pickers
 benchmarked on the **RoSE** (Romanian local-earthquake) and **STEAD** test
 sets — bundled checkpoints, unified loaders, scoring code, and the
