@@ -428,6 +428,8 @@ def main() -> None:
     ap.add_argument("--skip-t1", action="store_true",
                     help="Skip T1; report N/A in metrics.json.")
     args = ap.parse_args()
+    if args.rose_dir is None:
+        ap.error("--rose-dir is required (or set the ROSE_DATA_DIR environment variable)")
 
     cfg = EvalConfig(
         ckpt=args.ckpt, rose_dir=args.rose_dir, out_dir=args.out_dir,

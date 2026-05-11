@@ -677,6 +677,8 @@ def main() -> None:
                          "fixed --p-threshold/--s-threshold are ignored and a "
                          "per-threshold PR table is produced instead.")
     args = ap.parse_args()
+    if args.rose_dir is None:
+        ap.error("--rose-dir is required (or set the ROSE_DATA_DIR environment variable)")
 
     bandpass = None
     if args.bandpass_low is not None and args.bandpass_high is not None:

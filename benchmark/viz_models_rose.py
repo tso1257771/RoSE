@@ -261,6 +261,8 @@ def main() -> None:
     ap.add_argument("--bandpass-low", type=float, default=1.0)
     ap.add_argument("--bandpass-high", type=float, default=45.0)
     args = ap.parse_args()
+    if args.rose_dir is None:
+        ap.error("--rose-dir is required (or set the ROSE_DATA_DIR environment variable)")
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

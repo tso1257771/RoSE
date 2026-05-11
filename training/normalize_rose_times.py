@@ -80,6 +80,8 @@ def main() -> None:
     )
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+    if args.rose_dir is None:
+        ap.error("--rose-dir is required (or set the ROSE_DATA_DIR environment variable)")
 
     rose_dir = Path(args.rose_dir)
     grand_total = 0
