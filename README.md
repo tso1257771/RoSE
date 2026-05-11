@@ -151,6 +151,24 @@ checkpoints.
 
 ---
 
+## Benchmark headlines
+
+Threshold 0.30, on the RoSE (Romanian local-earthquake) and STEAD test sets.
+Full tables — all 9 models (the 3 bundled checkpoints + off-the-shelf EQT /
+PhaseNet baselines), all 6 thresholds, onset residuals, plus the EQT-RoSE
+Münchmeyer-Section-3 numbers — are in [`results/README.md`](results/README.md);
+the raw CSVs are `results/*.csv`.
+
+| Pool  | Best phase-pick F1 (P / S)        | Best event-detection F1                  |
+|---|---|---|
+| **RoSE**  | **RED-PAN-60s** 0.822 / 0.827     | **EQT-RoSE** 0.977 (MCC 0.945)           |
+| **STEAD** | **RED-PAN-60s** 0.972 / 0.980     | **EQT-stead** 0.998; **EQT-RoSE** 0.991  |
+
+(Produced by `bash benchmark/regenerate_results.sh --update-release` →
+`results/*.csv`; see [`benchmark/README.md`](benchmark/README.md).)
+
+---
+
 ## Training & benchmarking
 
 `training/` and `benchmark/` hold the ML pipeline behind the published pickers.

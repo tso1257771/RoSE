@@ -1,7 +1,8 @@
 # `benchmark/` — how the published numbers are produced
 
 This directory is the benchmark **pipeline**: the scripts that produce the
-committed `results/*.csv` (the numbers reported in the paper). One command runs
+committed `results/*.csv` (the numbers reported in the paper — the leaderboard
+tables live in [`../results/README.md`](../results/README.md)). One command runs
 the whole thing:
 
 ```bash
