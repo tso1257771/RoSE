@@ -1,4 +1,4 @@
-"""Tutorial 3 — EQTransformer (INSTANCE weights) on a Vrancea deep slab event.
+"""Tutorial 2 — EQTransformer (INSTANCE weights) on a Vrancea deep slab event.
 
 DEPRECATED (2026-04-17): Project policy is RED-PAN 60s for phase picking.
 EQTransformer picks are shown here for *comparison only*; do not use them in
@@ -25,7 +25,7 @@ import warnings
 from pathlib import Path
 
 warnings.warn(
-    "03_eqt_instance_vrancea is deprecated: project uses RED-PAN 60s for picking; "
+    "02_eqt_instance_vrancea is deprecated: project uses RED-PAN 60s for picking; "
     "EQTransformer shown here for comparison only.",
     DeprecationWarning,
     stacklevel=2,
@@ -45,7 +45,7 @@ DATA_DIR = os.environ.get(
 )
 EVENT_ID = "2018_0000140"
 OUT_PNG = str(
-    Path(__file__).resolve().parents[1] / "outputs" / "03_eqt_instance_vrancea.png"
+    Path(__file__).resolve().parents[1] / "outputs" / "02_eqt_instance_vrancea.png"
 )
 
 

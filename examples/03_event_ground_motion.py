@@ -1,4 +1,4 @@
-"""Tutorial 4 — Event workflow: QC, picking, coda analysis, ground motion.
+"""Tutorial 3 — Event workflow: QC, picking, coda analysis, ground motion.
 
 Complete pipeline for a single event. Generates multiple figures:
 
@@ -19,9 +19,9 @@ Steps:
     6. Stress-test coda algorithms with 12x synthetic pulse injection.
 
 Usage:
-    python 04_event_ground_motion.py
-    python 04_event_ground_motion.py --event 2022_0000708
-    python 04_event_ground_motion.py --coda-method envelope
+    python 03_event_ground_motion.py
+    python 03_event_ground_motion.py --event 2022_0000708
+    python 03_event_ground_motion.py --coda-method envelope
 """
 
 from __future__ import annotations
@@ -590,7 +590,7 @@ def main():
     args = parser.parse_args()
     event_id = args.event
 
-    out_dir = Path(__file__).resolve().parents[1] / "outputs" / f"04_event_{event_id}"
+    out_dir = Path(__file__).resolve().parents[1] / "outputs" / f"03_event_{event_id}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     data = RoSE(DATA_DIR)

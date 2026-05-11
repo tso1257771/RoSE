@@ -87,21 +87,28 @@ with no usable response (~4 %). Why this design? See
 
 ## Tutorials (`examples/`)
 
-Three runnable examples, each end-to-end against the published dataset:
+Four runnable examples, each end-to-end against the published dataset:
 
 1. **`01_load_and_browse.py`** — open the bundle, filter on
    `trace_p_snr_db` / `source_magnitude`, plot a random pick.
-2. **`03_eqt_instance_vrancea.py`** — full demo on the *M*<sub>w</sub> 5.8
+2. **`02_eqt_instance_vrancea.py`** — full demo on the *M*<sub>w</sub> 5.8
    Vrancea slab event (2018-10-28, 153 km depth, 68 stations): rebuild an
-   ObsPy `Stream` from SeisBench, run `EQTransformer.from_pretrained("instance")`,
-   plot a record section with catalog and model picks plus residuals.
-3. **`04_event_ground_motion.py`** — single-event ground-motion workflow:
+   ObsPy `Stream` from SeisBench, run `EQTransformer.from_pretrained("instance")`
+   for an off-the-shelf-picker comparison, plot a record section with catalog
+   and model picks plus residuals.
+3. **`03_event_ground_motion.py`** — single-event ground-motion workflow:
    waveform QC (`rose.qc`), Arias-intensity D5–95 coda window, instrument
    response removal from the bundled StationXML, PGA / PGV / PGD per pick
    source. Requires `data/rose_stationxml/`.
+4. **`04_picker_inference.py`** — load all three published checkpoints
+   (EQT-RoSE, PhaseNet-RoSE, RED-PAN-60s) via the release loaders and run
+   them on a few held-out test traces; prints a per-model residual table
+   and saves an overlay plot. RED-PAN-60s needs `.[tf]` (TensorFlow) — pass
+   `--no-redpan` to skip it.
 
 ```bash
-python examples/01_load_and_browse.py    # produces outputs/01_*.png
+python examples/01_load_and_browse.py     # outputs/01_load_and_browse.png
+python examples/04_picker_inference.py    # outputs/04_picker_inference.png
 ```
 
 ---
