@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Regenerate the published benchmark tables — application/seisbench-rose-benchmark/results/*.csv —
+# Regenerate the published benchmark tables — results/*.csv —
 # from the RoSE + STEAD test datasets and the three bundled checkpoints.
 #
-# This is THE pipeline behind the committed results/*.csv (the release's own
-# scripts/reproduce_all.sh is a *different*, simpler re-score and does NOT match
-# these — see application/seisbench-rose-benchmark/README.md). Five stages:
+# This is THE pipeline behind the committed results/*.csv.
+# Five stages:
 #
 #   1. bench_pickers_rose.py   8 PyTorch pickers on the RoSE test split
 #                              -> $EVAL/bench_rose_full_sweep/sweep_comparison.csv
@@ -22,7 +21,7 @@
 #                              -> $EVAL/bench_stead_full_{picking,detection,residuals}.csv
 #
 #   Then (with --update-release) copy the five published CSVs into
-#   application/seisbench-rose-benchmark/results/.
+#   results/.
 #
 # The 6 off-the-shelf baselines (EQT / PhaseNet x instance / ethz / stead) are
 # pulled via seisbench's `from_pretrained` and cached under ~/.seisbench.
@@ -32,7 +31,7 @@
 #       [--rose-dir DIR] [--stead-dir DIR] [--eval-dir DIR] \
 #       [--num-test N]         # 0 (default) = full pools (~hours on CPU);
 #                              #   >0 = quick smoke run on N traces per pool
-#       [--update-release]     # also overwrite application/.../results/*.csv
+#       [--update-release]     # also overwrite results/*.csv
 #       [--skip-rose] [--skip-stead]
 #
 # Defaults: --rose-dir $ROSE_DATA_DIR, --stead-dir $STEAD_DIR,
@@ -67,11 +66,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-MODELS_DIR="$REPO_ROOT/application/seisbench-rose-benchmark/models"
+MODELS_DIR="$REPO_ROOT/models"
 EQT_CKPT="$MODELS_DIR/eqt_rose/eqt_rose.pt"
 PN_CKPT="$MODELS_DIR/phasenet_rose/phasenet_rose.pt"
 RP_HDF5="$MODELS_DIR/redpan_tf60/train.hdf5"
-RELEASE_RESULTS="$REPO_ROOT/application/seisbench-rose-benchmark/results"
+RELEASE_RESULTS="$REPO_ROOT/results"
 PT_MODELS="eqt_rose phasenet_rose eqt_instance phasenet_instance eqt_ethz phasenet_ethz eqt_stead phasenet_stead"
 
 [[ -n "$ROSE_DIR"   ]] || { echo "ERROR: --rose-dir or \$ROSE_DATA_DIR is required" >&2; exit 2; }
@@ -151,13 +150,13 @@ ls -la "$EVAL_DIR"/bench_rose_picking_clean.csv "$EVAL_DIR"/bench_rose_detection
 
 if [[ "$UPDATE_RELEASE" == 1 ]]; then
   echo
-  echo "=== --update-release: copying into application/seisbench-rose-benchmark/results/ ==="
+  echo "=== --update-release: copying into results/ ==="
   cp "$EVAL_DIR/bench_rose_picking_clean.csv"   "$RELEASE_RESULTS/rose_picking.csv"
   cp "$EVAL_DIR/bench_rose_detection_clean.csv" "$RELEASE_RESULTS/rose_detection.csv"
   cp "$EVAL_DIR/bench_rose_residual_stats.csv"  "$RELEASE_RESULTS/rose_residual_stats.csv"
   cp "$EVAL_DIR/bench_stead_full_picking.csv"   "$RELEASE_RESULTS/stead_picking.csv"
   cp "$EVAL_DIR/bench_stead_full_detection.csv" "$RELEASE_RESULTS/stead_detection.csv"
-  echo "  done — review with: git diff application/seisbench-rose-benchmark/results/"
+  echo "  done — review with: git diff results/"
 fi
 
 echo

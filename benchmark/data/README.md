@@ -4,16 +4,16 @@ The benchmark runs on two test sets — **RoSE** (Romanian local earthquakes) an
 the **STEAD test split** (Mousavi et al., 2019). The raw waveforms are external
 and multi-GB, so this directory ships only the **index files** that pin down
 exactly which traces make up each test set. Point the benchmark scripts at the
-waveforms with `--rose-dir` / `--stead-dir` (or set `ROSE_DIR` / `STEAD_DIR`).
+waveforms with `--rose-dir` / `--stead-dir` (or set `ROSE_DATA_DIR` / `STEAD_DIR`).
 
 **TL;DR**:
 
 ```bash
 # 1. download both datasets (see RoSE waveforms / STEAD waveforms below)
-export ROSE_DIR=/path/to/rose
+export ROSE_DATA_DIR=/path/to/rose
 export STEAD_DIR=/path/to/STEAD/benchmark_stead
-# 2. run the benchmark
-bash ../scripts/reproduce_all.sh --rose-dir "$ROSE_DIR" --stead-dir "$STEAD_DIR"
+# 2. run the benchmark (writes results/*.csv with --update-release)
+bash ../regenerate_results.sh --update-release
 ```
 
 ## Index files in this directory
@@ -21,7 +21,7 @@ bash ../scripts/reproduce_all.sh --rose-dir "$ROSE_DIR" --stead-dir "$STEAD_DIR"
 | File | Rows | Columns | Description |
 |---|---:|---|---|
 | `rose_test_index.csv`   | 32 374  | `trace_name, source_id, split, year` | RoSE traces assigned to the **test** split. Derived from the repo-root `rose_split_index.csv` (the full deterministic train/dev/test assignment produced by `training/build_rose_split_index.py`, salt `ROMPLUS-singleEQ-v1`). All rows have `split == test`; `trace_name` is the SeisBench bucket key into `waveforms*.hdf5`. |
-| `stead_test_index.csv`  | 103 040 | `trace_name, p_sample, s_sample, p_sample_original, s_sample_original, ps_residual_sec, ps_group` | STEAD **event** test traces with P/S sample positions (in the 27 000-sample, 100 Hz, ENZ window used by `benchmarks/run_stead.py`). |
+| `stead_test_index.csv`  | 103 040 | `trace_name, p_sample, s_sample, p_sample_original, s_sample_original, ps_residual_sec, ps_group` | STEAD **event** test traces with P/S sample positions (in the 27 000-sample, 100 Hz, ENZ window used by `benchmark/bench_stead_test.py`). |
 | `stead_noise_index.csv` | 23 526  | `trace_name` | STEAD **noise** test traces — the real-negative pool for trace-level event-vs-noise (T1) metrics. |
 
 These files are versioned with the code so the benchmark composition is fixed
@@ -38,7 +38,7 @@ and reproducible; only the waveform arrays themselves need to be fetched.
   writes the `split` column into each `metadata{YEAR}.csv` (read directly by
   `WaveformDataset.train_dev_test()`) and re-emits `rose_split_index.csv` /
   `rose_split_index.json`. Re-running with the same salt is idempotent.
-* Then `export ROSE_DIR=/path/to/rose` and pass `--rose-dir "$ROSE_DIR"`.
+* Then `export ROSE_DATA_DIR=/path/to/rose` and pass `--rose-dir "$ROSE_DATA_DIR"`.
 
 ## STEAD waveforms
 
@@ -74,4 +74,4 @@ traces — for the RoSE pool it draws a random sample; for the STEAD pools it
 takes the *first* `N` traces, so a small slice can be unrepresentative). A
 few-thousand-trace subset is enough to spot-check that the checkpoints load
 and pick sanely; for the published numbers use the full pools (the committed
-`results/*.csv`).
+`../../results/*.csv`).

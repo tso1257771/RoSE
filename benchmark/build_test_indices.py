@@ -1,7 +1,7 @@
 """Regenerate the benchmark test-set index files.
 
 These index files (committed under
-``application/seisbench-rose-benchmark/data/``) pin exactly which traces make
+``benchmark/data/``) pin exactly which traces make
 up each test set, so the benchmark composition is reproducible without the
 multi-GB waveform datasets. This script (re)builds them:
 
@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = REPO_ROOT / "application" / "seisbench-rose-benchmark" / "data"
+DATA_DIR = REPO_ROOT / "benchmark" / "data"
 SPLIT_INDEX = REPO_ROOT / "rose_split_index.csv"
 TEST_SPLIT_NAME = "test"  # SeisBench vocabulary (RED-PAN "test" -> SeisBench "test")
 

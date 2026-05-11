@@ -17,7 +17,7 @@ tqdm>=4.65
 torch>=2.1,<3
 scikit-learn>=1.2
 
-# Only needed for the RED-PAN-60s benchmark (benchmark/redpan_inference + the
-# Keras model under application/seisbench-rose-benchmark/models/redpan_tf60/).
+# Only needed for the RED-PAN-60s benchmark (rose/redpan_inference + the
+# Keras model under models/redpan_tf60/).
 # Uncomment if you want to run that comparison:
 # tensorflow>=2.13

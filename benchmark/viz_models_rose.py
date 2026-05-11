@@ -84,7 +84,7 @@ def load_redpan(model_path: str):
             tf.config.experimental.set_memory_growth(g, True)
         except RuntimeError:
             pass
-    from redpan_inference.core import REDPAN
+    from rose.redpan_inference.core import REDPAN
     model = tf.keras.models.load_model(model_path, compile=False)
     return REDPAN(
         model=model, pred_npts=6000, dt=0.01,
@@ -246,17 +246,17 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument(
         "--eqt-rose",
-        default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "eqt_rose" / "eqt_rose.pt"),
+        default=str(REPO_ROOT / "models" / "eqt_rose" / "eqt_rose.pt"),
         help="Path to the EQT-RoSE checkpoint.",
     )
     ap.add_argument(
         "--phasenet-rose",
-        default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "phasenet_rose" / "phasenet_rose.pt"),
+        default=str(REPO_ROOT / "models" / "phasenet_rose" / "phasenet_rose.pt"),
         help="Path to the PhaseNet-RoSE checkpoint.",
     )
     ap.add_argument(
         "--redpan-tf-model",
-        default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "redpan_tf60" / "train.hdf5"),
+        default=str(REPO_ROOT / "models" / "redpan_tf60" / "train.hdf5"),
     )
     ap.add_argument("--bandpass-low", type=float, default=1.0)
     ap.add_argument("--bandpass-high", type=float, default=45.0)

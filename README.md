@@ -12,10 +12,11 @@ repicked with RED-PAN. *ROMPLUS* names the source bulletin (a registered NIEP
 product); *RoSE* names the derived, ML-ready dataset that we publish.
 
 This repo also ships a small ML pipeline: deterministic train/dev/test split,
-training scripts that fine-tune `seisbench.models.EQTransformer` and
-`PhaseNet` on RoSE, a benchmark suite that scores them against STEAD, and a
-self-contained release bundle (`application/seisbench-rose-benchmark/`) with
-the trained checkpoints, unified loaders, and headline-number CSVs.
+training scripts that fine-tune `seisbench.models.EQTransformer` and `PhaseNet`
+on RoSE, three published phase-picker checkpoints (`models/`) with one-call
+loaders (`rose.load_eqt_rose` / `load_phasenet_rose` / `load_redpan_tf60`), the
+pre-computed benchmark tables (`results/`), and the benchmark pipeline that
+produces them (`benchmark/`).
 
 ---
 
@@ -25,8 +26,8 @@ the trained checkpoints, unified loaders, and headline-number CSVs.
 |---|---|
 | **Load and browse the dataset**                   | [Quickstart](#quickstart) below + `examples/01_load_and_browse.py` |
 | Reference the dataset schema                       | [`docs/SEISBENCH_FORMAT.md`](docs/SEISBENCH_FORMAT.md) |
-| **Use a published picker on my data**             | [`application/seisbench-rose-benchmark/`](application/seisbench-rose-benchmark/README.md) |
-| Re-score the 3 bundled pickers on RoSE / STEAD     | `bash application/seisbench-rose-benchmark/scripts/reproduce_all.sh` (sanity check; not a bit-exact rebuild of `results/*.csv` — see that README) |
+| **Use a published picker on my data**             | [Use the published pickers](#use-the-published-pickers) below + `examples/04_picker_inference.py` + [`models/README.md`](models/README.md) |
+| Reproduce the benchmark tables (`results/*.csv`)   | `bash benchmark/regenerate_results.sh --update-release` — see [`benchmark/README.md`](benchmark/README.md) (needs the RoSE + STEAD test data) |
 | **Fine-tune EQT / PhaseNet on RoSE**              | [Training & benchmarking](#training--benchmarking) below + `training/` |
 | Run a single picker on RoSE / STEAD                | `benchmark/bench_pickers_rose.py`, `bench_stead_test.py` |
 | Build the SeisBench bundle from the native HDF5    | [`docs/DATASET.md`](docs/DATASET.md) + `rose.convert.convert_all` |
@@ -129,36 +130,32 @@ python examples/04_picker_inference.py    # outputs/04_picker_inference/trace_*.
 
 ## Use the published pickers
 
-`application/seisbench-rose-benchmark/` is a self-contained release with three
-trained checkpoints (EQT-RoSE 1.6 MB, PhaseNet-RoSE 1.1 MB, RED-PAN-60s
-5.8 MB), unified SeisBench-style loaders, the headline-number CSVs, and a
-one-shot reproducer. Smallest path to predictions:
+Three trained checkpoints ship under [`models/`](models/) — EQT-RoSE (1.6 MB),
+PhaseNet-RoSE (1.1 MB), RED-PAN-60s (5.8 MB) — each with a one-call loader in
+the `rose` package that returns a SeisBench-style object:
 
 ```python
-import sys; sys.path.insert(0, "application/seisbench-rose-benchmark")
-from benchmarks.models import load_eqt_rose
+from rose import load_eqt_rose          # also load_phasenet_rose, load_redpan_tf60
 
-model = load_eqt_rose()                                    # 1.6 MB checkpoint, weights_only=True
-out   = model.classify(stream, P_threshold=0.3, S_threshold=0.3,
-                       detection_threshold=0.3)            # ObsPy Stream in
+model = load_eqt_rose()                  # loads models/eqt_rose/eqt_rose.pt (weights_only=True)
+out   = model.classify(stream,           # an ObsPy Stream in ZNE order
+                       P_threshold=0.3, S_threshold=0.3, detection_threshold=0.3)
 print(out.picks, out.detections)
 ```
 
-See [`application/seisbench-rose-benchmark/README.md`](application/seisbench-rose-benchmark/README.md)
-for the full release docs and `models/README.md` for per-model cards.
+`load_redpan_tf60()` needs TensorFlow (the `.[tf]` extra); it reorders ZNE → ENZ
+internally. `examples/04_picker_inference.py` runs all three on held-out test
+traces; [`models/README.md`](models/README.md) has the per-model cards
+(architecture, training recipe, dev loss) and `SHA256SUMS` to verify the
+checkpoints.
 
 ---
 
 ## Training & benchmarking
 
-Three sibling directories hold the ML pipeline behind the published pickers —
-note `benchmark/` and `application/seisbench-rose-benchmark/` are **not** the
-same despite the similar names: `benchmark/` is the internal pipeline that
-*produces* the result CSVs; `application/seisbench-rose-benchmark/` is the
-*self-contained release bundle* that *ships* them (and imports nothing from the
-rest of the repo). The scripts read default paths from environment variables
-(see `.env.example`) and accept explicit `--rose-dir` / `--stead-dir` /
-`--out-dir` overrides:
+`training/` and `benchmark/` hold the ML pipeline behind the published pickers.
+The scripts read default paths from environment variables (see `.env.example`)
+and accept explicit `--rose-dir` / `--stead-dir` / `--out-dir` overrides:
 
 ```bash
 pip install -e ".[cuda,bench]"              # torch + scikit-learn  (or ".[cpu,bench]")
@@ -183,46 +180,31 @@ without one of these or the matching env var the scripts exit with a clear error
   earthquake stays in the same split — no event-level leakage. The TWCC
   launcher shells used for the published runs are under `training/cloud/`.
 
-* **`benchmark/`** — the **internal benchmark pipeline**: scores all 9 pickers
-  (the 3 RoSE-trained checkpoints + 6 off-the-shelf EQT/PhaseNet baselines) on
-  the RoSE / STEAD test sets (per-phase precision/recall/F1, MCC, residual
-  stats, trace-level event-vs-noise T1) and is what *produces* the published
-  `results/*.csv`. `bench_pickers_rose.py` / `bench_redpan_rose.py` /
+* **`benchmark/`** — the benchmark **pipeline**: scores all 9 pickers (the 3
+  RoSE-trained checkpoints in `models/` + 6 off-the-shelf EQT/PhaseNet
+  baselines) on the RoSE / STEAD test sets (per-phase precision/recall/F1, MCC,
+  residual stats, trace-level event-vs-noise T1) and is what **produces** the
+  committed `results/*.csv`. `bench_pickers_rose.py` / `bench_redpan_rose.py` /
   `bench_stead_test.py` / `bench_noise_fp.py` do the inference; `build_*.py`
   aggregate; **`benchmark/regenerate_results.sh` chains the whole thing** (see
-  [`benchmark/README.md`](benchmark/README.md)):
+  [`benchmark/README.md`](benchmark/README.md) — needs the RoSE + STEAD test
+  data):
 
   ```bash
   bash benchmark/regenerate_results.sh --update-release         # full run (hours on CPU)
   bash benchmark/regenerate_results.sh --num-test 200           # ~10-min smoke run
   ```
 
-  The exact test-set composition is pinned by the index files in
-  `application/.../data/`; regenerate them with
+  The exact test-set composition is pinned by the index files under
+  `benchmark/data/`; regenerate them with
   `python benchmark/build_test_indices.py [--stead-dir $STEAD_DIR]`.
 
-* **`application/seisbench-rose-benchmark/`** — the **self-contained release
-  bundle** (a *copy*, not the pipeline): the 3 bundled checkpoints + verifiable
-  `SHA256SUMS` + unified loaders + `pickerbench` scoring + `redpan_inference`
-  subset + the **pre-computed** `results/*.csv`. It imports nothing from the
-  rest of the repo. Its `scripts/reproduce_all.sh` is a quick re-score of the
-  three bundled checkpoints (writes only
-  `application/seisbench-rose-benchmark/results/runs/`; a sanity check, **not**
-  a bit-exact rebuild of the committed `results/*.csv` — for that use
-  `benchmark/regenerate_results.sh` above):
-
-  ```bash
-  bash application/seisbench-rose-benchmark/scripts/reproduce_all.sh \
-      --rose-dir "$ROSE_DATA_DIR" --stead-dir "$STEAD_DIR"
-  ```
-
-Every `.pt` checkpoint the `training/` and `benchmark/` scripts read is loaded
-via `rose.checkpoint_io.safe_torch_load`, which forces
-`torch.load(weights_only=True)` — the restricted unpickler — so running them on
-third-party `.pt` files cannot trigger the classic pickle-deserialization RCE.
-(The self-contained release under `application/` ships its own equivalent
-`weights_only=True` loader in `benchmarks/models.py`, since it deliberately
-doesn't import the `rose` package.)
+Every `.pt` checkpoint that `rose.pickers` and the `training/` + `benchmark/`
+scripts read is loaded via `rose.checkpoint_io.safe_torch_load`, which forces
+`torch.load(weights_only=True)` — the restricted unpickler — so loading a
+third-party `.pt` cannot trigger the classic pickle-deserialization RCE. (The
+RED-PAN-60s `.hdf5` is a Keras model; `tf.keras.models.load_model` can execute
+embedded code, so verify it against `models/SHA256SUMS` — see `models/README.md`.)
 
 ---
 
@@ -261,12 +243,15 @@ split partition remains bit-for-bit reproducible.
 
 ```
 RoSE/
-├── rose/                          # importable package (loader + helpers)
+├── rose/                          # importable package: RoSE loader, qc, convert,
+│                                  #   pickers.load_eqt_rose/…, checkpoint_io, redpan_inference/
+├── models/                        # the 3 published checkpoints + SHA256SUMS + model cards
+├── results/                       # the pre-computed benchmark CSVs (the published numbers)
+├── benchmark/                     # benchmark pipeline (all 9 pickers) — *produces* results/*.csv;
+│                                  #   regenerate_results.sh, bench_*.py, build_*.py, data/ (test indices)
+├── training/                      # SeisBench EQT / PhaseNet RoSE training
 ├── examples/                      # 01, 02, 03, 04 — runnable tutorials
 ├── docs/                          # DATASET.md, SEISBENCH_FORMAT.md (schemas)
-├── training/                      # SeisBench EQT / PhaseNet RoSE training
-├── benchmark/                     # internal benchmark PIPELINE (all 9 pickers) — *produces* results/*.csv; see benchmark/README.md
-├── application/seisbench-rose-benchmark/   # SHIPPED self-contained release — 3 checkpoints + loaders + the produced results/*.csv (imports nothing from the repo)
 ├── stationxml_sources/sc3ml_niep/ # SeisComP SC3ML → FDSN StationXML helper
 └── tests/                         # pytest unit tests
 ```
@@ -296,10 +281,11 @@ gitignored — see `.env.example` for the env vars that point at them.)
 
 If you use this dataset or the published checkpoints, please cite both the
 **ROMPLUS** source bulletin (NIEP) and the **RoSE** dataset paper that
-accompanies this compilation. See `docs/DATASET.md` for the native HDF5
-schema and `docs/SEISBENCH_FORMAT.md` for the column reference; the picker
-release has its own citation block in
-[`application/seisbench-rose-benchmark/README.md#citation`](application/seisbench-rose-benchmark/README.md#citation).
+accompanies this compilation. See `docs/DATASET.md` for the native HDF5 schema,
+`docs/SEISBENCH_FORMAT.md` for the column reference, and `models/README.md` for
+the per-model cards and references (RED-PAN — Liao et al. 2022; SeisBench —
+Woollam et al. 2022; PhaseNet — Zhu & Beroza 2019; EQTransformer — Mousavi
+et al. 2020).
 
 ---
 
@@ -307,7 +293,7 @@ release has its own citation block in
 
 | What | License | File |
 |---|---|---|
-| **Code** — the `rose` package, `training/`, `benchmark/`, `examples/`, the bundled picker release under `application/`, scripts, and everything else in this repo | **MIT** | [`LICENSE`](LICENSE) (and [`application/seisbench-rose-benchmark/LICENSE`](application/seisbench-rose-benchmark/LICENSE) for the release subtree) |
+| **Code** — the `rose` package, `models/` loaders/cards, `benchmark/`, `training/`, `examples/`, scripts, and everything else in this repo | **MIT** | [`LICENSE`](LICENSE) |
 | **The RoSE dataset** — the SeisBench-format waveforms + per-trace metadata distributed on Zenodo and mounted at `data/rose/` (not in this repo) | **CC-BY-4.0** | [`LICENSE-DATA`](LICENSE-DATA) |
 
 The dataset is derived from the NIEP **ROMPLUS** bulletin (a registered NIEP

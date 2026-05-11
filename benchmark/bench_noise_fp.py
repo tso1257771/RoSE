@@ -234,11 +234,11 @@ def main() -> None:
         "redpan",
     ])
     ap.add_argument("--eqt-rose-ckpt",
-        default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "eqt_rose" / "eqt_rose.pt"))
+        default=str(REPO_ROOT / "models" / "eqt_rose" / "eqt_rose.pt"))
     ap.add_argument("--phasenet-rose-ckpt",
-        default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "phasenet_rose" / "phasenet_rose.pt"))
+        default=str(REPO_ROOT / "models" / "phasenet_rose" / "phasenet_rose.pt"))
     ap.add_argument("--redpan-tf",
-        default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "redpan_tf60" / "train.hdf5"))
+        default=str(REPO_ROOT / "models" / "redpan_tf60" / "train.hdf5"))
     ap.add_argument("--tf-threads", type=int, default=2)
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--total-shards", type=int, default=1)
@@ -315,7 +315,7 @@ def main() -> None:
                             args.tf_threads)
                     except Exception:
                         pass
-                from redpan_inference.core import REDPAN
+                from rose.redpan_inference.core import REDPAN
                 tf_model = tf.keras.models.load_model(args.redpan_tf,
                                                      compile=False)
                 m = REDPAN(model=tf_model, pred_npts=6000, dt=0.01,

@@ -9,26 +9,25 @@ data/
 outputs/
 
 # Local training outputs (per-epoch ckpts + train.log + history.json). The
-# *published* checkpoints live under application/seisbench-rose-benchmark/
-# models/ and are versioned; this dir is whatever was produced on this machine.
+# *published* checkpoints live under models/ and are versioned; this dir is
+# whatever was produced on this machine.
 checkpoints/
 
 # Local benchmark outputs (per-run JSON / CSV / log / viz PNGs under eval/<run>/).
-# The *published* benchmark numbers live in
-# application/seisbench-rose-benchmark/results/.
+# The *published* benchmark numbers live in results/.
 eval/
 
-# Output of application/seisbench-rose-benchmark/scripts/reproduce_all.sh
-# (per-model JSONs + aggregated CSVs). The committed reference numbers are the
-# *.csv files directly under results/; only results/runs/ is generated.
-# (Full path: a pattern with a mid-slash is anchored to this .gitignore's dir.)
-application/seisbench-rose-benchmark/results/runs/
+# Output of benchmark/regenerate_results.sh (per-model JSONs + aggregated CSVs
+# under <eval-dir>/, default eval/ which is already ignored; results/runs/ is
+# its --update-release staging dir). The committed reference numbers are the
+# *.csv files directly under results/. Anchored to the repo root.
+/results/runs/
 
 # Derived split index (full train/dev/test assignment for the local copy of the
-# RoSE dataset). Regenerated idempotently by
-# training/build_rose_split_index.py; the pinned test-set composition is
-# committed under application/seisbench-rose-benchmark/data/rose_test_index.csv,
-# so the multi-MB full-split file does not need to be versioned.
+# RoSE dataset). Regenerated idempotently by training/build_rose_split_index.py;
+# the pinned test-set composition is committed under
+# benchmark/data/rose_test_index.csv, so the multi-MB full-split file does not
+# need to be versioned.
 rose_split_index.csv
 rose_split_index.json
 
@@ -41,9 +40,7 @@ rose_split_index.json
 draft/
 # Third-party supplementary PDFs
 reference/
-# Internal data-prep pipeline (not user-facing).
-# Anchored to the repo root so it does NOT also swallow
-# application/seisbench-rose-benchmark/scripts/ (the published reproducer).
+# Internal data-prep pipeline (not user-facing); anchored to the repo root.
 /scripts/
 # Raw StationXML / dataless dumps. Keep only the SC3ML→StationXML
 # conversion script for reproducibility of the response-archive build.
@@ -134,22 +131,18 @@ Thumbs.db
 credentials*.json
 
 # ---------------------------------------------------------------------------
-# ML pipeline (training / benchmark / published model release)
-# These dirs ARE versioned — re-include them and the few binary artifacts
-# (small SeisBench checkpoints + the RED-PAN Keras model) that the generic
+# ML pipeline (training / benchmark / published checkpoints + results)
+# These dirs ARE versioned — re-include the few paths/binaries that the generic
 # safety-net patterns above would otherwise swallow. Negation rules must come
 # after the patterns they override, so they live here at the end of the file.
 # ---------------------------------------------------------------------------
 !training/
 !benchmark/
-!application/
-# The published benchmark release ships its requirements under env/ and its
-# test-set index files / download notes under data/ — un-ignore those specific
-# directories (the generic `env/` and `data/` rules above are meant for
-# virtualenvs and the multi-GB waveform datasets, respectively).
-!application/seisbench-rose-benchmark/env/
-!application/seisbench-rose-benchmark/data/
-# Bundled model weights in the release (1.6 MB + 1.1 MB SeisBench .pt,
-# 5.8 MB RED-PAN Keras .hdf5). Small enough to version with the code.
-!application/seisbench-rose-benchmark/models/**/*.pt
-!application/seisbench-rose-benchmark/models/**/*.hdf5
+# Pinned test-set index CSVs + download notes under benchmark/data/ (the
+# generic `data/` rule above is for the multi-GB waveform dataset mount).
+!benchmark/data/
+# Published checkpoints: 1.6 MB + 1.1 MB SeisBench .pt and the 5.8 MB RED-PAN
+# Keras .hdf5 under models/ (the generic `*.pt` / `*.hdf5` rules above are for
+# training output). Small enough to version with the code.
+!models/**/*.pt
+!models/**/*.hdf5

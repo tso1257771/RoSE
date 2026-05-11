@@ -97,7 +97,7 @@ def load_redpan(model_path: str, pred_interval_sec: float = 10.0,
                 batch_size: int = 32):
     """Load the TF model + wrap in the RED-PAN sliding-window inferer."""
     import tensorflow as tf
-    from redpan_inference.core import REDPAN
+    from rose.redpan_inference.core import REDPAN
     logger.info("loading TF model from %s", model_path)
     model = tf.keras.models.load_model(model_path, compile=False)
     logger.info("loaded TF model (%d params); pred_npts=6000",
