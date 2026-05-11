@@ -12,8 +12,8 @@ waveforms with `--rose-dir` / `--stead-dir` (or set `ROSE_DATA_DIR` / `STEAD_DIR
 # 1. download both datasets (see RoSE waveforms / STEAD waveforms below)
 export ROSE_DATA_DIR=/path/to/rose
 export STEAD_DIR=/path/to/STEAD/benchmark_stead
-# 2. run the benchmark (writes results/*.csv with --update-release)
-bash ../regenerate_results.sh --update-release
+# 2. run the benchmark (writes results/*.csv)
+bash ../regenerate_results.sh                # or: --num-test 200 for a quick subset
 ```
 
 ## Index files in this directory

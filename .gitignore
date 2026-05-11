@@ -17,10 +17,11 @@ checkpoints/
 # The *published* benchmark numbers live in results/.
 eval/
 
-# Output of benchmark/regenerate_results.sh (per-model JSONs + aggregated CSVs
-# under <eval-dir>/, default eval/ which is already ignored; results/runs/ is
-# its --update-release staging dir). The committed reference numbers are the
-# *.csv files directly under results/. Anchored to the repo root.
+# Output of benchmark/run_inference.py (per-model JSONs + aggregated CSVs) lands
+# under <eval_dir>/, default eval/ — already ignored above. The committed
+# reference numbers are the *.csv files directly under results/, which
+# build_leaderboard.py --update-results overwrites. (Older runs used a
+# results/runs/ staging dir — kept ignored just in case.)
 /results/runs/
 
 # Derived split index (full train/dev/test assignment for the local copy of the

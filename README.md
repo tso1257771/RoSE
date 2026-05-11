@@ -27,7 +27,7 @@ produces them (`benchmark/`).
 | **Load and browse the dataset**                   | [Quickstart](#quickstart) below + `examples/01_load_and_browse.py` |
 | Reference the dataset schema                       | [`docs/SEISBENCH_FORMAT.md`](docs/SEISBENCH_FORMAT.md) |
 | **Use a published picker on my data**             | [Use the published pickers](#use-the-published-pickers) below + `examples/04_picker_inference.py` + [`models/README.md`](models/README.md) |
-| Reproduce the benchmark tables (`results/*.csv`)   | `bash benchmark/regenerate_results.sh --update-release` — see [`benchmark/README.md`](benchmark/README.md) (needs the RoSE + STEAD test data) |
+| Reproduce the benchmark tables (`results/*.csv`)   | `bash benchmark/regenerate_results.sh` — see [`benchmark/README.md`](benchmark/README.md) (needs the RoSE + STEAD test data) |
 | **Fine-tune EQT / PhaseNet on RoSE**              | [Training & benchmarking](#training--benchmarking) below + `training/` |
 | Run a single picker on RoSE / STEAD                | `benchmark/bench_pickers_rose.py`, `bench_stead_test.py` |
 | Build the SeisBench bundle from the native HDF5    | [`docs/DATASET.md`](docs/DATASET.md) + `rose.convert.convert_all` |
@@ -164,7 +164,7 @@ the raw CSVs are `results/*.csv`.
 | **RoSE**  | **RED-PAN-60s** 0.822 / 0.827     | **EQT-RoSE** 0.977 (MCC 0.945)           |
 | **STEAD** | **RED-PAN-60s** 0.972 / 0.980     | **EQT-stead** 0.998; **EQT-RoSE** 0.991  |
 
-(Produced by `bash benchmark/regenerate_results.sh --update-release` →
+(Produced by `bash benchmark/regenerate_results.sh` →
 `results/*.csv`; see [`benchmark/README.md`](benchmark/README.md).)
 
 ---
@@ -200,22 +200,22 @@ without one of these or the matching env var the scripts exit with a clear error
 
 * **`benchmark/`** — the benchmark **pipeline**: scores all 9 pickers (the 3
   RoSE-trained checkpoints in `models/` + 6 off-the-shelf EQT/PhaseNet
-  baselines) on the RoSE / STEAD test sets (per-phase precision/recall/F1, MCC,
-  residual stats, trace-level event-vs-noise T1) and is what **produces** the
-  committed `results/*.csv`. `bench_pickers_rose.py` / `bench_redpan_rose.py` /
-  `bench_stead_test.py` / `bench_noise_fp.py` do the inference; `build_*.py`
-  aggregate; **`benchmark/regenerate_results.sh` chains the whole thing** (see
-  [`benchmark/README.md`](benchmark/README.md) — needs the RoSE + STEAD test
-  data):
+  baselines) on the RoSE / STEAD test sets and is what **produces** the
+  committed `results/*.csv`. Two stages + a config (`benchmark/config.json`):
 
   ```bash
-  bash benchmark/regenerate_results.sh --update-release         # full run (hours on CPU)
-  bash benchmark/regenerate_results.sh --num-test 200           # ~10-min smoke run
+  python benchmark/run_inference.py                       # (a) per-model inference  -> eval/
+  python benchmark/build_leaderboard.py --update-results  # (b) aggregate            -> results/*.csv
+  # or both at once:
+  bash benchmark/regenerate_results.sh                    # full run (~hours on CPU)
+  bash benchmark/regenerate_results.sh --num-test 200     # ~10-min subset
   ```
 
-  The exact test-set composition is pinned by the index files under
-  `benchmark/data/`; regenerate them with
-  `python benchmark/build_test_indices.py [--stead-dir $STEAD_DIR]`.
+  `run_inference.py` calls the `bench_*.py` per (model, dataset); `build_leaderboard.py`
+  calls the `build_*.py` aggregators (which also print the threshold-0.30 tables).
+  See [`benchmark/README.md`](benchmark/README.md). The exact test-set composition
+  is pinned by the index files under `benchmark/data/` (regenerate them with
+  `python benchmark/build_test_indices.py [--stead-dir $STEAD_DIR]`).
 
 Every `.pt` checkpoint that `rose.pickers` and the `training/` + `benchmark/`
 scripts read is loaded via `rose.checkpoint_io.safe_torch_load`, which forces
@@ -266,7 +266,8 @@ RoSE/
 ├── models/                        # the 3 published checkpoints + SHA256SUMS + model cards
 ├── results/                       # the pre-computed benchmark CSVs (the published numbers)
 ├── benchmark/                     # benchmark pipeline (all 9 pickers) — *produces* results/*.csv;
-│                                  #   regenerate_results.sh, bench_*.py, build_*.py, data/ (test indices)
+│                                  #   run_inference.py (a) + build_leaderboard.py (b) + config.json
+│                                  #   + the bench_*/build_* stage scripts + data/ (pinned test indices)
 ├── training/                      # SeisBench EQT / PhaseNet RoSE training
 ├── examples/                      # 01, 02, 03, 04 — runnable tutorials
 ├── docs/                          # DATASET.md, SEISBENCH_FORMAT.md (schemas)
