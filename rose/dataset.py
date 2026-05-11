@@ -19,14 +19,15 @@ from seisbench.data.base import WaveformDataset
 
 
 class RoSE(WaveformDataset):
-    """Romanian Seismic Events dataset in SeisBench format.
+    """Romanian SEismic dataset in SeisBench format.
 
     Parameters
     ----------
     path : str or Path
         Directory holding the converted SeisBench chunks.
     component_order : str, optional
-        Override the natural ENZ order if a model needs e.g. ZNE.
+        Override the native ``ZNE`` component order if a model needs a
+        different one.
     sampling_rate : float, optional
         Resample on read to this rate (Hz). Defaults to native 100 Hz.
     """
@@ -87,7 +88,7 @@ class RoSE(WaveformDataset):
     @property
     def citation(self) -> str:
         return (
-            "RoSE — Romanian Seismic Events: a ROMPLUS-enhanced Romanian "
+            "RoSE — Romanian SEismic dataset: a ROMPLUS-enhanced Romanian "
             "earthquake dataset for machine-learning and seismological "
             "applications (2014-2024). Source catalog: ROMPLUS (NIEP), "
             "relocated with hypoDD3D and repicked with RED-PAN."

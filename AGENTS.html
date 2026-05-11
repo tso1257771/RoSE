@@ -89,8 +89,9 @@ a Romanian seismic dataset + three published phase pickers
 <code>outputs/</code>, <code>rose_split_index.*</code> — all gitignored.</p>
 
 <h2>Verify</h2>
-<p><code>pytest tests/</code> (39 tests; pins the split partition +
-<code>safe_torch_load</code> behaviour).</p>
+<p><code>pytest tests/</code> (43 tests; pins the split partition, the SeisBench
+converter, <code>get_sample_physical</code>, the QC helpers, and
+<code>safe_torch_load</code>).</p>
 
 <p class="meta">
   Companion to <a href="AGENTS.md"><code>AGENTS.md</code></a>.

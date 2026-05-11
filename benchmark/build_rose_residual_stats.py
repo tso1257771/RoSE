@@ -45,7 +45,7 @@ from pathlib import Path
 DEFAULT_EVAL = Path(os.environ.get("ROSE_EVAL_DIR", "eval"))
 
 MODELS = [
-    "REDPAN-60s",
+    "RED-PAN-60s",
     "EQT-RoSE", "PhaseNet-RoSE",
     "EQT-instance", "PhaseNet-instance",
     "EQT-ethz", "PhaseNet-ethz",

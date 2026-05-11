@@ -103,14 +103,16 @@ sha256sum -c SHA256SUMS
 
 ### Security notes
 
-* The two PyTorch checkpoints are loaded via
-  `rose.checkpoint_io.safe_torch_load`, which forces
-  `torch.load(weights_only=True)` — the restricted unpickler that only accepts
-  tensors and plain Python scalars. The training scripts emit checkpoints in
-  the form `{"model": state_dict, "config": {...}, "epoch": int, "dev_loss":
-  float}`, all of which the safe loader accepts; a checkpoint that fails to
-  load under `weights_only=True` is one whose provenance you should inspect
-  before trusting.
+* The two PyTorch checkpoints are loaded via `benchmarks/models.py`'s
+  `_safe_torch_load`, which forces `torch.load(weights_only=True)` — the
+  restricted unpickler that only accepts tensors and plain Python scalars.
+  (It mirrors `rose.checkpoint_io.safe_torch_load` from the main repo; this
+  release is self-contained and deliberately doesn't import the `rose`
+  package.) The training scripts emit checkpoints in the form `{"model":
+  state_dict, "config": {...}, "epoch": int, "dev_loss": float}`, all of which
+  the safe loader accepts; a checkpoint that fails to load under
+  `weights_only=True` is one whose provenance you should inspect before
+  trusting.
 * `redpan_tf60/train.hdf5` is a Keras model. **`tf.keras.models.load_model()`
   executes any Python code embedded in the HDF5** (e.g. Lambda layers, custom
   `call()` implementations). This is intrinsic to the Keras serialization

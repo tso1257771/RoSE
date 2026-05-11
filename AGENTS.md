@@ -24,4 +24,4 @@ RED-PAN-60s).
 `data/`, `eval/`, `checkpoints/`, `outputs/`, `rose_split_index.*` — all gitignored.
 
 ## Verify
-`pytest tests/` (39 tests; pins the split partition + `safe_torch_load` behaviour).
+`pytest tests/` (43 tests; pins the split partition, the SeisBench converter, `get_sample_physical`, the QC helpers, and `safe_torch_load`).

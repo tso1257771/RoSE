@@ -10,7 +10,7 @@ For each chosen test trace, runs every model in the lineup and plots:
 Models compared:
   - SeisBench pretrained: PhaseNet-instance, EQT-instance
   - Custom SeisBench:     PhaseNet-RoSE,  EQT-RoSE
-  - TF RED-PAN:           REDPAN-60s, with two preprocessing variants:
+  - TF RED-PAN:           RED-PAN-60s, with two preprocessing variants:
        a) bandpass 1-45 Hz + internal z-score
        b) raw + internal z-score (probably matches training)
 

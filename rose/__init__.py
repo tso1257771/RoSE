@@ -1,4 +1,4 @@
-"""RoSE — Romanian Seismic Events: SeisBench-format dataset."""
+"""RoSE — Romanian SEismic dataset (SeisBench format)."""
 
 from .dataset import RoSE
 from .convert import convert_year, convert_all

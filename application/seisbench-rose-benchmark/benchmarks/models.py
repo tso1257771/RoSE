@@ -5,9 +5,17 @@ Identifiers:
     phasenet_rose — PyTorch / SeisBench PhaseNet fine-tuned on RoSE
     redpan_tf60   — TensorFlow / Keras RED-PAN-60s (TaiwanCWB-trained)
 
-Each loader returns a callable ``predict(stream, threshold)`` → (picks, detections)
-where the obspy Stream input is in ZNE order (SeisBench native).
+Each loader returns a SeisBench-style model exposing
+``.classify(stream, P_threshold=, S_threshold=[, detection_threshold=])`` →
+an object with ``.picks`` (and ``.detections`` for the models with a detection
+head). The obspy ``Stream`` input is in ZNE order (SeisBench native);
 RED-PAN-60s reorders internally to ENZ.
+
+PyTorch checkpoints are loaded with ``weights_only=True`` (``_safe_torch_load``
+below) — the restricted unpickler — so loading a third-party ``.pt`` cannot
+trigger the classic pickle-deserialization RCE. (This bundled helper mirrors
+``rose.checkpoint_io.safe_torch_load``; the release is self-contained and does
+not import the ``rose`` package.)
 """
 from __future__ import annotations
 

@@ -44,7 +44,7 @@ def model_paths(eval_dir: Path) -> list[tuple[str, Path, bool]]:
         ("PhaseNet-ethz",     pt / "phasenet_ethz"     / "phasenet_ethz.json",     False),
         ("EQT-stead",         pt / "eqt_stead"         / "eqt_stead.json",         True),
         ("PhaseNet-stead",    pt / "phasenet_stead"    / "phasenet_stead.json",    False),
-        ("REDPAN-60s",        rp / "redpan_merged.json",                            True),
+        ("RED-PAN-60s",        rp / "redpan_merged.json",                            True),
     ]
 
 

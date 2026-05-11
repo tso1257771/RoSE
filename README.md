@@ -75,13 +75,17 @@ data = RoSE("/path/to/data/rose", component_order="ZNE")  # PhaseNet/EQT order
 print(len(data), "traces")
 
 wf_counts, meta = data.get_sample(0)            # raw counts, shape (3, npts)
-wf_phys,   meta = data.get_sample_physical(1)   # M/S or M/S**2 — divides by per-trace sensitivity
-                                                # (index 0 happens to lack a response; see below)
+wf_phys,   meta = data.get_sample_physical(0)   # M/S or M/S**2 — divides by per-trace sensitivity
+                                                # (raises ValueError if a trace lacks a usable
+                                                #  instrument response; see below)
 ```
 
 The dataset stores **counts** on disk and the per-component sensitivity values
 in metadata; `get_sample_physical` does the divide for you and raises
-`ValueError` on traces with no usable response (~4 %). Why this design? See
+`ValueError` on the ~4 % of traces whose `trace_status_physical` is
+`partial_response` or `missing_response` (the [Provenance](#provenance) table
+breaks this down — only ~0.2 % come from stations with no public response at
+all). Why this design? See
 [`docs/SEISBENCH_FORMAT.md#units--instrument-response`](docs/SEISBENCH_FORMAT.md).
 
 ---
@@ -165,7 +169,7 @@ without one of these or the matching env var the scripts exit with a clear error
 
   ```bash
   python training/build_rose_split_index.py     # write the SeisBench `split` column
-  python training/train_eqt_rose.py      --epochs 30 --batch-size 128 --lr 1e-4
+  python training/train_eqt_rose.py      --epochs 30 --batch-size 64  --lr 1e-4
   python training/train_phasenet_rose.py --epochs 30 --batch-size 256 --lr 1e-4
   ```
 
@@ -184,16 +188,22 @@ without one of these or the matching env var the scripts exit with a clear error
 
 * **`application/seisbench-rose-benchmark/`** — the published release (model
   weights + verifiable `SHA256SUMS` + loaders + `pickerbench` scoring +
-  `redpan_inference` subset + `results/*.csv`). One-shot reproduction:
+  `redpan_inference` subset + `results/*.csv`). One-shot reproduction (writes
+  `application/seisbench-rose-benchmark/results/runs/`, doesn't touch the
+  committed `results/*.csv`):
 
   ```bash
-  bash application/seisbench-rose-benchmark/scripts/reproduce_all.sh
+  bash application/seisbench-rose-benchmark/scripts/reproduce_all.sh \
+      --rose-dir "$ROSE_DATA_DIR" --stead-dir "$STEAD_DIR"
   ```
 
-All `.pt` checkpoints are loaded via `rose.checkpoint_io.safe_torch_load`,
-which forces `torch.load(weights_only=True)` — the restricted unpickler — so
-running the scripts on third-party `.pt` files cannot trigger the classic
-pickle-deserialization RCE.
+Every `.pt` checkpoint the `training/` and `benchmark/` scripts read is loaded
+via `rose.checkpoint_io.safe_torch_load`, which forces
+`torch.load(weights_only=True)` — the restricted unpickler — so running them on
+third-party `.pt` files cannot trigger the classic pickle-deserialization RCE.
+(The self-contained release under `application/` ships its own equivalent
+`weights_only=True` loader in `benchmarks/models.py`, since it deliberately
+doesn't import the `rose` package.)
 
 ---
 
@@ -220,7 +230,7 @@ The unit suite exercises the `rose` package directly (no large dataset needed):
 
 ```bash
 pip install -e ".[dev]"
-pytest tests/ -q          # 39 tests
+pytest tests/ -q          # 43 tests
 ```
 
 `tests/test_splits.py` golden-value pin tests guarantee the deterministic
