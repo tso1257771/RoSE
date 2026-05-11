@@ -1,98 +1,80 @@
 # `benchmark/` — how the published numbers are produced
 
-This directory is the benchmark **pipeline**: the scripts that produce the
-committed `results/*.csv` (the numbers reported in the paper — the leaderboard
-tables live in [`../results/README.md`](../results/README.md)). One command runs
-the whole thing:
+Two stages:
+
+- **(a) inference** — run every model on every test trace, match its picks to
+  the catalogue picks, tally per-model results → `eval/`.
+- **(b) leaderboard** — aggregate those tallies into the `results/*.csv` tables.
+
+Two scripts + one config:
 
 ```bash
-# defaults: --rose-dir $ROSE_DATA_DIR  --stead-dir $STEAD_DIR  --eval-dir ${ROSE_EVAL_DIR:-eval}
-bash benchmark/regenerate_results.sh --update-release            # full run (hours on CPU)
-bash benchmark/regenerate_results.sh --num-test 200              # quick smoke run (~10 min), no --update-release
+# everything lives in benchmark/config.json — override key fields on the CLI
+python benchmark/run_inference.py                       # stage (a)  -> eval/
+python benchmark/build_leaderboard.py --update-results  # stage (b)  -> results/*.csv
+
+# or both at once:
+bash benchmark/regenerate_results.sh                    # = run_inference.py + build_leaderboard.py --update-results
+bash benchmark/regenerate_results.sh --num-test 200     # quick subset
 ```
 
-`--num-test 0` (the default) uses the full pools. `--update-release` copies the
-regenerated CSVs over `results/*.csv` (omit it to leave the committed reference
-files untouched and just compare under `$ROSE_EVAL_DIR/`). Run with `python`
-pointing at an env that can load `seisbench.models.EQTransformer` / `PhaseNet`
-**and** `tensorflow` (for RED-PAN-60s).
+`--num-test 0` (the config default) = full test pools (~hours on CPU);
+`--num-test N` = a quick N-traces-per-pool subset (for the STEAD pools it takes
+the first N, not a random sample). Run with a Python env that has `seisbench` +
+`torch` + `tensorflow` (the last for RED-PAN-60s).
 
 > **You must supply the two test datasets yourself — they are not in this repo.**
-> - **RoSE** (SeisBench format, ~13 GB for the test split): download the RoSE
->   waveform bundle from Zenodo and mount/symlink it, then
->   `export ROSE_DATA_DIR=/path/to/rose`.
-> - **STEAD** test set (`metadata.csv`, `metadata_noise.csv`, `waveforms/*.npy`,
->   `noise_waveforms/*.npy`): obtain STEAD and prepare this layout (see
->   [`benchmark/data/README.md`](data/README.md)), then
->   `export STEAD_DIR=/path/to/STEAD/benchmark_stead`.
+> - **RoSE** (SeisBench-format, ~13 GB for the test split): download the RoSE
+>   bundle from Zenodo → `export ROSE_DATA_DIR=…` (or set `rose_dir` in the config).
+> - **STEAD** test set (`metadata.csv` + `metadata_noise.csv` + `waveforms/*.npy`
+>   + `noise_waveforms/*.npy` — layout recipe in [`data/README.md`](data/README.md))
+>   → `export STEAD_DIR=…` (or `stead_dir` in the config). Required **even for
+>   the RoSE leg**: RoSE event labels are incomplete, so RoSE false positives are
+>   counted on dedicated STEAD *noise* traces (with unmatched-on-event picks kept
+>   as a separate diagnostic column).
 >
-> STEAD is needed **even for the RoSE leg**: RoSE event labels are incomplete,
-> so a predicted pick on a RoSE event trace that doesn't match a catalogue
-> phase may be a real (unlabelled) aftershock, not a false positive. The
-> benchmark therefore counts **false positives on dedicated STEAD *noise*
-> traces only** for the RoSE pool (`bench_noise_fp.py`), keeping unmatched-on-
-> event picks as a separate diagnostic column. STEAD's own labels are clean, so
-> for the STEAD pool the canonical events+noise FP convention is used.
+> The three RoSE-trained checkpoints come from `../models/`; the six off-the-shelf
+> EQT / PhaseNet baselines are fetched by SeisBench's `from_pretrained` and cached
+> under `~/.seisbench`.
 
-The 6 off-the-shelf baselines (EQT / PhaseNet × `instance` / `ethz` / `stead`)
-are fetched by SeisBench's `from_pretrained` and cached under `~/.seisbench`;
-they need network access on first run. The 3 RoSE-trained checkpoints come from
-`../models/`.
+## Config — `benchmark/config.json`
 
-## Pipeline (what `regenerate_results.sh` chains)
+| field | meaning | default |
+|---|---|---|
+| `rose_dir` / `stead_dir` | dataset paths; `null` → `$ROSE_DATA_DIR` / `$STEAD_DIR` | `null` |
+| `eval_dir` | where stage (a) writes per-model results | `eval` (gitignored) |
+| `results_dir` | where `build_leaderboard.py --update-results` writes the CSVs | `results` |
+| `models_dir` | the bundled checkpoints | `models` |
+| `thresholds` | detection/pick threshold sweep (metrics computed at each) | `[0.05, 0.1, 0.2, 0.3, 0.5, 0.7]` |
+| `display_threshold` | which threshold the printed leaderboard tables use | `0.3` |
+| `num_test` | `0` = full pools; `N` = subset | `0` |
+| `bandpass` | pre-inference Butterworth band-pass (Hz) | `[1.0, 45.0]` |
+| `pytorch_model_ids` | the 8 PyTorch model ids to run | EQT/PhaseNet × {RoSE, instance, ethz, stead} |
 
-| # | Script | In | Out (under `$EVAL`) |
-|---|---|---|---|
-| 1 | `bench_pickers_rose.py --custom-eqt … --custom-phasenet …` | RoSE test split | `bench_rose_full_sweep/sweep_comparison.csv` — 8 PyTorch pickers (EQT/PhaseNet × {RoSE, instance, ethz, stead}), per-phase metrics over the 6-threshold sweep |
-| 2 | `bench_redpan_rose.py --model-path ../models/redpan_tf60/train.hdf5` | RoSE test split | `bench_redpan_rose_full/sweep_comparison.csv` — RED-PAN-60s, same shape |
-| 3 | `bench_noise_fp.py` | STEAD noise pool | `bench_noise_fp/<model_id>.json` × 9 — picks emitted on noise traces per model/threshold (the FP source for the RoSE pool) |
-| 4 | `build_rose_final_benchmark.py`; `build_rose_residual_stats.py` | (1)+(2)+(3) | `bench_rose_picking_clean.csv`, `bench_rose_detection_clean.csv`, `bench_rose_residual_stats.csv` |
-| 5 | `bench_stead_test.py` × 8 PyTorch + × RED-PAN-60s | STEAD events + noise | `bench_stead_full_pytorch/<m>/<m>.json`, `bench_stead_full/redpan_merged.json` |
-| 6 | `build_stead_full_benchmark.py` | (5) | `bench_stead_full_picking.csv`, `bench_stead_full_detection.csv`, `bench_stead_full_residuals.csv` |
+Both stage scripts also take `--config FILE` and overrides: `--rose-dir`,
+`--stead-dir`, `--eval-dir`, `--num-test` (run_inference), `--threshold`,
+`--results-dir`, `--update-results` (build_leaderboard), `--skip-rose`,
+`--skip-stead` — see `--help`.
 
-`--update-release` then copies (no transformation — same column schema):
+## What's in here
 
-```
-bench_rose_picking_clean.csv    ->  results/rose_picking.csv
-bench_rose_detection_clean.csv  ->  results/rose_detection.csv
-bench_rose_residual_stats.csv   ->  results/rose_residual_stats.csv
-bench_stead_full_picking.csv    ->  results/stead_picking.csv
-bench_stead_full_detection.csv  ->  results/stead_detection.csv
-```
+| file | role |
+|---|---|
+| **`run_inference.py`** | stage (a) — the one script you run for inference |
+| **`build_leaderboard.py`** | stage (b) — the one script you run for the leaderboard |
+| **`regenerate_results.sh`** | convenience wrapper: runs (a) then (b) `--update-results` |
+| `config.json` | the config both stages read |
+| `bench_pickers_rose.py` / `bench_redpan_rose.py` / `bench_noise_fp.py` / `bench_stead_test.py` | the inference *stage implementations* `run_inference.py` calls per (model, dataset) — not run directly |
+| `build_rose_final_benchmark.py` / `build_rose_residual_stats.py` / `build_stead_full_benchmark.py` | the aggregation *stage implementations* `build_leaderboard.py` calls (each also prints its threshold-0.30 leaderboard table to stdout) |
+| `_pipeline.py` | shared config-loading / subprocess helpers for the two stage scripts |
+| `build_test_indices.py` | regenerate the pinned `data/*_index.csv` |
+| `data/` | the pinned test-set index CSVs (which traces make up each test set) |
+| `eval_eqt_rose.py` | standalone: an EQT-only eval in the Münchmeyer-2022 / Section-3 "3 tasks" format (T1/T2/T3) — *not* part of the pipeline; the pipeline already produces equivalent T1/T2/T3 numbers for all 9 models |
+| `bench_joint_rose.py` | standalone: picking metrics under detector-*gated* operation vs the un-gated baseline |
+| `viz_models_rose.py` | standalone: record-section comparison plots |
 
-(`bench_stead_full_residuals.csv` is generated but not shipped.)
-
-## Running pieces individually
-
-Every script takes `--rose-dir` / `--stead-dir` (or `$ROSE_DATA_DIR` /
-`$STEAD_DIR`) and `--num-test N` / `--num-events N --num-noise N` (`0` = full).
-Defaults for the bundled checkpoints point at `../models/`. Inference runs once
-per trace at the lowest threshold; the threshold sweep is post-hoc, so
-re-running at more thresholds needs no re-inference. `bench_stead_test.py` and
-`bench_noise_fp.py` support `--shard k --total-shards N` for trivial parallelism
-(merge the per-shard JSONs afterward; for RED-PAN on STEAD,
-`regenerate_results.sh` just runs a single shard and names the output
-`redpan_merged.json`).
-
-Standalone tools here (not run by `regenerate_results.sh`):
-
-* `bench_joint_rose.py` — picking metrics under **detector-gated** operation
-  (a pick counts only if it lands inside a triggered detection window) vs the
-  un-gated picker-only baseline, for the two models with detection heads
-  (EQT-RoSE, RED-PAN-60s); writes `joint_comparison.csv` + `summary.json`.
-* `eval_eqt_rose.py` — an **EQT-only** evaluation in the Münchmeyer-2022 /
-  TRANSFORM²-Section-3 format (T1 detection F1/AUC, T2 phase-ID MCC, T3 onset
-  MAE/RMSE), using SeisBench's fixed-window training generator and a synthesised
-  *coda-window* negative for T1 (RoSE has no noise traces). It's a different
-  protocol from the main pipeline — which already produces equivalent T1/T2/T3
-  numbers (STEAD-noise T1, per-phase MCC, residual stats) for **all 9** models
-  via `bench_pickers_rose.py` + `build_*.py` — so `eval_eqt_rose.py` is kept
-  only for that specific output format; the `results/*.csv` numbers come from
-  the pipeline, not from here.
-* `viz_models_rose.py` — record-section comparison plots (catalogue vs model
-  picks across stations).
-* `build_test_indices.py` — regenerate the pinned `benchmark/data/*_index.csv`.
-
-For just *using* a published picker on your own data, you don't need any of
-this — `from rose import load_eqt_rose, load_phasenet_rose, load_redpan_tf60`
-(see the top-level README and `models/README.md`).
+The five leaderboard CSVs and their human-readable tables are documented in
+[`../results/README.md`](../results/README.md). For just *using* a published
+picker on your own data you need none of this — `from rose import load_eqt_rose,
+load_phasenet_rose, load_redpan_tf60` (see the top-level README and
+[`../models/README.md`](../models/README.md)).

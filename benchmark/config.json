@@ -1,0 +1,17 @@
+{
+  "rose_dir": null,
+  "stead_dir": null,
+  "eval_dir": "eval",
+  "results_dir": "results",
+  "models_dir": "models",
+  "thresholds": [0.05, 0.1, 0.2, 0.3, 0.5, 0.7],
+  "display_threshold": 0.3,
+  "num_test": 0,
+  "bandpass": [1.0, 45.0],
+  "pytorch_model_ids": [
+    "eqt_rose", "phasenet_rose",
+    "eqt_instance", "phasenet_instance",
+    "eqt_ethz", "phasenet_ethz",
+    "eqt_stead", "phasenet_stead"
+  ]
+}
