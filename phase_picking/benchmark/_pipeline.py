@@ -13,10 +13,12 @@ scripts call — you normally don't run them directly.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import os
 import subprocess
 import sys
+import threading
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -51,9 +53,54 @@ def ckpt_paths(cfg: dict) -> dict:
     }
 
 
-def run(cmd: list[str]) -> None:
-    print("    $ " + " ".join(cmd), flush=True)
-    subprocess.run(cmd, check=True)
+def run(cmd: list[str], *, env: dict | None = None, label: str | None = None) -> None:
+    print(f"    [{label}] $ " + " ".join(cmd) if label else "    $ " + " ".join(cmd), flush=True)
+    subprocess.run(cmd, check=True, env=env)
+
+
+def threadcap_env(threads: int) -> dict:
+    """Env copy that caps each scientific-stack library to ``threads`` OS threads.
+
+    Used when running several stage scripts concurrently so N workers × T threads
+    doesn't oversubscribe the cores (and the bench_*.py also get ``--tf-threads T``).
+    """
+    e = dict(os.environ)
+    for k in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+              "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+              "TF_NUM_INTRAOP_THREADS", "TF_NUM_INTEROP_THREADS"):
+        e[k] = str(threads)
+    return e
+
+
+def run_parallel(tasks: list[tuple[str, list[str], dict | None]], jobs: int) -> None:
+    """Run ``(label, cmd, env)`` tasks through a ``jobs``-wide thread pool.
+
+    Each worker just blocks in ``subprocess.run`` — the GIL is irrelevant — so
+    the actual stage processes run concurrently. First failure cancels the rest.
+    """
+    if jobs <= 1 or len(tasks) <= 1:
+        for label, cmd, env in tasks:
+            run(cmd, env=env, label=label)
+        return
+    lock = threading.Lock()
+
+    def _go(t):
+        label, cmd, env = t
+        with lock:
+            print(f"  >>> start [{label}]", flush=True)
+        run(cmd, env=env, label=label)
+        with lock:
+            print(f"  <<< done  [{label}]", flush=True)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as ex:
+        futs = {ex.submit(_go, t): t[0] for t in tasks}
+        try:
+            for fut in concurrent.futures.as_completed(futs):
+                fut.result()  # re-raise on failure
+        except Exception:
+            for f in futs:
+                f.cancel()
+            raise
 
 
 def py(script: str) -> list[str]:
