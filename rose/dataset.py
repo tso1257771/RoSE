@@ -2,7 +2,7 @@
 
 Usage:
     from rose import RoSE
-    data = RoSE("/media/rick/lSSD_8TB/romania/seisbench_integration/data/rose")
+    data = RoSE("/path/to/data/rose")          # or os.environ["ROSE_DATA_DIR"]
     sample = data.get_sample(0)
 
 Pre-requisite: the dataset directory must already contain SeisBench-format files
