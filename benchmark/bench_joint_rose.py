@@ -271,9 +271,9 @@ def main() -> None:
     ap.add_argument("--num-test", type=int, default=2000)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--eqt-ckpt",
-                    default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "eqt_rose" / "eqt_rose.pt"))
+                    default=str(REPO_ROOT / "models" / "eqt_rose" / "eqt_rose.pt"))
     ap.add_argument("--redpan-tf",
-                    default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "redpan_tf60" / "train.hdf5"))
+                    default=str(REPO_ROOT / "models" / "redpan_tf60" / "train.hdf5"))
     ap.add_argument("--eqt-p", type=float, default=0.20)
     ap.add_argument("--eqt-s", type=float, default=0.20)
     ap.add_argument("--redpan-p", type=float, default=0.30)
@@ -341,7 +341,7 @@ def main() -> None:
             tf.config.experimental.set_memory_growth(g, True)
         except RuntimeError:
             pass
-    from redpan_inference.core import REDPAN
+    from rose.redpan_inference.core import REDPAN
     rp_model = tf.keras.models.load_model(args.redpan_tf, compile=False)
     redpan = REDPAN(model=rp_model, pred_npts=6000, dt=0.01,
                     pred_interval_sec=10.0, batch_size=8,

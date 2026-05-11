@@ -17,7 +17,7 @@ Inputs (point ``--stead-dir`` or ``$STEAD_DIR`` at this directory):
 
 The exact ``metadata.csv`` / ``metadata_noise.csv`` files used to produce the
 published numbers are pinned under
-``application/seisbench-rose-benchmark/data/stead_{test,noise}_index.csv``.
+``benchmark/data/stead_{test,noise}_index.csv``.
 
 Models evaluated:
   * EQT-RoSE              (PyTorch / SeisBench)
@@ -445,11 +445,11 @@ def main() -> None:
                              "eqt_ethz", "phasenet_ethz",
                              "eqt_stead", "phasenet_stead"])
     ap.add_argument("--eqt-rose-ckpt",
-                    default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "eqt_rose" / "eqt_rose.pt"))
+                    default=str(REPO_ROOT / "models" / "eqt_rose" / "eqt_rose.pt"))
     ap.add_argument("--phasenet-rose-ckpt",
-                    default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "phasenet_rose" / "phasenet_rose.pt"))
+                    default=str(REPO_ROOT / "models" / "phasenet_rose" / "phasenet_rose.pt"))
     ap.add_argument("--redpan-tf",
-                    default=str(REPO_ROOT / "application" / "seisbench-rose-benchmark" / "models" / "redpan_tf60" / "train.hdf5"))
+                    default=str(REPO_ROOT / "models" / "redpan_tf60" / "train.hdf5"))
     ap.add_argument("--p-threshold", type=float, default=0.30,
                     help="(legacy) ignored if --sweep-thresholds is set.")
     ap.add_argument("--s-threshold", type=float, default=0.30)
@@ -563,7 +563,7 @@ def main() -> None:
                                 args.total_shards)
                 except Exception:
                     pass
-                from redpan_inference.core import REDPAN
+                from rose.redpan_inference.core import REDPAN
                 tf_model = tf.keras.models.load_model(args.redpan_tf,
                                                      compile=False)
                 m = REDPAN(model=tf_model, pred_npts=6000, dt=0.01,

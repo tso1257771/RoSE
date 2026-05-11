@@ -11,7 +11,7 @@ restricted unpickler that only accepts tensors, plain Python scalars, and a
 small allowlist of container types) and falls back transparently for older
 PyTorch versions that don't accept the keyword. All checkpoints written by
 ``training/train_eqt_rose.py`` and ``training/train_phasenet_rose.py`` (and the
-bundled release weights under ``application/seisbench-rose-benchmark/models/``)
+bundled release weights under ``models/``)
 are plain ``state_dict`` + scalars + a config dict, so the safe loader is
 sufficient.
 

@@ -1,14 +1,15 @@
-"""Minimal RED-PAN inference package.
+"""Minimal RED-PAN inference subset (vendored).
 
 Self-contained subset of the upstream `redpan` package
 (https://github.com/tso1257771/RED-PAN) sufficient to run RED-PAN-60s
 inference on a single trace via the `REDPAN` class. The training,
-data-loading, and TF-Keras model-construction modules are not bundled
-because the published `redpan_tf60/train.hdf5` is the inference target.
+data-loading, and TF-Keras model-construction modules are not vendored
+because the published `models/redpan_tf60/train.hdf5` is the inference target.
+Used by `rose.pickers.load_redpan_tf60` and the `benchmark/` scripts.
 
 Usage:
     import tensorflow as tf
-    from redpan_inference import REDPAN
+    from rose.redpan_inference import REDPAN
     tf_model = tf.keras.models.load_model("models/redpan_tf60/train.hdf5",
                                           compile=False)
     rp = REDPAN(model=tf_model, pred_npts=6000, dt=0.01,

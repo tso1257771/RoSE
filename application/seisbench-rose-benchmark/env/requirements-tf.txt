@@ -1,6 +1,0 @@
-# TensorFlow / Keras: required for RED-PAN-60s only.
-# Install on top of env/requirements.txt.
-# CPU-only (recommended for reproducibility):
-tensorflow-cpu>=2.13,<2.16
-# OR for GPU:
-# tensorflow>=2.13,<2.16

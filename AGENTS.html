@@ -51,20 +51,17 @@ a Romanian seismic dataset + three published phase pickers
 
 <h2>Layout</h2>
 <ul>
-  <li><code>rose/</code> — importable loader + helpers
-      (<code>splits.hash_split</code>, <code>checkpoint_io.safe_torch_load</code>)</li>
+  <li><code>rose/</code> — the importable package: <code>RoSE</code> loader, <code>convert</code>,
+      <code>qc</code>, <code>splits.hash_split</code>, <code>checkpoint_io.safe_torch_load</code>,
+      <code>pickers.load_eqt_rose</code>&nbsp;/&nbsp;<code>load_phasenet_rose</code>&nbsp;/&nbsp;<code>load_redpan_tf60</code>
+      (also re-exported as <code>rose.load_*</code>), and the vendored <code>redpan_inference/</code> (TF subset)</li>
+  <li><code>models/</code> — the 3 published checkpoints + <code>SHA256SUMS</code> + model cards</li>
+  <li><code>results/</code> — the pre-computed benchmark CSVs (<code>{rose,stead}_{picking,detection}.csv</code>, <code>rose_residual_stats.csv</code>)</li>
+  <li><code>benchmark/</code> — the benchmark <em>pipeline</em> (all 9 pickers);
+      <code>regenerate_results.sh</code> chains <code>bench_*.py</code> → <code>build_*.py</code> and
+      <em>produces</em> <code>results/*.csv</code>; <code>benchmark/data/</code> holds the pinned
+      test-set index CSVs. See <code>benchmark/README.md</code>.</li>
   <li><code>training/</code> — fine-tune SeisBench EQT&nbsp;/&nbsp;PhaseNet on RoSE (DDP, INSTANCE-init)</li>
-  <li><code>benchmark/</code> — the internal benchmark <em>pipeline</em> (all 9 pickers);
-      <code>regenerate_results.sh</code> chains it and <em>produces</em>
-      <code>application/seisbench-rose-benchmark/results/*.csv</code>; vendored
-      <code>redpan_inference/</code> (TF subset). See <code>benchmark/README.md</code>.</li>
-  <li><code>application/seisbench-rose-benchmark/</code> — the <em>self-contained release
-      bundle</em> (a copy — imports nothing from <code>benchmark/</code> or <code>rose</code>):
-      3 checkpoints + <code>SHA256SUMS</code> + unified loaders
-      (<code>benchmarks.models.load_eqt_rose</code>, <code>…_phasenet_rose</code>,
-      <code>…_redpan_tf60</code>) + the pre-computed results CSVs + a quick
-      <code>scripts/reproduce_all.sh</code> sanity re-scorer. <strong>Not</strong> the same
-      directory as the top-level <code>benchmark/</code>.</li>
   <li><code>examples/</code> — four numbered tutorials (01 load → 02 INSTANCE demo →
       03 ground motion → 04 all-three-pickers inference)</li>
   <li><code>docs/</code> — <code>DATASET.md</code> (native HDF5) +

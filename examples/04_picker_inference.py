@@ -1,7 +1,6 @@
 """Tutorial 4 — Run all three published RoSE pickers on test traces.
 
-End-to-end demo of the released checkpoints under
-``application/seisbench-rose-benchmark/models/``:
+End-to-end demo of the released checkpoints under ``models/``:
 
     1. Open `data/rose` with `RoSE`.
     2. Filter to the held-out test split (falls back to the full dataset
@@ -14,8 +13,8 @@ End-to-end demo of the released checkpoints under
        Each model still applies its OWN amplitude normalisation internally
        (peak for the two SeisBench models, Z-score for RED-PAN); do NOT
        pre-normalise the input. See the long comment block below.
-    6. Load PhaseNet-RoSE, EQT-RoSE, and RED-PAN-60s via the release
-       loaders (``application/seisbench-rose-benchmark/benchmarks/models.py``).
+    6. Load PhaseNet-RoSE, EQT-RoSE, and RED-PAN-60s via the package loaders
+       (``rose.load_eqt_rose`` / ``load_phasenet_rose`` / ``load_redpan_tf60``).
     7. Run each model and grab raw per-sample probability curves
        (``model.annotate(stream)`` for SeisBench, ``REDPAN.predict(...,
        postprocess=False)`` for RED-PAN), plus picks from
@@ -53,9 +52,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-RELEASE = REPO_ROOT / "application" / "seisbench-rose-benchmark"
-sys.path.insert(0, str(REPO_ROOT))
-sys.path.insert(0, str(RELEASE))  # so `from benchmarks.models import ...` resolves
+sys.path.insert(0, str(REPO_ROOT))  # so `import rose` works when run as a script
 
 
 def _rel(p: str | Path) -> str:
@@ -75,15 +72,15 @@ from matplotlib.lines import Line2D  # noqa: E402
 from obspy import Stream, Trace, UTCDateTime  # noqa: E402
 from scipy.signal import find_peaks  # noqa: E402
 
-from rose import RoSE  # noqa: E402
-from benchmarks.models import (  # noqa: E402
+from rose import (  # noqa: E402
+    RoSE,
     load_eqt_rose,
     load_phasenet_rose,
     load_redpan_tf60,
 )
 
 DATA_DIR = os.environ.get("ROSE_DATA_DIR", str(REPO_ROOT / "data" / "rose"))
-MODELS_DIR = RELEASE / "models"
+MODELS_DIR = REPO_ROOT / "models"
 OUT_DIR = REPO_ROOT / "outputs" / "04_picker_inference"
 
 # RoSE waveform geometry (the dataset is fixed at these values).
@@ -121,9 +118,9 @@ _RPPick = namedtuple("_RPPick", ["phase", "peak_time", "peak_value"])
 #
 # We *do* preprocess the input by demean + linear-detrend + (optional)
 # Butterworth band-pass via `preprocess()`; the published benchmark
-# (`benchmarks/run_benchmark.py` and `bench_pickers_rose.py`) defaults to
-# 1-45 Hz bandpass to match the 1-45 Hz pre-augment filter EQT-RoSE was
-# trained with — so the same default is used here.
+# (`benchmark/bench_pickers_rose.py`) defaults to 1-45 Hz bandpass to match
+# the 1-45 Hz pre-augment filter EQT-RoSE was trained with — so the same
+# default is used here.
 # ---------------------------------------------------------------------------
 
 # Plotting palette: phase = colour, model = line style.
