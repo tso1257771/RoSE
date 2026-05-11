@@ -2,8 +2,11 @@
 
 These CSVs are the canonical benchmark numbers reported in the RoSE picker
 paper (TRANSFORM² Deliverable 3.4). They cover nine pickers: the three
-RoSE-trained checkpoints in `models/` plus six off-the-shelf SeisBench
-baselines (EQT / PhaseNet × `instance` / `ethz` / `stead`).
+checkpoints in `models/` — **EQT-RoSE** and **PhaseNet-RoSE** (fine-tuned on
+the RoSE training split from INSTANCE init) and **RED-PAN-60s** (RED-PAN
+retrained on Taiwan + STEAD + INSTANCE + RoSE, warm-started from the published
+RED-PAN(60 s) weights — see `models/README.md`) — plus six off-the-shelf
+SeisBench baselines (EQT / PhaseNet × `instance` / `ethz` / `stead`).
 `scripts/reproduce_all.sh` re-runs just the three bundled checkpoints (it
 needs the RoSE + STEAD test datasets) and writes its own copies under
 `results/runs/`; the EQT-RoSE / PhaseNet-RoSE / RED-PAN-60s rows there should

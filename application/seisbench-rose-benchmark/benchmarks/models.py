@@ -3,7 +3,10 @@
 Identifiers:
     eqt_rose      — PyTorch / SeisBench EQTransformer fine-tuned on RoSE
     phasenet_rose — PyTorch / SeisBench PhaseNet fine-tuned on RoSE
-    redpan_tf60   — TensorFlow / Keras RED-PAN-60s (TaiwanCWB-trained)
+    redpan_tf60   — TensorFlow / Keras RED-PAN-60s (MTAN R2U-Net): retrained
+                    outside SeisBench on Taiwan + STEAD + INSTANCE + RoSE,
+                    warm-started from the published RED-PAN-60s weights.
+                    See models/README.md for the full recipe.
 
 Each loader returns a SeisBench-style model exposing
 ``.classify(stream, P_threshold=, S_threshold=[, detection_threshold=])`` →
