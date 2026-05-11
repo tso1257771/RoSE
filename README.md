@@ -102,12 +102,18 @@ Four runnable examples, each end-to-end against the published dataset:
    source. Requires `data/rose_stationxml/`.
 4. **`04_picker_inference.py`** — load all three published checkpoints
    (PhaseNet-RoSE, EQT-RoSE, RED-PAN-60s) via the release loaders and run
-   them on a few held-out test traces. Saves one 6-panel PNG per trace
-   under `outputs/04_picker_inference/trace_<idx>.png` (Z, N, E waveforms
-   on top; PhaseNet, EQTransformer, RED-PAN probability curves below,
-   each `ylim=[0, 1]`, all sharing the same time axis so timestamps line
-   up vertically) plus a per-model residual table on stdout. RED-PAN-60s
-   needs `.[tf]` (TensorFlow) — pass `--no-redpan` to skip it.
+   them on a few held-out test traces. Input is in **Z, N, E** order;
+   each model applies its own internal normalisation (`norm="peak"` for the
+   SeisBench checkpoints, per-window Z-score for RED-PAN), so the script
+   does NOT pre-normalise — it only demeans, detrends, and (by default)
+   1–45 Hz Butterworth band-passes the stream (`--highpass` / `--lowpass`
+   to override; pass `0` to disable either leg). Saves one 6-panel PNG per
+   trace under `outputs/04_picker_inference/trace_<idx>.png` (Z, N, E
+   waveforms on top; PhaseNet, EQTransformer, RED-PAN probability curves
+   below, each `ylim=[-0.1, 1.1]`, all sharing the same time axis so
+   timestamps line up vertically) plus a per-model residual table on
+   stdout. RED-PAN-60s needs `.[tf]` (TensorFlow) — pass `--no-redpan` to
+   skip it.
 
 ```bash
 python examples/01_load_and_browse.py     # outputs/01_load_and_browse.png
