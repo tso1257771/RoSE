@@ -19,8 +19,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-BENCH_DIR = REPO_ROOT / "benchmark"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BENCH_DIR = REPO_ROOT / "phase_picking" / "benchmark"
 DEFAULT_CONFIG = BENCH_DIR / "config.json"
 
 

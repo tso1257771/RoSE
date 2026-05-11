@@ -1,14 +1,14 @@
 """Loaders for the three published RoSE phase pickers.
 
-Identifiers (and the bundled checkpoints under ``models/``):
+Identifiers (and the bundled checkpoints under ``phase_picking/models/``):
     eqt_rose      — PyTorch / SeisBench EQTransformer fine-tuned on RoSE
-                    (``models/eqt_rose/eqt_rose.pt``)
+                    (``phase_picking/models/eqt_rose/eqt_rose.pt``)
     phasenet_rose — PyTorch / SeisBench PhaseNet fine-tuned on RoSE
-                    (``models/phasenet_rose/phasenet_rose.pt``)
+                    (``phase_picking/models/phasenet_rose/phasenet_rose.pt``)
     redpan_tf60   — TensorFlow / Keras RED-PAN-60s (MTAN R2U-Net): retrained
                     outside SeisBench on Taiwan + STEAD + INSTANCE + RoSE,
                     warm-started from the published RED-PAN-60s weights
-                    (``models/redpan_tf60/train.hdf5``). See ``models/README.md``
+                    (``phase_picking/models/redpan_tf60/train.hdf5``). See ``phase_picking/models/README.md``
                     for the full recipe.
 
 Each loader returns a SeisBench-style object exposing
@@ -32,7 +32,7 @@ from obspy import UTCDateTime
 from .checkpoint_io import safe_torch_load
 
 # Bundled checkpoints live at <repo>/models/  (rose/pickers.py -> rose/ -> repo)
-DEFAULT_MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
+DEFAULT_MODELS_DIR = Path(__file__).resolve().parent.parent / "phase_picking" / "models"
 
 
 # --------------------------------------------------------------------- EQT-RoSE

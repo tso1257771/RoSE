@@ -33,7 +33,7 @@ import numpy as np
 import pandas as pd
 
 # Make the in-tree `rose` package importable when run as a plain script.
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 from rose.splits import (  # noqa: E402

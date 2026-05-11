@@ -54,8 +54,8 @@ from sklearn.metrics import f1_score, roc_auc_score
 
 import seisbench.models as sbm
 
-_THIS_DIR = Path(__file__).resolve().parent          # benchmark/
-REPO_ROOT = _THIS_DIR.parent                          # repo root
+_THIS_DIR = Path(__file__).resolve().parent          # phase_picking/benchmark/
+REPO_ROOT = _THIS_DIR.parent.parent          # repo root (phase_picking/benchmark -> ..)
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(_THIS_DIR))                    # sibling bench_* + redpan_inference
 from rose.checkpoint_io import safe_torch_load  # noqa: E402

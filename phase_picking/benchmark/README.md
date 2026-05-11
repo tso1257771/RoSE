@@ -1,21 +1,21 @@
-# `benchmark/` — how the published numbers are produced
+# `phase_picking/benchmark/` — how the published numbers are produced
 
 Two stages:
 
 - **(a) inference** — run every model on every test trace, match its picks to
   the catalogue picks, tally per-model results → `eval/`.
-- **(b) leaderboard** — aggregate those tallies into the `results/*.csv` tables.
+- **(b) leaderboard** — aggregate those tallies into the `phase_picking/results/*.csv` tables.
 
 Two scripts + one config:
 
 ```bash
 # everything lives in benchmark/config.json — override key fields on the CLI
-python benchmark/run_inference.py                       # stage (a)  -> eval/
-python benchmark/build_leaderboard.py --update-results  # stage (b)  -> results/*.csv
+python phase_picking/benchmark/run_inference.py                       # stage (a)  -> eval/
+python phase_picking/benchmark/build_leaderboard.py --update-results  # stage (b)  -> phase_picking/results/*.csv
 
 # or both at once:
-bash benchmark/regenerate_results.sh                    # = run_inference.py + build_leaderboard.py --update-results
-bash benchmark/regenerate_results.sh --num-test 200     # quick subset
+bash phase_picking/benchmark/regenerate_results.sh                    # = run_inference.py + build_leaderboard.py --update-results
+bash phase_picking/benchmark/regenerate_results.sh --num-test 200     # quick subset
 ```
 
 `--num-test 0` (the config default) = full test pools (~hours on CPU);

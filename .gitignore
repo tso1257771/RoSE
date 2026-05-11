@@ -22,7 +22,7 @@ eval/
 # reference numbers are the *.csv files directly under results/, which
 # build_leaderboard.py --update-results overwrites. (Older runs used a
 # results/runs/ staging dir — kept ignored just in case.)
-/results/runs/
+/phase_picking/results/runs/
 
 # Derived split index (full train/dev/test assignment for the local copy of the
 # RoSE dataset). Regenerated idempotently by training/build_rose_split_index.py;
@@ -138,12 +138,12 @@ credentials*.json
 # after the patterns they override, so they live here at the end of the file.
 # ---------------------------------------------------------------------------
 !training/
-!benchmark/
+!phase_picking/benchmark/
 # Pinned test-set index CSVs + download notes under benchmark/data/ (the
 # generic `data/` rule above is for the multi-GB waveform dataset mount).
-!benchmark/data/
+!phase_picking/benchmark/data/
 # Published checkpoints: 1.6 MB + 1.1 MB SeisBench .pt and the 5.8 MB RED-PAN
 # Keras .hdf5 under models/ (the generic `*.pt` / `*.hdf5` rules above are for
 # training output). Small enough to version with the code.
-!models/**/*.pt
-!models/**/*.hdf5
+!phase_picking/models/**/*.pt
+!phase_picking/models/**/*.hdf5

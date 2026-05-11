@@ -42,8 +42,8 @@ from scipy.signal import find_peaks
 
 import seisbench.data as sbd
 
-_THIS_DIR = Path(__file__).resolve().parent          # benchmark/
-REPO_ROOT = _THIS_DIR.parent                          # repo root
+_THIS_DIR = Path(__file__).resolve().parent          # phase_picking/benchmark/
+REPO_ROOT = _THIS_DIR.parent.parent          # repo root (phase_picking/benchmark -> ..)
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(_THIS_DIR))                    # sibling bench_* + redpan_inference
 
