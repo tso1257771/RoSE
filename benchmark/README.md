@@ -73,10 +73,24 @@ re-running at more thresholds needs no re-inference. `bench_stead_test.py` and
 `regenerate_results.sh` just runs a single shard and names the output
 `redpan_merged.json`).
 
-Other tools here: `bench_joint_rose.py` (joint detector+picker on RoSE),
-`eval_eqt_rose.py` (the Münchmeyer-2022 / TRANSFORM² Section-3 tasks),
-`viz_models_rose.py` (record-section plots), `build_test_indices.py` (regenerate
-the pinned `benchmark/data/*_index.csv`).
+Standalone tools here (not run by `regenerate_results.sh`):
+
+* `bench_joint_rose.py` — picking metrics under **detector-gated** operation
+  (a pick counts only if it lands inside a triggered detection window) vs the
+  un-gated picker-only baseline, for the two models with detection heads
+  (EQT-RoSE, RED-PAN-60s); writes `joint_comparison.csv` + `summary.json`.
+* `eval_eqt_rose.py` — an **EQT-only** evaluation in the Münchmeyer-2022 /
+  TRANSFORM²-Section-3 format (T1 detection F1/AUC, T2 phase-ID MCC, T3 onset
+  MAE/RMSE), using SeisBench's fixed-window training generator and a synthesised
+  *coda-window* negative for T1 (RoSE has no noise traces). It's a different
+  protocol from the main pipeline — which already produces equivalent T1/T2/T3
+  numbers (STEAD-noise T1, per-phase MCC, residual stats) for **all 9** models
+  via `bench_pickers_rose.py` + `build_*.py` — so `eval_eqt_rose.py` is kept
+  only for that specific output format; the `results/*.csv` numbers come from
+  the pipeline, not from here.
+* `viz_models_rose.py` — record-section comparison plots (catalogue vs model
+  picks across stations).
+* `build_test_indices.py` — regenerate the pinned `benchmark/data/*_index.csv`.
 
 For just *using* a published picker on your own data, you don't need any of
 this — `from rose import load_eqt_rose, load_phasenet_rose, load_redpan_tf60`
