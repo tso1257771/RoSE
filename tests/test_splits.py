@@ -78,12 +78,14 @@ def test_bernoulli_3way_is_seeded_and_reproducible():
 
 def test_bernoulli_3way_proportions():
     rng = np.random.default_rng(0)
+    n = 20_000
     counts = collections.Counter(
-        splits.bernoulli_3way(rng, 0.70, 0.15) for _ in range(20_000)
+        splits.bernoulli_3way(rng, 0.70, 0.15) for _ in range(n)
     )
-    n = sum(counts.values())
+    assert sum(counts.values()) == n  # every draw landed in exactly one split
     assert counts["train"] / n == pytest.approx(0.70, abs=0.02)
     assert counts["val"] / n == pytest.approx(0.15, abs=0.02)
+    assert counts["test"] / n == pytest.approx(0.15, abs=0.02)
 
 
 # --------------------------------------------------------------------------- #

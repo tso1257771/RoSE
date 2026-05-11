@@ -91,7 +91,7 @@ STATIONXML_DIR = os.environ.get(
 )
 
 
-def _rel(p) -> str:
+def _rel(p: str | Path) -> str:
     """Format ``p`` for log output relative to the repo root when possible.
 
     Keeps internal I/O paths absolute (so the script works from any CWD)
