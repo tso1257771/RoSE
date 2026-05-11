@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Operating notes for LLM agents working in the RoSE phase-picker repo.">
+<title>AGENTS — RoSE phase-picker repo</title>
+<style>
+  *      { box-sizing: border-box; }
+  html   { -webkit-text-size-adjust: 100%; }
+  body   { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                       "Helvetica Neue", Arial, sans-serif;
+           font-size: 15px; line-height: 1.55; color: #1f2328; background: #fff;
+           margin: 0; padding: 2.5em 1.2em; }
+  main   { max-width: 760px; margin: 0 auto; }
+  h1     { font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+           font-size: 1.7em; margin: 0 0 .15em; color: #0969da; letter-spacing: -.01em; }
+  h1 + p { color: #57606a; margin-top: 0; }
+  h2     { font-size: 1.1em; margin: 1.8em 0 .45em; padding-bottom: .25em;
+           border-bottom: 1px solid #d0d7de; color: #1f2328; }
+  p, li  { margin: .3em 0; }
+  ul     { padding-left: 1.35em; margin: .35em 0 .8em; }
+  li     { margin-bottom: .25em; }
+  code   { font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+           font-size: 0.88em; background: #eff1f3; padding: 1px 5px;
+           border-radius: 4px; color: #0a3069; }
+  strong { color: #0a3069; }
+  a      { color: #0969da; text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+  .meta  { font-size: .82em; color: #6e7781; margin-top: 2.5em;
+           border-top: 1px solid #d0d7de; padding-top: .8em; }
+  @media (prefers-color-scheme: dark) {
+    body   { color: #e6edf3; background: #0d1117; }
+    h1     { color: #58a6ff; }
+    h1 + p { color: #8b949e; }
+    h2     { color: #e6edf3; border-bottom-color: #30363d; }
+    code   { background: #161b22; color: #79c0ff; }
+    strong { color: #79c0ff; }
+    a      { color: #58a6ff; }
+    .meta  { color: #8b949e; border-top-color: #30363d; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<h1>AGENTS.md</h1>
+<p>Operating notes for LLM agents working in the <strong>RoSE</strong> repo —
+a Romanian seismic dataset + three published phase pickers
+(EQT-RoSE, PhaseNet-RoSE, RED-PAN-60s).</p>
+
+<h2>Layout</h2>
+<ul>
+  <li><code>rose/</code> — importable loader + helpers
+      (<code>splits.hash_split</code>, <code>checkpoint_io.safe_torch_load</code>)</li>
+  <li><code>training/</code> — fine-tune SeisBench EQT&nbsp;/&nbsp;PhaseNet on RoSE (DDP, INSTANCE-init)</li>
+  <li><code>benchmark/</code> — RoSE&nbsp;/&nbsp;STEAD picker scoring; vendored
+      <code>redpan_inference/</code> (TF subset)</li>
+  <li><code>application/seisbench-rose-benchmark/</code> — published release: 3 checkpoints +
+      unified loaders (<code>benchmarks.models.load_eqt_rose</code>,
+      <code>…_phasenet_rose</code>, <code>…_redpan_tf60</code>) +
+      results CSVs + <code>SHA256SUMS</code></li>
+  <li><code>examples/</code> — four numbered tutorials (01 load → 02 INSTANCE demo →
+      03 ground motion → 04 all-three-pickers inference)</li>
+  <li><code>docs/</code> — <code>DATASET.md</code> (native HDF5) +
+      <code>SEISBENCH_FORMAT.md</code> (column reference)</li>
+</ul>
+
+<h2>Conventions</h2>
+<ul>
+  <li><strong>Channels:</strong> ZNE in/out (RED-PAN wrapper rotates internally).</li>
+  <li><strong>Normalisation:</strong> applied <strong>internally</strong> by every model —
+      peak for SeisBench, per-window Z-score for RED-PAN; <strong>never pre-normalise</strong>.</li>
+  <li><strong>Preprocessing:</strong> demean + linear-detrend + 1–45 Hz Butterworth band-pass
+      (matches EQT training-time filter).</li>
+  <li><strong>Checkpoint loading:</strong>
+      <code>from rose.checkpoint_io import safe_torch_load</code> — never bare
+      <code>torch.load</code>.</li>
+  <li><strong>Paths:</strong> env vars <code>ROSE_DATA_DIR</code>,
+      <code>STEAD_DIR</code>, <code>ROSE_TRAIN_OUT_DIR</code>,
+      <code>ROSE_EVAL_DIR</code> (<code>.env.example</code>); no hardcoded
+      <code>/home/&lt;user&gt;/…</code>; print via <code>_rel(p)</code>.</li>
+  <li><strong>Model IDs:</strong> <code>eqt_rose</code>, <code>phasenet_rose</code>,
+      <code>redpan_tf60</code> — no <code>_v3</code> / <code>_v2</code> suffixes.</li>
+</ul>
+
+<h2>Don't commit</h2>
+<p><code>data/</code>, <code>eval/</code>, <code>checkpoints/</code>,
+<code>outputs/</code>, <code>rose_split_index.*</code> — all gitignored.</p>
+
+<h2>Verify</h2>
+<p><code>pytest tests/</code> (39 tests; pins the split partition +
+<code>safe_torch_load</code> behaviour).</p>
+
+<p class="meta">
+  Companion to <a href="AGENTS.md"><code>AGENTS.md</code></a>.
+  Source: <a href="https://github.com/tso1257771/RoSE">github.com/tso1257771/RoSE</a>.
+</p>
+
+</main>
+</body>
+</html>
