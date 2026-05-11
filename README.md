@@ -1,167 +1,230 @@
 # RoSE — Romanian Seismic Events
 
-> **RoSE: a ROMPLUS-enhanced Romanian seismic dataset for machine-learning and
-> seismological foundations.**
+> A ROMPLUS-enhanced Romanian seismic dataset for machine learning and
+> seismological applications, plus three published phase pickers benchmarked
+> on it.
 
 End-to-end glue for the **RoSE Romanian seismic dataset** (2014–2024) in
-[SeisBench](https://github.com/seisbench/seisbench) format.
+[SeisBench](https://github.com/seisbench/seisbench) format: ~19 230 events and
+~416 000 picks, distributed as yearly chunks of bucketed HDF5 plus per-trace
+metadata. Built from the NIEP **ROMPLUS** catalog, relocated with hypoDD3D and
+repicked with RED-PAN. *ROMPLUS* names the source bulletin (a registered NIEP
+product); *RoSE* names the derived, ML-ready dataset that we publish.
 
-The published dataset is built from the NIEP **ROMPLUS** catalog, relocated
-with hypoDD3D and repicked with RED-PAN. Throughout this repository
-*ROMPLUS* refers to the **source bulletin name** (a registered NIEP product),
-while *RoSE* is the name of the **derived, ML-ready dataset** that we publish.
-
-The published RoSE SeisBench bundle (`data/rose/`) contains
-~19 230 events and ≈ 416 000 picks (2014–2024), distributed as yearly
-chunks of bucketed HDF5 plus per-trace metadata.
+This repo also ships a small ML pipeline: deterministic train/dev/test split,
+training scripts that fine-tune `seisbench.models.EQTransformer` and
+`PhaseNet` on RoSE, a benchmark suite that scores them against STEAD, and a
+self-contained release bundle (`application/seisbench-rose-benchmark/`) with
+the trained checkpoints, unified loaders, and headline-number CSVs.
 
 ---
 
-## Layout
+## I want to…
 
-```
-seisbench_integration/
-├── README.md
-├── docs/
-│   ├── DATASET.md           # native HDF5 schema (intermediate build)
-│   └── SEISBENCH_FORMAT.md  # published RoSE schema + column reference
-├── rose/                    # importable package (the "rose" Python module)
-│   ├── __init__.py
-│   ├── convert.py           # native HDF5  →  SeisBench format
-│   ├── dataset.py           # RoSE(WaveformDataset) wrapper
-│   └── qc.py                # waveform quality-control primitives
-├── examples/                # tutorials targeting the published dataset
-│   ├── 01_load_and_browse.py
-│   ├── 03_eqt_instance_vrancea.py
-│   └── 04_event_ground_motion.py
-├── stationxml_sources/      # response-archive build helpers
-│   └── sc3ml_niep/
-│       └── sc3ml_to_stationxml.py   # SeisComP SC3ML → FDSN StationXML
-└── tests/                   # unit tests for the rose package
-```
+| Goal                                              | Read / run |
+|---|---|
+| **Load and browse the dataset**                   | [Quickstart](#quickstart) below + `examples/01_load_and_browse.py` |
+| Reference the dataset schema                       | [`docs/SEISBENCH_FORMAT.md`](docs/SEISBENCH_FORMAT.md) |
+| **Use a published picker on my data**             | [`application/seisbench-rose-benchmark/`](application/seisbench-rose-benchmark/README.md) |
+| Reproduce the paper's benchmark numbers            | `bash application/seisbench-rose-benchmark/scripts/reproduce_all.sh` |
+| **Fine-tune EQT / PhaseNet on RoSE**              | [Training & benchmarking](#training--benchmarking) below + `training/` |
+| Run a single picker on RoSE / STEAD                | `benchmark/bench_pickers_rose.py`, `bench_stead_test.py` |
+| Build the SeisBench bundle from the native HDF5    | [`docs/DATASET.md`](docs/DATASET.md) + `rose.convert.convert_all` |
 
-The 35 GB published waveform dataset (`data/rose/`) and the curated
-StationXML response archive (`data/rose_stationxml/`, ~80 MB) are
-distributed separately on Zenodo and are **not** tracked in this
-repository. Mount or symlink them at `./data/rose/` and
-`./data/rose_stationxml/` after cloning, or set the `ROSE_DATA_DIR` /
-`ROSE_STATIONXML_DIR` environment variables. The
-`stationxml_sources/sc3ml_niep/sc3ml_to_stationxml.py` helper is
-included for reproducibility of the response-archive build from
-upstream SeisComP inventories.
+---
 
 ## Install
 
-The package definition lives in `pyproject.toml`. We recommend
-[uv](https://github.com/astral-sh/uv) for fast, reproducible installs.
+The package lives in `pyproject.toml` (Python ≥ 3.10). Pick the path that fits
+your tooling:
 
 ```bash
-# 1) get uv (one-time)
-curl -LsSf https://astral.sh/uv/install.sh | sh
+git clone https://github.com/tso1257771/RoSE.git
+cd RoSE
 
-# 2) create an isolated env and install the package
-cd seisbench_integration
-uv venv --python 3.11
-source .venv/bin/activate
+# A) uv (fastest, recommended)
+uv venv --python 3.11 && source .venv/bin/activate
+uv pip install -e ".[cpu]"        # or .[cuda] for GPU work
 
-# Pick ONE torch variant — CPU is enough for tutorials 01 and 03:
-uv pip install -e ".[cpu]"
-# or, for GPU work:
-uv pip install -e ".[cuda]"
-```
+# B) pip (works everywhere)
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt && pip install -e .
 
-Pip-only fallback:
-
-```bash
-pip install -r requirements.txt
-pip install -e .
-```
-
-### Docker
-
-A reproducible CPU image is provided. The tutorials read the dataset path
-from the `ROSE_DATA_DIR` environment variable (default `/data` inside the
-image, default `./data/rose` outside), so you mount the dataset at `/data`
-and run any tutorial directly:
-
-```bash
+# C) Docker (CPU-only image; mount data/ as a volume — see "Docker" below)
 docker build -t rose:cpu .
-docker run --rm -it \
-    -v $(pwd)/data/rose:/data:ro \
-    rose:cpu python 01_load_and_browse.py
 ```
 
-The 35 GB `data/` directory is intentionally excluded from the image
-(`.dockerignore`) — always mount it as a volume.
+Optional extras: `.[bench]` adds `scikit-learn` for the benchmark scripts;
+`.[tf]` adds `tensorflow` for the RED-PAN-60s picker; `.[dev]` adds `pytest`
+and `ruff`.
+
+The 35 GB published waveform dataset (`data/rose/`) and the 80 MB StationXML
+response archive (`data/rose_stationxml/`) are distributed separately on
+Zenodo — **not** in this repo. Mount or symlink them at `./data/rose/` and
+`./data/rose_stationxml/` after cloning, or set the `ROSE_DATA_DIR` /
+`ROSE_STATIONXML_DIR` environment variables.
+
+---
 
 ## Quickstart
 
 ```python
 from rose import RoSE
 
-# Open the published dataset (yearly chunks + chunks manifest).
-data = RoSE(
-    "/path/to/data/rose",
-    component_order="ZNE",    # PhaseNet/EQTransformer convention
-)
-
+data = RoSE("/path/to/data/rose", component_order="ZNE")  # PhaseNet/EQT order
 print(len(data), "traces")
-wf_counts, meta = data.get_sample(0)              # raw counts, shape (3, npts)
-wf_phys,   meta = data.get_sample_physical(0)     # M/S or M/S**2, same shape
+
+wf_counts, meta = data.get_sample(0)            # raw counts, shape (3, npts)
+wf_phys,   meta = data.get_sample_physical(0)   # M/S or M/S**2 — divides by per-trace sensitivity
 ```
 
-If you have the *native* yearly HDF5 build (the intermediate ROMPLUS
-HDF5 produced before the SeisBench layout), `rose.convert.convert_all`
-re-builds the SeisBench bundle from it. See `docs/DATASET.md` for the
-native schema and `rose/convert.py` for the converter API.
+The dataset stores **counts** on disk and the per-component sensitivity values
+in metadata; `get_sample_physical` does the divide for you and raises on traces
+with no usable response (~4 %). Why this design? See
+[`docs/SEISBENCH_FORMAT.md#units--instrument-response`](docs/SEISBENCH_FORMAT.md).
 
-### Why a single counts file, not two HDF5s?
+---
 
-For publication it is wasteful to ship counts and physical units
-separately: physical units are exactly `counts / sensitivity_value`, and
-the sensitivities live in the StationXML that produced the physical
-build. The converter therefore stores **only counts** on disk (smaller,
-lossless, integer-valued) and attaches the per-component sensitivity
-values plus the response status as metadata columns:
+## Tutorials (`examples/`)
 
-| Column | Meaning |
-|---|---|
-| `trace_units` | always `"counts"` (what is stored) |
-| `trace_unit_physical` | `"M/S"`, `"M/S**2"`, … (target unit after divide) |
-| `trace_sensitivity_e/n/z` | divisor for each component (counts / sens) |
-| `trace_status_physical` | `ok`, `partial_response`, `missing_response` |
-| `trace_missing_response_components` | comma list of components without response |
+Three runnable examples, each end-to-end against the published dataset:
 
-`RoSE.get_sample_physical(idx)` does the divide for you and raises if the
-trace lacks a valid response (~4 % of traces).
-
-## Walkthrough
-
-`examples/` covers the published dataset end-to-end:
-
-1. **`01_load_and_browse.py`** — open via `RoSE`, filter on
+1. **`01_load_and_browse.py`** — open the bundle, filter on
    `trace_p_snr_db` / `source_magnitude`, plot a random pick.
-2. **`03_eqt_instance_vrancea.py`** — full demo on the $M_w$ 5.8 Vrancea
-   slab event (2018-10-28, 153 km depth, 68 stations): reconstruct an
-   ObsPy `Stream` from the SeisBench dataset, run
-   `EQTransformer.from_pretrained("instance")`, and plot a record section
-   with catalog and model picks overlaid plus residual statistics.
+2. **`03_eqt_instance_vrancea.py`** — full demo on the *M*<sub>w</sub> 5.8
+   Vrancea slab event (2018-10-28, 153 km depth, 68 stations): rebuild an
+   ObsPy `Stream` from SeisBench, run `EQTransformer.from_pretrained("instance")`,
+   plot a record section with catalog and model picks plus residuals.
 3. **`04_event_ground_motion.py`** — single-event ground-motion workflow:
-   loads an event, runs waveform QC (`rose.qc`: clipping / dead / gaps /
-   spikes / SNR), defines the S-coda window via Arias intensity D5–95,
-   removes instrument response from the bundled StationXML, and extracts
-   PGA/PGV/PGD per pick source. Requires `data/rose_stationxml/` to be
-   mounted alongside the dataset.
+   waveform QC (`rose.qc`), Arias-intensity D5–95 coda window, instrument
+   response removal from the bundled StationXML, PGA / PGV / PGD per pick
+   source. Requires `data/rose_stationxml/`.
+
+```bash
+python examples/01_load_and_browse.py    # produces outputs/01_*.png
+```
+
+---
+
+## Use the published pickers
+
+`application/seisbench-rose-benchmark/` is a self-contained release with three
+trained checkpoints (EQT-RoSE 1.6 MB, PhaseNet-RoSE 1.1 MB, RED-PAN-60s
+5.8 MB), unified SeisBench-style loaders, the headline-number CSVs, and a
+one-shot reproducer. Smallest path to predictions:
+
+```python
+import sys; sys.path.insert(0, "application/seisbench-rose-benchmark")
+from benchmarks.models import load_eqt_rose
+
+model = load_eqt_rose()                                    # 1.6 MB checkpoint, weights_only=True
+out   = model.classify(stream, P_threshold=0.3, S_threshold=0.3,
+                       detection_threshold=0.3)            # ObsPy Stream in
+print(out.picks, out.detections)
+```
+
+See [`application/seisbench-rose-benchmark/README.md`](application/seisbench-rose-benchmark/README.md)
+for the full release docs and `models/README.md` for per-model cards.
+
+---
+
+## Training & benchmarking
+
+Three sibling directories hold the ML pipeline behind the published pickers.
+The scripts read default paths from environment variables (see `.env.example`)
+and accept explicit `--rose-dir` / `--stead-dir` / `--out-dir` overrides:
+
+```bash
+pip install -e ".[cuda,bench]"              # torch + scikit-learn
+cp .env.example .env && $EDITOR .env        # set ROSE_DATA_DIR, STEAD_DIR, …
+```
+
+* **`training/`** — fine-tune SeisBench `EQTransformer` / `PhaseNet` from
+  the INSTANCE pretrained weights on the RoSE training split (DDP, AMP, Adam):
+
+  ```bash
+  python training/build_rose_split_index.py     # write the SeisBench `split` column
+  python training/train_eqt_rose.py      --epochs 30 --batch-size 128 --lr 1e-4
+  python training/train_phasenet_rose.py --epochs 30 --batch-size 256 --lr 1e-4
+  ```
+
+  `build_rose_split_index.py` uses RED-PAN's deterministic `hash_split` (salt
+  `ROMPLUS-singleEQ-v1`, vendored in `rose/splits.py`) so every trace of one
+  earthquake stays in the same split — no event-level leakage. The TWCC
+  launcher shells used for the published runs are under `training/cloud/`.
+
+* **`benchmark/`** — score pickers on the RoSE / STEAD test sets
+  (per-phase precision/recall/F1, MCC, residual stats, trace-level
+  event-vs-noise T1). `bench_pickers_rose.py` is the canonical SeisBench-API
+  entry point; `bench_stead_test.py` and `bench_redpan_rose.py` add the
+  RED-PAN-60s comparison (needs `.[tf]`). The exact test-set composition is
+  pinned by the index files in `application/.../data/`; regenerate them with
+  `python benchmark/build_test_indices.py [--stead-dir $STEAD_DIR]`.
+
+* **`application/seisbench-rose-benchmark/`** — the published release (model
+  weights + verifiable `SHA256SUMS` + loaders + `pickerbench` scoring +
+  `redpan_inference` subset + `results/*.csv`). One-shot reproduction:
+
+  ```bash
+  bash application/seisbench-rose-benchmark/scripts/reproduce_all.sh
+  ```
+
+All `.pt` checkpoints are loaded via `rose.checkpoint_io.safe_torch_load`,
+which forces `torch.load(weights_only=True)` — the restricted unpickler — so
+running the scripts on third-party `.pt` files cannot trigger the classic
+pickle-deserialization RCE.
+
+---
+
+## Docker
+
+A reproducible CPU image is provided. The tutorials read the dataset path from
+`ROSE_DATA_DIR` (default `/data` inside the image). Mount the dataset and run
+any tutorial directly:
+
+```bash
+docker build -t rose:cpu .
+docker run --rm -it -v $(pwd)/data/rose:/data:ro \
+    rose:cpu python 01_load_and_browse.py
+```
+
+The 35 GB `data/` directory is excluded from the image (`.dockerignore`) —
+always mount it as a volume.
+
+---
 
 ## Tests
 
-The unit-test suite exercises the `rose` package directly (no large
-dataset required):
+The unit suite exercises the `rose` package directly (no large dataset needed):
 
 ```bash
-pip install pytest
-python -m pytest tests/ -q
+pip install -e ".[dev]"
+pytest tests/ -q          # 39 tests
 ```
+
+`tests/test_splits.py` golden-value pin tests guarantee the deterministic
+split partition remains bit-for-bit reproducible.
+
+---
+
+## Repo layout
+
+```
+RoSE/
+├── rose/                          # importable package (loader + helpers)
+├── examples/                      # 01, 03, 04 — runnable tutorials
+├── docs/                          # DATASET.md, SEISBENCH_FORMAT.md (schemas)
+├── training/                      # SeisBench EQT / PhaseNet RoSE training
+├── benchmark/                     # multi-model benchmark suite (RoSE + STEAD)
+├── application/seisbench-rose-benchmark/   # published release: weights + loaders + results
+├── stationxml_sources/sc3ml_niep/ # SeisComP SC3ML → FDSN StationXML helper
+└── tests/                         # pytest unit tests
+```
+
+(`data/`, `outputs/`, `checkpoints/`, `eval/`, `rose_split_index.*` are
+gitignored — see `.env.example` for the env vars that point at them.)
+
+---
 
 ## Provenance
 
@@ -170,16 +233,20 @@ python -m pytest tests/ -q
 | Event hypocenters | hypoDD3D relocations of the NIEP ROMPLUS catalog |
 | Origin time, magnitude | inherited from ROMPLUS (`source_*_raw`) |
 | Manual picks | NIEP ROMPLUS bulletins |
-| ML-assisted repicks | RED-PAN 60s, 3 s/5 s P/S consistency window vs. theoretical (NLLoc) |
+| ML-assisted repicks | RED-PAN 60 s, 3 s / 5 s P / S consistency window vs. NLLoc theoretical |
 | Pick selection | higher-SNR among manual / RED-PAN; theoretical-only never used |
-| Sampling | **always** resampled to 100 Hz on a uniform reference axis with median-pad fill |
-| Component order | **ZNE** on disk in `data/rose/` (canonical SeisBench order) — vanilla `seisbench.data.WaveformDataset(path)` works without specifying `component_order` |
-| Instrument response | StationXML bundled in `data/rose_stationxml/` covers **217/226 stations (96 %)**: 152 with full poles+zeros (FDSN-fetched, enables `remove_response`), 65 with overall sensitivity only (NIEP-provided). The 9 stations with no public response at all (1 SJ + 8 TU, 0.21 % of traces) still carry per-trace `trace_sensitivity_{e,n,z}` in the metadata. |
-| Event coverage | **19 228 / 19 230 catalog events** have waveforms in `data/rose/`. Two catalog events (`2014_0001698`, `2020_0000816`) are excluded because no recording station had all three E/N/Z components in a single band code. |
+| Sampling | resampled to 100 Hz on a uniform reference axis with median-pad fill |
+| Component order | **ZNE** on disk (canonical SeisBench order) |
+| Instrument response | StationXML covers **217 / 226 stations (96 %)**: 152 with full poles+zeros (FDSN-fetched), 65 with overall sensitivity only (NIEP-provided). 9 stations (1 SJ + 8 TU; 0.21 % of traces) have no public response — the metadata still carries `trace_sensitivity_{e,n,z}` for them. |
+| Event coverage | **19 228 / 19 230** catalog events have waveforms (two excluded for missing all-three-component recordings: `2014_0001698`, `2020_0000816`). |
+
+---
 
 ## Citation
 
-If you use this dataset, please cite both the **ROMPLUS** source bulletin
-(NIEP) and the **RoSE** dataset paper that accompanies this compilation. See
-`docs/DATASET.md` for the native HDF5 attribute schema and
-`docs/SEISBENCH_FORMAT.md` for the RoSE metadata column reference.
+If you use this dataset or the published checkpoints, please cite both the
+**ROMPLUS** source bulletin (NIEP) and the **RoSE** dataset paper that
+accompanies this compilation. See `docs/DATASET.md` for the native HDF5
+schema and `docs/SEISBENCH_FORMAT.md` for the column reference; the picker
+release has its own citation block in
+[`application/seisbench-rose-benchmark/README.md#citation`](application/seisbench-rose-benchmark/README.md#citation).

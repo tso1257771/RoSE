@@ -8,6 +8,24 @@ data/
 # Run outputs: figures, per-event tables, MiniSEED exports.
 outputs/
 
+# Local training outputs (per-epoch ckpts + train.log + history.json). The
+# *published* checkpoints live under application/seisbench-rose-benchmark/
+# models/ and are versioned; this dir is whatever was produced on this machine.
+checkpoints/
+
+# Local benchmark outputs (per-run JSON / CSV / log / viz PNGs under eval/<run>/).
+# The *published* benchmark numbers live in
+# application/seisbench-rose-benchmark/results/.
+eval/
+
+# Derived split index (full train/dev/test assignment for the local copy of the
+# RoSE dataset). Regenerated idempotently by
+# training/build_rose_split_index.py; the pinned test-set composition is
+# committed under application/seisbench-rose-benchmark/data/rose_test_index.csv,
+# so the multi-MB full-split file does not need to be versioned.
+rose_split_index.csv
+rose_split_index.json
+
 # ---------------------------------------------------------------------------
 # Excluded from the public dataset-companion repository
 # (kept on disk locally; not pushed to GitHub)
@@ -85,10 +103,13 @@ env/
 .ipynb_checkpoints/
 
 # ---------------------------------------------------------------------------
-# Editors / OS
+# Editors / OS / agent metadata
 # ---------------------------------------------------------------------------
 .vscode/
 .idea/
+.claude/
+.codex/
+.antigravity/
 *.swp
 *.swo
 .DS_Store
@@ -103,3 +124,24 @@ Thumbs.db
 *.key
 *.pem
 credentials*.json
+
+# ---------------------------------------------------------------------------
+# ML pipeline (training / benchmark / published model release)
+# These dirs ARE versioned — re-include them and the few binary artifacts
+# (small SeisBench checkpoints + the RED-PAN Keras model) that the generic
+# safety-net patterns above would otherwise swallow. Negation rules must come
+# after the patterns they override, so they live here at the end of the file.
+# ---------------------------------------------------------------------------
+!training/
+!benchmark/
+!application/
+# The published benchmark release ships its requirements under env/ and its
+# test-set index files / download notes under data/ — un-ignore those specific
+# directories (the generic `env/` and `data/` rules above are meant for
+# virtualenvs and the multi-GB waveform datasets, respectively).
+!application/seisbench-rose-benchmark/env/
+!application/seisbench-rose-benchmark/data/
+# Bundled model weights in the release (1.6 MB + 1.1 MB SeisBench .pt,
+# 5.8 MB RED-PAN Keras .hdf5). Small enough to version with the code.
+!application/seisbench-rose-benchmark/models/**/*.pt
+!application/seisbench-rose-benchmark/models/**/*.hdf5
