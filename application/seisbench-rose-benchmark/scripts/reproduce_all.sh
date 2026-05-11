@@ -10,11 +10,21 @@
 #
 # Per-model outputs land at <out-dir>/<dataset>/<model>/<model>.json, then are
 # aggregated into <out-dir>/<dataset>_picking.csv and <out-dir>/<dataset>_detection.csv.
-# Compare those against the committed results/<dataset>_picking.csv / _detection.csv
-# (the EQT-RoSE / PhaseNet-RoSE / RED-PAN-60s rows should match to floating-point
-# precision; the committed files also carry off-the-shelf `instance` / `ethz` /
-# `stead` baselines and a *_residual_stats.csv from the main repo's full benchmark,
-# which aren't re-run here). Nothing under results/ is overwritten.
+#
+# This is an INDEPENDENT re-score with the release's own (self-contained,
+# deliberately simple) pickerbench/ scoring — handy for confirming the
+# checkpoints load and pick sanely and for ballpark per-phase precision/recall/
+# F1. It is NOT a bit-for-bit reproduction of the committed results/*.csv:
+# those come from the main repo's full benchmark suite (benchmark/build_*),
+# which uses a richer schema, a separate dedicated-noise pass, and the
+# "FP on dedicated-noise traces only" convention for the RoSE pool (RoSE event
+# labels are incomplete). STEAD rows track the committed ones closely at full
+# scale; RoSE precision/FP differ by construction. The committed CSVs also
+# carry off-the-shelf `instance`/`ethz`/`stead` baselines and a
+# *_residual_stats.csv, which aren't re-run here. Nothing under results/ is
+# overwritten (output goes only under <out-dir>/, default results/runs/).
+# Note: --num-test for the STEAD pools takes the first N traces, not a random
+# sample, so a small subset can be unrepresentative.
 set -euo pipefail
 
 ROSE_DIR=""

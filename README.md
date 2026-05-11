@@ -26,7 +26,7 @@ the trained checkpoints, unified loaders, and headline-number CSVs.
 | **Load and browse the dataset**                   | [Quickstart](#quickstart) below + `examples/01_load_and_browse.py` |
 | Reference the dataset schema                       | [`docs/SEISBENCH_FORMAT.md`](docs/SEISBENCH_FORMAT.md) |
 | **Use a published picker on my data**             | [`application/seisbench-rose-benchmark/`](application/seisbench-rose-benchmark/README.md) |
-| Reproduce the paper's benchmark numbers            | `bash application/seisbench-rose-benchmark/scripts/reproduce_all.sh` |
+| Re-score the 3 bundled pickers on RoSE / STEAD     | `bash application/seisbench-rose-benchmark/scripts/reproduce_all.sh` (sanity check; not a bit-exact rebuild of `results/*.csv` — see that README) |
 | **Fine-tune EQT / PhaseNet on RoSE**              | [Training & benchmarking](#training--benchmarking) below + `training/` |
 | Run a single picker on RoSE / STEAD                | `benchmark/bench_pickers_rose.py`, `bench_stead_test.py` |
 | Build the SeisBench bundle from the native HDF5    | [`docs/DATASET.md`](docs/DATASET.md) + `rose.convert.convert_all` |
@@ -188,9 +188,10 @@ without one of these or the matching env var the scripts exit with a clear error
 
 * **`application/seisbench-rose-benchmark/`** — the published release (model
   weights + verifiable `SHA256SUMS` + loaders + `pickerbench` scoring +
-  `redpan_inference` subset + `results/*.csv`). One-shot reproduction (writes
-  `application/seisbench-rose-benchmark/results/runs/`, doesn't touch the
-  committed `results/*.csv`):
+  `redpan_inference` subset + `results/*.csv`). One-shot re-score of the three
+  bundled checkpoints (writes only `application/seisbench-rose-benchmark/results/runs/`;
+  a sanity check, **not** a bit-exact rebuild of the committed `results/*.csv` —
+  see the release README):
 
   ```bash
   bash application/seisbench-rose-benchmark/scripts/reproduce_all.sh \
