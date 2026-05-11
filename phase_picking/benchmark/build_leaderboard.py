@@ -53,6 +53,7 @@ def main() -> None:
     # accepted-but-ignored so `regenerate_results.sh ... | run_inference.py | build_leaderboard.py`
     # can forward the same arg list to both stages
     ap.add_argument("--num-test", default=None, help=argparse.SUPPRESS)
+    ap.add_argument("--jobs", default=None, help=argparse.SUPPRESS)
     ap.add_argument("--skip-rose", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--skip-stead", action="store_true", help=argparse.SUPPRESS)
     args = ap.parse_args()
