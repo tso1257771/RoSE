@@ -5,7 +5,8 @@
 #   bash scripts/reproduce_all.sh \
 #       --rose-dir  /path/to/rose \
 #       --stead-dir /path/to/STEAD/benchmark_stead \
-#       --out-dir   results/runs
+#       --out-dir   results/runs \
+#       [--num-test N]      # smoke test: cap each pool at N traces (0 = full)
 #
 # Per-model outputs land at <out-dir>/<dataset>/<model>/<model>.json, then are
 # aggregated into <out-dir>/<dataset>_picking.csv and <out-dir>/<dataset>_detection.csv.
@@ -19,12 +20,14 @@ set -euo pipefail
 ROSE_DIR=""
 STEAD_DIR=""
 OUT_DIR="results/runs"
+NUM_TEST=0          # 0 = full split/pool; >0 = smoke-test on N traces per pool
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --rose-dir)  ROSE_DIR="$2"; shift 2 ;;
     --stead-dir) STEAD_DIR="$2"; shift 2 ;;
     --out-dir)   OUT_DIR="$2"; shift 2 ;;
+    --num-test)  NUM_TEST="$2"; shift 2 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
 done
@@ -44,7 +47,7 @@ for MODEL in eqt_rose phasenet_rose redpan_tf60; do
   echo "==> $MODEL on RoSE"
   python benchmarks/run_benchmark.py \
     --model "$MODEL" --dataset rose \
-    --rose-dir "$ROSE_DIR" \
+    --rose-dir "$ROSE_DIR" --num-test "$NUM_TEST" \
     --out-dir "$OUT_DIR/rose/$MODEL"
 done
 
@@ -52,7 +55,7 @@ for MODEL in eqt_rose phasenet_rose redpan_tf60; do
   echo "==> $MODEL on STEAD"
   python benchmarks/run_benchmark.py \
     --model "$MODEL" --dataset stead \
-    --stead-dir "$STEAD_DIR" \
+    --stead-dir "$STEAD_DIR" --num-test "$NUM_TEST" \
     --out-dir "$OUT_DIR/stead/$MODEL"
 done
 
