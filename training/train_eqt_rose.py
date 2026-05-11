@@ -39,7 +39,6 @@ from rose.checkpoint_io import safe_torch_load  # noqa: E402
 import numpy as np
 import torch
 import torch.distributed as dist
-import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler

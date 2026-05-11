@@ -24,7 +24,7 @@ from obspy.signal.util import smooth
 from scipy.signal import resample_poly
 from .utils import (
     sac_len_complement, stream_standardize,
-    pad_waveform_with_noise, generate_matching_noise, find_reference_signal
+    generate_matching_noise, find_reference_signal
 )
 from .picks import pred_postprocess
 
@@ -1204,7 +1204,6 @@ def conti_standard_wf_fast(wf, pred_npts, pred_interval_sec, dt, pad_zeros=True)
     """
     Legacy waveform preparation function - kept for compatibility.
     """
-    from .utils import sac_len_complement
     from copy import deepcopy
     
     raw_n = len(wf[0].data)
