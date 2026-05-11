@@ -29,7 +29,6 @@ import numpy as np
 import pandas as pd
 import torch
 from obspy import Stream, Trace, UTCDateTime
-from obspy.signal.trigger import trigger_onset
 from scipy.signal import find_peaks
 
 import seisbench.models as sbm

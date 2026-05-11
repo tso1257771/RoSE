@@ -46,7 +46,6 @@ _THIS_DIR = Path(__file__).resolve().parent          # benchmark/
 REPO_ROOT = _THIS_DIR.parent                          # repo root
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(_THIS_DIR))                    # sibling bench_* + redpan_inference
-from rose.checkpoint_io import safe_torch_load  # noqa: E402
 
 # Import metric helpers from the SeisBench bench script for parity.
 from bench_pickers_rose import (  # noqa: E402

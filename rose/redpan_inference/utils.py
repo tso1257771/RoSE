@@ -10,7 +10,6 @@ waveform validation, and other helper functions.
 import gc
 import logging
 import numpy as np
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 

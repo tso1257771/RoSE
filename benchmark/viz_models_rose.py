@@ -36,7 +36,6 @@ from scipy.signal import find_peaks
 
 import seisbench.data as sbd
 import seisbench.models as sbm
-import torch
 
 _THIS_DIR = Path(__file__).resolve().parent          # benchmark/
 REPO_ROOT = _THIS_DIR.parent                          # repo root
