@@ -101,14 +101,17 @@ Four runnable examples, each end-to-end against the published dataset:
    response removal from the bundled StationXML, PGA / PGV / PGD per pick
    source. Requires `data/rose_stationxml/`.
 4. **`04_picker_inference.py`** — load all three published checkpoints
-   (EQT-RoSE, PhaseNet-RoSE, RED-PAN-60s) via the release loaders and run
-   them on a few held-out test traces; prints a per-model residual table
-   and saves an overlay plot. RED-PAN-60s needs `.[tf]` (TensorFlow) — pass
-   `--no-redpan` to skip it.
+   (PhaseNet-RoSE, EQT-RoSE, RED-PAN-60s) via the release loaders and run
+   them on a few held-out test traces. Saves one 6-panel PNG per trace
+   under `outputs/04_picker_inference/trace_<idx>.png` (Z, N, E waveforms
+   on top; PhaseNet, EQTransformer, RED-PAN probability curves below,
+   each `ylim=[0, 1]`, all sharing the same time axis so timestamps line
+   up vertically) plus a per-model residual table on stdout. RED-PAN-60s
+   needs `.[tf]` (TensorFlow) — pass `--no-redpan` to skip it.
 
 ```bash
 python examples/01_load_and_browse.py     # outputs/01_load_and_browse.png
-python examples/04_picker_inference.py    # outputs/04_picker_inference.png
+python examples/04_picker_inference.py    # outputs/04_picker_inference/trace_*.png
 ```
 
 ---

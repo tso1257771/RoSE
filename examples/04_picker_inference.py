@@ -1,6 +1,6 @@
 """Tutorial 4 — Run all three published RoSE pickers on test traces.
 
-Smallest end-to-end demo of the released checkpoints under
+End-to-end demo of the released checkpoints under
 ``application/seisbench-rose-benchmark/models/``:
 
     1. Open `data/rose` with `RoSE`.
@@ -8,14 +8,22 @@ Smallest end-to-end demo of the released checkpoints under
        if the `split` column hasn't been materialised yet).
     3. Pick a few well-labelled test traces (both P and S in window).
     4. Reconstruct an ObsPy Stream per trace.
-    5. Load EQT-RoSE, PhaseNet-RoSE, and RED-PAN-60s via the release loaders
-       (``application/seisbench-rose-benchmark/benchmarks/models.py``).
-    6. Run ``model.classify(stream, ...)`` on each model and compare
-       the predicted picks to the catalog labels — print a per-model
-       residual table, plot a 2×2 panel with all three picker overlays.
+    5. Load PhaseNet-RoSE, EQT-RoSE, and RED-PAN-60s via the release
+       loaders (``application/seisbench-rose-benchmark/benchmarks/models.py``).
+    6. Run each model and grab raw per-sample probability curves
+       (``model.annotate(stream)`` for SeisBench, ``REDPAN.predict(...,
+       postprocess=False)`` for RED-PAN), plus picks from
+       ``model.classify(stream)``; compare to the catalog labels and
+       print a per-model residual table.
+    7. For every selected trace, save a 6-panel PNG with a shared time
+       axis: Z/N/E waveforms on top, then PhaseNet / EQTransformer /
+       RED-PAN probability curves (each ylim ``[0, 1]``). Catalog and
+       predicted picks are drawn as vertical lines across all panels so
+       timestamps line up vertically.
 
 RED-PAN-60s requires TensorFlow; if it isn't installed (or you pass
-``--no-redpan``) the example runs the two SeisBench pickers only.
+``--no-redpan``) the example runs the two SeisBench pickers only and the
+RED-PAN row is omitted.
 
 Usage:
     python examples/04_picker_inference.py
@@ -23,7 +31,8 @@ Usage:
     python examples/04_picker_inference.py --device cuda
     python examples/04_picker_inference.py --no-redpan          # PyTorch only
 
-Outputs: ``outputs/04_picker_inference.png`` and a residual summary on stdout.
+Outputs: ``outputs/04_picker_inference/trace_<idx>.png`` (one per trace) +
+a residual summary on stdout.
 """
 from __future__ import annotations
 
@@ -51,7 +60,7 @@ from benchmarks.models import (  # noqa: E402
 
 DATA_DIR = os.environ.get("ROSE_DATA_DIR", str(REPO_ROOT / "data" / "rose"))
 MODELS_DIR = RELEASE / "models"
-OUT_PNG = REPO_ROOT / "outputs" / "04_picker_inference.png"
+OUT_DIR = REPO_ROOT / "outputs" / "04_picker_inference"
 
 # RED-PAN paper convention; see benchmark/ for why the tolerances aren't symmetric.
 TOL_P_SEC = 0.5
@@ -62,13 +71,16 @@ P_THRESHOLD = 0.3
 S_THRESHOLD = 0.3
 DETECTION_THRESHOLD = 0.3
 
-# Per-model line styles for the picks overlay.
-MODEL_STYLES = {
-    "EQT-RoSE":      {"ls": "--", "lw": 1.0, "alpha": 0.85},
-    "PhaseNet-RoSE": {"ls": ":",  "lw": 1.4, "alpha": 0.85},
-    "RED-PAN-60s":   {"ls": "-.", "lw": 1.0, "alpha": 0.85},
+# Plotting palette: phase = colour, model = line style.
+PHASE_COLORS = {
+    "P":         "tab:blue",
+    "S":         "tab:red",
+    "N":         "tab:gray",      # PhaseNet's "noise" channel
+    "Detection": "tab:green",     # EQT detection / RED-PAN event mask
 }
-PHASE_COLORS = {"P": "tab:blue", "S": "tab:red"}
+WAVEFORM_COLOR = "black"
+CATALOG_LW = 1.5
+PRED_LW = 0.9
 
 
 # ---------------------------------------------------------------------------
@@ -128,11 +140,73 @@ def trace_to_stream(wf: np.ndarray, meta) -> Stream:
     return Stream(traces)
 
 
+def reorder_zne_to_enz(stream_zne: Stream) -> Stream:
+    """Return a new Stream in E, N, Z order (RED-PAN's training convention)."""
+    chans = {tr.stats.channel[-1]: tr for tr in stream_zne}
+    if set(chans) != {"Z", "N", "E"}:
+        raise ValueError(f"expected Z/N/E channels, got {sorted(chans)}")
+    return Stream([chans["E"], chans["N"], chans["Z"]])
+
+
 # ---------------------------------------------------------------------------
-# Per-trace inference + matching
+# Inference: raw probability curves + picks
 # ---------------------------------------------------------------------------
+def run_seisbench_curves(model, stream: Stream) -> dict:
+    """Return per-channel probability arrays + picks from a SeisBench model."""
+    anno = model.annotate(stream)
+    starttime = stream[0].stats.starttime
+    sr = float(stream[0].stats.sampling_rate)
+    curves: dict[str, np.ndarray] = {}
+    offsets: dict[str, float] = {}
+    for tr in anno:
+        # SeisBench annotation channel suffixes:
+        #   PhaseNet: <station>_PhaseNet_P / _S / _N
+        #   EQT:      <station>_EQTransformer_P / _S / _Detection
+        # The annotate Stream's starttime lags the input (blinding +
+        # sliding-window stitch); record the offset so curves align in time.
+        suffix = tr.stats.channel.split("_")[-1]
+        if suffix in {"P", "S", "N", "Detection"}:
+            curves[suffix] = np.asarray(tr.data, dtype=float)
+            offsets[suffix] = float(tr.stats.starttime - starttime)
+    out = model.classify(
+        stream,
+        P_threshold=P_THRESHOLD, S_threshold=S_THRESHOLD,
+        detection_threshold=DETECTION_THRESHOLD,
+    )
+    p_picks = [p for p in out.picks if str(p.phase).upper() == "P"]
+    s_picks = [p for p in out.picks if str(p.phase).upper() == "S"]
+    return {
+        "curves": curves, "offsets": offsets,
+        "p_picks": p_picks, "s_picks": s_picks,
+        "starttime": starttime, "sampling_rate": sr,
+    }
+
+
+def run_redpan_curves(wrapper, stream_zne: Stream) -> dict:
+    """Same shape as run_seisbench_curves, but for the RED-PAN-60s wrapper."""
+    enz = reorder_zne_to_enz(stream_zne)
+    p_arr, s_arr, m_arr = wrapper.redpan.predict(enz, postprocess=False)
+    starttime = enz[0].stats.starttime
+    sr = float(enz[0].stats.sampling_rate)
+    out = wrapper.classify(
+        stream_zne,
+        P_threshold=P_THRESHOLD, S_threshold=S_THRESHOLD,
+        detection_threshold=DETECTION_THRESHOLD,
+    )
+    p_picks = [p for p in out.picks if str(p.phase).upper() == "P"]
+    s_picks = [p for p in out.picks if str(p.phase).upper() == "S"]
+    return {
+        "curves": {"P": np.asarray(p_arr, dtype=float),
+                   "S": np.asarray(s_arr, dtype=float),
+                   "Detection": np.asarray(m_arr, dtype=float)},
+        "offsets": {"P": 0.0, "S": 0.0, "Detection": 0.0},
+        "p_picks": p_picks, "s_picks": s_picks,
+        "starttime": starttime, "sampling_rate": sr,
+    }
+
+
 def closest_match(predicted, target_time, tolerance_s):
-    """Return the predicted pick closest to ``target_time`` within ``tolerance_s``."""
+    """Return (best_pick, residual_seconds) within `tolerance_s`, or (None, None)."""
     best, best_dt = None, None
     for p in predicted:
         dt = float(p.peak_time - target_time)
@@ -141,84 +215,100 @@ def closest_match(predicted, target_time, tolerance_s):
     return best, best_dt
 
 
-def predict(model, stream: Stream) -> tuple[list, list]:
-    """Run model.classify and split into (P picks, S picks)."""
-    output = model.classify(
-        stream,
-        P_threshold=P_THRESHOLD, S_threshold=S_THRESHOLD,
-        detection_threshold=DETECTION_THRESHOLD,
-    )
-    p_picks = [p for p in output.picks if str(p.phase).upper() == "P"]
-    s_picks = [p for p in output.picks if str(p.phase).upper() == "S"]
-    return p_picks, s_picks
-
-
-def evaluate_one(stream: Stream, meta, models: dict) -> dict:
-    """Run every model on one trace and report per-phase residuals + match status."""
-    sr = float(meta["trace_sampling_rate_hz"])
-    starttime = UTCDateTime(meta["trace_start_time"])
-    true_p = starttime + float(meta["trace_p_arrival_sample"]) / sr
-    true_s = starttime + float(meta["trace_s_arrival_sample"]) / sr
-
-    per_model = {}
-    for name, model in models.items():
-        p_picks, s_picks = predict(model, stream)
-        _, p_dt = closest_match(p_picks, true_p, TOL_P_SEC)
-        _, s_dt = closest_match(s_picks, true_s, TOL_S_SEC)
-        per_model[name] = {
-            "p_picks": p_picks, "s_picks": s_picks,
-            "p_dt": p_dt, "s_dt": s_dt,
-        }
-    return {
-        "true_p": true_p, "true_s": true_s, "starttime": starttime,
-        "per_model": per_model,
-    }
-
-
 # ---------------------------------------------------------------------------
 # Plotting
 # ---------------------------------------------------------------------------
-def plot_panel(ax, stream: Stream, meta, result: dict, show_legend: bool):
-    sr = float(meta["trace_sampling_rate_hz"])
-    z = stream.select(channel="*Z")[0].data.astype(float)
-    z = z / (np.max(np.abs(z)) + 1e-9)
-    t = np.arange(len(z)) / sr
-    ax.plot(t, z, color="black", lw=0.6)
+def plot_event(stream: Stream, meta, true_p: UTCDateTime, true_s: UTCDateTime,
+               model_outputs: dict[str, dict], out_path: Path) -> None:
+    """One figure per trace: 3 waveform rows + N model-output rows.
 
-    starttime = result["starttime"]
-    # ground-truth picks (solid, thick)
-    ax.axvline(result["true_p"] - starttime, color=PHASE_COLORS["P"], lw=1.6, label="catalog P")
-    ax.axvline(result["true_s"] - starttime, color=PHASE_COLORS["S"], lw=1.6, label="catalog S")
+    All rows share the same x-axis (seconds since trace start); model rows
+    have ylim [0, 1] so the probability curves are directly comparable.
+    """
+    sr = float(stream[0].stats.sampling_rate)
+    starttime = stream[0].stats.starttime
+    npts = stream[0].stats.npts
+    t_wf = np.arange(npts) / sr
+    t_max = npts / sr
 
-    # per-model predicted picks
-    for model_name, picks in result["per_model"].items():
-        style = MODEL_STYLES[model_name]
-        for phase_name, key in (("P", "p_picks"), ("S", "s_picks")):
-            for p in picks[key]:
-                ax.axvline(
-                    p.peak_time - starttime,
-                    color=PHASE_COLORS[phase_name],
-                    label=f"{model_name} {phase_name}" if show_legend else None,
-                    **style,
-                )
+    p_offset_s = float(true_p - starttime)
+    s_offset_s = float(true_s - starttime)
 
-    title = (
-        f"{meta['station_network_code']}.{meta['station_code']}  "
-        f"M{float(meta['source_magnitude']):.1f}, "
-        f"{float(meta['path_ep_distance_km']):.0f} km"
+    n_model_rows = len(model_outputs)
+    n_rows = 3 + n_model_rows
+    height_ratios = [1.0] * 3 + [1.1] * n_model_rows
+    fig, axes = plt.subplots(
+        n_rows, 1, sharex=True,
+        figsize=(10, 1.4 * n_rows),
+        gridspec_kw={"height_ratios": height_ratios, "hspace": 0.18},
     )
-    ax.set_title(title, fontsize=9)
-    ax.set_xlabel("time (s)")
-    ax.set_xlim(0, len(z) / sr)
-    ax.set_yticks([])
-    if show_legend:
-        # de-duplicate the legend (each model adds 2 entries per panel)
-        handles, labels = ax.get_legend_handles_labels()
-        seen, uniq = set(), []
-        for h, l in zip(handles, labels):
-            if l not in seen:
-                seen.add(l); uniq.append((h, l))
-        ax.legend(*zip(*uniq), loc="upper right", fontsize=7, ncol=2)
+
+    # --- waveform rows: Z, N, E ---
+    for ax, comp in zip(axes[:3], "ZNE"):
+        tr = stream.select(channel=f"*{comp}")[0]
+        d = tr.data.astype(float)
+        ax.plot(t_wf, d, color=WAVEFORM_COLOR, lw=0.5)
+        ax.set_ylabel(f"{comp}\n(counts)", fontsize=9)
+        ax.tick_params(axis="both", labelsize=8)
+        # symmetric y-limits around zero for a clean look
+        amax = max(np.max(np.abs(d)), 1.0)
+        ax.set_ylim(-1.05 * amax, 1.05 * amax)
+        ax.axhline(0, color="0.85", lw=0.4, zorder=0)
+        # catalog picks across the waveform
+        ax.axvline(p_offset_s, color=PHASE_COLORS["P"], lw=CATALOG_LW, alpha=0.85)
+        ax.axvline(s_offset_s, color=PHASE_COLORS["S"], lw=CATALOG_LW, alpha=0.85)
+
+    # --- model-output rows ---
+    legend_handles_done = False
+    for ax, (model_name, result) in zip(axes[3:], model_outputs.items()):
+        for ch_name, prob in result["curves"].items():
+            offset = result["offsets"].get(ch_name, 0.0)
+            t_curve = offset + np.arange(len(prob)) / result["sampling_rate"]
+            label = ch_name if not legend_handles_done else None
+            ax.plot(
+                t_curve, prob, color=PHASE_COLORS.get(ch_name, "0.4"),
+                lw=1.0, alpha=0.95, label=label,
+            )
+        # threshold guide line
+        ax.axhline(P_THRESHOLD, color="0.7", lw=0.6, ls=":", zorder=0)
+        # catalog picks for vertical alignment
+        ax.axvline(p_offset_s, color=PHASE_COLORS["P"], lw=CATALOG_LW, alpha=0.85)
+        ax.axvline(s_offset_s, color=PHASE_COLORS["S"], lw=CATALOG_LW, alpha=0.85)
+        # predicted picks (small downward ticks at the top of the panel)
+        for p in result["p_picks"]:
+            ax.axvline(
+                float(p.peak_time - starttime),
+                color=PHASE_COLORS["P"], lw=PRED_LW, ls="--", alpha=0.7,
+            )
+        for p in result["s_picks"]:
+            ax.axvline(
+                float(p.peak_time - starttime),
+                color=PHASE_COLORS["S"], lw=PRED_LW, ls="--", alpha=0.7,
+            )
+        ax.set_ylim(0.0, 1.0)
+        ax.set_yticks([0.0, 0.5, 1.0])
+        ax.set_ylabel(f"{model_name}\nprob.", fontsize=9)
+        ax.tick_params(axis="both", labelsize=8)
+        if not legend_handles_done:
+            ax.legend(loc="upper right", fontsize=7, ncol=len(result["curves"]))
+            legend_handles_done = True
+
+    axes[-1].set_xlabel("time (s) since trace start", fontsize=10)
+    axes[-1].set_xlim(0, t_max)
+
+    fig.suptitle(
+        f"{meta['station_network_code']}.{meta['station_code']}   "
+        f"M{float(meta['source_magnitude']):.1f},  "
+        f"epi {float(meta['path_ep_distance_km']):.0f} km,  "
+        f"depth {float(meta['source_depth_km']):.0f} km   |   "
+        f"start {starttime.strftime('%Y-%m-%dT%H:%M:%S')}   |   "
+        f"thresholds {P_THRESHOLD}/{S_THRESHOLD}/{DETECTION_THRESHOLD}",
+        fontsize=10,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.97))
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
 
 
 # ---------------------------------------------------------------------------
@@ -235,20 +325,25 @@ def main() -> None:
     ap.add_argument("--device", default="cpu", help='"cpu" (default) or "cuda".')
     ap.add_argument("--no-redpan", action="store_true",
                     help="Skip RED-PAN-60s (avoids the TensorFlow dependency).")
-    ap.add_argument("--out-png", default=str(OUT_PNG))
+    ap.add_argument("--out-dir", default=str(OUT_DIR),
+                    help=f"Directory for per-trace PNGs (default: {OUT_DIR}).")
     args = ap.parse_args()
 
     print(f"Opening {args.rose_dir} ...")
     data = RoSE(args.rose_dir, component_order="ZNE")
     print(f"  total traces: {len(data)}")
 
-    # --- load all three models (RED-PAN is optional) ---
+    # --- load all three models (RED-PAN is optional) -- order matches plot rows
     print("Loading models from", MODELS_DIR.relative_to(REPO_ROOT))
     models: dict[str, object] = {}
-    print(f"  EQT-RoSE      ({(MODELS_DIR / 'eqt_rose' / 'eqt_rose.pt').stat().st_size / 1e6:.1f} MB) ...")
-    models["EQT-RoSE"] = load_eqt_rose(device=args.device)
-    print(f"  PhaseNet-RoSE ({(MODELS_DIR / 'phasenet_rose' / 'phasenet_rose.pt').stat().st_size / 1e6:.1f} MB) ...")
+
+    pn_size = (MODELS_DIR / "phasenet_rose" / "phasenet_rose.pt").stat().st_size / 1e6
+    print(f"  PhaseNet-RoSE ({pn_size:.1f} MB) ...")
     models["PhaseNet-RoSE"] = load_phasenet_rose(device=args.device)
+
+    eqt_size = (MODELS_DIR / "eqt_rose" / "eqt_rose.pt").stat().st_size / 1e6
+    print(f"  EQT-RoSE      ({eqt_size:.1f} MB) ...")
+    models["EQT-RoSE"] = load_eqt_rose(device=args.device)
 
     have_tf = importlib.util.find_spec("tensorflow") is not None
     if args.no_redpan:
@@ -264,56 +359,48 @@ def main() -> None:
     # --- pick test traces and run inference ---
     indices = select_test_traces(data, args.n_traces, args.seed)
     n = len(indices)
-    ncols = 2 if n > 1 else 1
-    nrows = int(np.ceil(n / ncols))
-    fig, axes = plt.subplots(nrows, ncols, figsize=(7.0 * ncols, 2.7 * nrows),
-                             squeeze=False)
-    axes = axes.ravel()
 
     print()
-    header = f"  {'trace':>7s}   " + "  ".join(
-        f"{name:^16s}" for name in models
-    )
+    header = f"  {'trace':>7s}   " + "  ".join(f"{name:^16s}" for name in models)
     print(header)
     print("  " + "-" * (len(header) - 2))
-    residuals: dict[str, dict[str, list]] = {
-        name: {"P": [], "S": []} for name in models
-    }
-    hits: dict[str, dict[str, int]] = {
-        name: {"P": 0, "S": 0} for name in models
-    }
-    for k, idx in enumerate(indices):
-        wf, meta = data.get_sample(int(idx))
-        stream = trace_to_stream(wf, meta)
-        result = evaluate_one(stream, meta, models)
-        plot_panel(axes[k], stream, meta, result, show_legend=(k == 0))
+    residuals: dict[str, dict[str, list]] = {nm: {"P": [], "S": []} for nm in models}
+    hits: dict[str, dict[str, int]] = {nm: {"P": 0, "S": 0} for nm in models}
 
+    out_dir = Path(args.out_dir)
+
+    for idx in indices:
+        wf, meta = data.get_sample(int(idx))
+        stream_zne = trace_to_stream(wf, meta)
+
+        sr = float(meta["trace_sampling_rate_hz"])
+        starttime = UTCDateTime(meta["trace_start_time"])
+        true_p = starttime + float(meta["trace_p_arrival_sample"]) / sr
+        true_s = starttime + float(meta["trace_s_arrival_sample"]) / sr
+
+        model_outputs: dict[str, dict] = {}
         cells = []
-        for name in models:
-            r = result["per_model"][name]
-            p_str = f"P{r['p_dt']:+.2f}" if r["p_dt"] is not None else "P --"
-            s_str = f"S{r['s_dt']:+.2f}" if r["s_dt"] is not None else "S --"
+        for name, m in models.items():
+            if name == "RED-PAN-60s":
+                result = run_redpan_curves(m, stream_zne)
+            else:
+                result = run_seisbench_curves(m, stream_zne)
+            model_outputs[name] = result
+
+            _, p_dt = closest_match(result["p_picks"], true_p, TOL_P_SEC)
+            _, s_dt = closest_match(result["s_picks"], true_s, TOL_S_SEC)
+            p_str = f"P{p_dt:+.2f}" if p_dt is not None else "P --"
+            s_str = f"S{s_dt:+.2f}" if s_dt is not None else "S --"
             cells.append(f"{p_str:>7s} {s_str:>7s}")
-            for ph, dt in (("P", r["p_dt"]), ("S", r["s_dt"])):
+            for ph, dt in (("P", p_dt), ("S", s_dt)):
                 if dt is not None:
                     residuals[name][ph].append(dt); hits[name][ph] += 1
         print(f"  {idx:7d}   " + "  ".join(f"{c:^16s}" for c in cells))
 
-    # hide any unused axes (when n is odd in a 2-col grid)
-    for j in range(n, len(axes)):
-        axes[j].axis("off")
+        png_path = out_dir / f"trace_{int(idx):07d}.png"
+        plot_event(stream_zne, meta, true_p, true_s, model_outputs, png_path)
 
-    fig.suptitle(
-        f"Published RoSE pickers on {n} held-out test trace(s)   "
-        f"(thresholds {P_THRESHOLD}/{S_THRESHOLD}/{DETECTION_THRESHOLD},  "
-        f"P tol {TOL_P_SEC}s,  S tol {TOL_S_SEC}s)",
-        fontsize=11,
-    )
-    fig.tight_layout(rect=(0, 0, 1, 0.96))
-    out_path = Path(args.out_png)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=160)
-    print(f"\nsaved {out_path}")
+    print(f"\nsaved {n} PNGs under {out_dir}")
 
     # --- summary table ---
     print("\nSummary (residuals = predicted − catalog, in seconds)")
