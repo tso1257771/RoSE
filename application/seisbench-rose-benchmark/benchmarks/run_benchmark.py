@@ -280,10 +280,13 @@ def main() -> None:
         # Use the more elaborate STEAD-format loop: see benchmarks/run_stead.py
         # for the full implementation. Here we delegate to that module.
         from benchmarks.run_stead import run_stead
+        # --num-test caps the per-pool count here too (None = full pool); for
+        # --dataset noise the event pool is fixed at 0.
+        limit = args.num_test if args.num_test and args.num_test > 0 else None
         run_stead(model, args.model, Path(args.stead_dir),
                   out_dir / f"{args.model}.json",
-                  num_events=0 if args.dataset == "noise" else None,
-                  num_noise=None,
+                  num_events=0 if args.dataset == "noise" else limit,
+                  num_noise=limit,
                   bandpass=bandpass,
                   thresholds=THRESHOLDS, pick_tol=PICK_TOL)
     logger.info("done")
