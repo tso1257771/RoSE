@@ -10,8 +10,9 @@ from __future__ import annotations
 import numpy as np
 
 
-def detect_clipping(data: np.ndarray, n_consecutive: int = 5,
-                    edge_fraction: float = 0.001) -> dict:
+def detect_clipping(
+    data: np.ndarray, n_consecutive: int = 5, edge_fraction: float = 0.001
+) -> dict:
     """Detect clipping: sustained flatlines near the min/max of the trace.
 
     A trace is clipped when the sensor or digitizer saturates, producing a
@@ -34,13 +35,21 @@ def detect_clipping(data: np.ndarray, n_consecutive: int = 5,
         clip_segments : list of (start, end) index tuples
     """
     if len(data) == 0:
-        return {"clipped": False, "n_clipped_samples": 0,
-                "clip_fraction": 0.0, "clip_segments": []}
+        return {
+            "clipped": False,
+            "n_clipped_samples": 0,
+            "clip_fraction": 0.0,
+            "clip_segments": [],
+        }
     dmin, dmax = float(np.nanmin(data)), float(np.nanmax(data))
     rng = dmax - dmin
     if rng == 0:
-        return {"clipped": True, "n_clipped_samples": len(data),
-                "clip_fraction": 1.0, "clip_segments": [(0, len(data))]}
+        return {
+            "clipped": True,
+            "n_clipped_samples": len(data),
+            "clip_fraction": 1.0,
+            "clip_segments": [(0, len(data))],
+        }
 
     threshold = edge_fraction * rng
     near_max = data >= (dmax - threshold)
@@ -57,7 +66,7 @@ def detect_clipping(data: np.ndarray, n_consecutive: int = 5,
                 j += 1
             if (j - i) >= n_consecutive:
                 segments.append((i, j))
-                n_clip += (j - i)
+                n_clip += j - i
             i = j
         else:
             i += 1
@@ -79,16 +88,21 @@ def detect_dead_channel(data: np.ndarray, std_threshold: float = 1e-10) -> dict:
     return {"dead": is_dead, "std": std}
 
 
-def detect_gaps(data: np.ndarray, min_gap_samples: int = 10,
-                zero_threshold: float = 1e-15) -> dict:
+def detect_gaps(
+    data: np.ndarray, min_gap_samples: int = 10, zero_threshold: float = 1e-15
+) -> dict:
     """Detect zero-filled gaps (instrument dropouts or padding artifacts).
 
     A gap is a run of near-zero samples in the interior of the trace (not
     counting the first/last few samples which may be legitimate).
     """
     if len(data) == 0:
-        return {"has_gaps": False, "n_gap_samples": 0,
-                "gap_fraction": 0.0, "gap_segments": []}
+        return {
+            "has_gaps": False,
+            "n_gap_samples": 0,
+            "gap_fraction": 0.0,
+            "gap_segments": [],
+        }
     is_zero = np.abs(data) < zero_threshold
     segments = []
     n_gap = 0
@@ -106,7 +120,7 @@ def detect_gaps(data: np.ndarray, min_gap_samples: int = 10,
                 j += 1
             if (j - i) >= min_gap_samples:
                 segments.append((i, j))
-                n_gap += (j - i)
+                n_gap += j - i
             i = j
         else:
             i += 1
@@ -119,8 +133,9 @@ def detect_gaps(data: np.ndarray, min_gap_samples: int = 10,
     }
 
 
-def detect_spikes(data: np.ndarray, mad_threshold: float = 50.0,
-                  max_width_samples: int = 3) -> dict:
+def detect_spikes(
+    data: np.ndarray, mad_threshold: float = 50.0, max_width_samples: int = 3
+) -> dict:
     """Detect anomalous instrument spikes via MAD + isolation check.
 
     A sample is a candidate spike if |x - median| > mad_threshold * MAD.
@@ -139,17 +154,27 @@ def detect_spikes(data: np.ndarray, mad_threshold: float = 50.0,
         Longer runs are earthquake energy, not instrument artefacts.
     """
     if len(data) == 0:
-        return {"has_spikes": False, "n_spikes": 0, "spike_fraction": 0.0,
-                "spike_indices": np.array([], dtype=int), "mad": 0.0}
+        return {
+            "has_spikes": False,
+            "n_spikes": 0,
+            "spike_fraction": 0.0,
+            "spike_indices": np.array([], dtype=np.intp),
+            "mad": 0.0,
+        }
     median = float(np.nanmedian(data))
     mad = float(np.nanmedian(np.abs(data - median)))
     if mad == 0:
-        return {"has_spikes": False, "n_spikes": 0, "spike_fraction": 0.0,
-                "spike_indices": np.array([], dtype=int), "mad": 0.0}
+        return {
+            "has_spikes": False,
+            "n_spikes": 0,
+            "spike_fraction": 0.0,
+            "spike_indices": np.array([], dtype=np.intp),
+            "mad": 0.0,
+        }
     deviation = np.abs(data - median) / mad
     outlier_mask = deviation > mad_threshold
 
-    spike_indices = []
+    spike_indices: list[int] = []
     i = 0
     while i < len(outlier_mask):
         if outlier_mask[i]:
@@ -162,7 +187,7 @@ def detect_spikes(data: np.ndarray, mad_threshold: float = 50.0,
         else:
             i += 1
 
-    indices = np.array(spike_indices, dtype=int)
+    indices = np.array(spike_indices, dtype=np.intp)
     return {
         "has_spikes": len(indices) > 0,
         "n_spikes": len(indices),
@@ -172,9 +197,13 @@ def detect_spikes(data: np.ndarray, mad_threshold: float = 50.0,
     }
 
 
-def compute_snr(data: np.ndarray, sr: float, phase_sample: int,
-                noise_window_s: float = 5.0,
-                signal_window_s: float = 5.0) -> dict:
+def compute_snr(
+    data: np.ndarray,
+    sr: float,
+    phase_sample: int,
+    noise_window_s: float = 5.0,
+    signal_window_s: float = 5.0,
+) -> dict:
     """Compute SNR as the ratio of RMS amplitude in post-arrival vs pre-arrival windows."""
     noise_n = int(noise_window_s * sr)
     signal_n = int(signal_window_s * sr)
@@ -185,7 +214,12 @@ def compute_snr(data: np.ndarray, sr: float, phase_sample: int,
     signal_end = min(len(data), phase_sample + signal_n)
 
     if noise_end <= noise_start or signal_end <= signal_start:
-        return {"snr": np.nan, "snr_db": np.nan, "noise_rms": np.nan, "signal_rms": np.nan}
+        return {
+            "snr": np.nan,
+            "snr_db": np.nan,
+            "noise_rms": np.nan,
+            "signal_rms": np.nan,
+        }
 
     noise_rms = float(np.sqrt(np.nanmean(data[noise_start:noise_end] ** 2)))
     signal_rms = float(np.sqrt(np.nanmean(data[signal_start:signal_end] ** 2)))
@@ -197,11 +231,17 @@ def compute_snr(data: np.ndarray, sr: float, phase_sample: int,
         snr = signal_rms / noise_rms
         snr_db = 20.0 * np.log10(snr)
 
-    return {"snr": snr, "snr_db": snr_db, "noise_rms": noise_rms, "signal_rms": signal_rms}
+    return {
+        "snr": snr,
+        "snr_db": snr_db,
+        "noise_rms": noise_rms,
+        "signal_rms": signal_rms,
+    }
 
 
-def quality_report(data: np.ndarray, sr: float,
-                   phase_sample: int | None = None) -> dict:
+def quality_report(
+    data: np.ndarray, sr: float, phase_sample: int | None = None
+) -> dict:
     """Run all QC checks and return a combined report."""
     report = {
         "clipping": detect_clipping(data),
@@ -212,12 +252,14 @@ def quality_report(data: np.ndarray, sr: float,
     if phase_sample is not None and phase_sample > 0:
         report["snr"] = compute_snr(data, sr, phase_sample)
 
-    n_issues = sum([
-        report["clipping"]["clipped"],
-        report["dead"]["dead"],
-        report["gaps"]["has_gaps"],
-        report["spikes"]["has_spikes"],
-    ])
+    n_issues = sum(
+        [
+            report["clipping"]["clipped"],
+            report["dead"]["dead"],
+            report["gaps"]["has_gaps"],
+            report["spikes"]["has_spikes"],
+        ]
+    )
     report["pass"] = n_issues == 0
     report["n_issues"] = n_issues
     return report

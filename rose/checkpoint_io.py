@@ -24,13 +24,14 @@ that is the intended behavior. To intentionally load such a checkpoint, set
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 def safe_torch_load(
-    path: str,
+    path: str | Path,
     *,
     map_location: Any = "cpu",
     trusted: bool = False,
@@ -40,7 +41,8 @@ def safe_torch_load(
     Parameters
     ----------
     path
-        Filesystem path to the checkpoint (``.pt``/``.pth``).
+        Filesystem path to the checkpoint (``.pt``/``.pth``); ``str`` or
+        ``pathlib.Path``.
     map_location
         Forwarded to ``torch.load`` (e.g. ``"cpu"``, a ``torch.device``,
         or a function).
@@ -54,6 +56,14 @@ def safe_torch_load(
     -------
     The loaded checkpoint (typically ``OrderedDict`` for a bare ``state_dict``,
     or ``dict`` for a wrapped ``{"model": state_dict, "config": ..., ...}``).
+
+    Raises
+    ------
+    pickle.UnpicklingError
+        If ``weights_only=True`` rejects a non-allowlisted object in the
+        checkpoint. This is the intended security behaviour — the offending
+        checkpoint is not from one of this repo's training scripts; pass
+        ``trusted=True`` only if you have independently verified its source.
     """
     import torch  # local import: keeps `rose` importable without torch
 

@@ -96,20 +96,40 @@ def year_split(
 ) -> Split | None:
     """Return the split for a given year, or ``None`` if the year is unlisted.
 
+    Each ``*_years`` argument is materialised to a ``frozenset`` once up front,
+    so passing one-shot generators is safe and lookups are O(1). If a year
+    appears in more than one set, train wins, then val (first-match order).
+
     Returns the RED-PAN split vocabulary; remap ``"val" -> "dev"`` for SeisBench.
     """
-    if year in set(train_years):
+    s_train = frozenset(train_years)
+    s_val = frozenset(val_years)
+    s_test = frozenset(test_years)
+    if year in s_train:
         return "train"
-    if year in set(val_years):
+    if year in s_val:
         return "val"
-    if year in set(test_years):
+    if year in s_test:
         return "test"
     return None
 
 
 def assert_valid_proportions(p_train: float, p_val: float) -> None:
-    """Sanity-check split proportions."""
+    """Sanity-check split proportions; raise ``ValueError`` if they're degenerate.
+
+    Requires ``0 < p_train < 1``, ``p_val >= 0``, and ``p_train + p_val < 1``
+    (so the implied test fraction ``1 - p_train - p_val`` is strictly positive).
+    The sum check is done directly rather than comparing ``p_val`` to
+    ``1.0 - p_train`` — the latter is fragile under floating-point rounding
+    (e.g. ``1.0 - 0.85 == 0.15000000000000002``, which would wrongly accept
+    ``(0.85, 0.15)`` and leave nothing for the test split).
+    """
     if not 0.0 < p_train < 1.0:
-        raise ValueError(f"p_train must be in (0,1); got {p_train}")
-    if not 0.0 <= p_val < 1.0 - p_train:
-        raise ValueError(f"p_val must be in [0, {1.0 - p_train}); got {p_val}")
+        raise ValueError(f"p_train must be in (0, 1); got {p_train}")
+    if p_val < 0.0:
+        raise ValueError(f"p_val must be >= 0; got {p_val}")
+    if p_train + p_val >= 1.0:
+        raise ValueError(
+            f"p_train + p_val must be < 1.0 (the rest is the test split); "
+            f"got {p_train} + {p_val} = {p_train + p_val}"
+        )

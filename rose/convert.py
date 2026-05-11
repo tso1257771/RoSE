@@ -22,7 +22,8 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Any, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Any
 
 import h5py
 import numpy as np
@@ -82,7 +83,7 @@ def _split_station_id(station_id: str) -> tuple[str, str, str, str]:
     return parts[0], parts[1], parts[2], parts[3]
 
 
-def _stack_components(station_group, npts: int) -> Optional[np.ndarray]:
+def _stack_components(station_group, npts: int) -> np.ndarray | None:
     arr = np.zeros((3, npts), dtype=np.float32)
     for i, comp in enumerate(COMPONENT_ORDER):
         if comp not in station_group:
@@ -99,8 +100,8 @@ def _build_metadata(
     station_id: str,
     station_attrs: dict,
     npts: int,
-    stations_df: Optional[pd.DataFrame],
-    physical_info: Optional[dict] = None,
+    stations_df: pd.DataFrame | None,
+    physical_info: dict | None = None,
 ) -> dict:
     net, sta, loc, band = _split_station_id(station_id)
     ref_start = _attr(station_attrs, "reference_starttime_utc")
@@ -116,8 +117,12 @@ def _build_metadata(
         "trace_component_order": COMPONENT_ORDER,
         "trace_units": "counts",
         # Picks (standard SeisBench names)
-        "trace_p_arrival_sample": _int(_attr(station_attrs, "p_arrival_sample"), default=-1),
-        "trace_s_arrival_sample": _int(_attr(station_attrs, "s_arrival_sample"), default=-1),
+        "trace_p_arrival_sample": _int(
+            _attr(station_attrs, "p_arrival_sample"), default=-1
+        ),
+        "trace_s_arrival_sample": _int(
+            _attr(station_attrs, "s_arrival_sample"), default=-1
+        ),
         "trace_p_arrival_time": _attr(station_attrs, "p_arrival_utc"),
         "trace_s_arrival_time": _attr(station_attrs, "s_arrival_utc"),
         "trace_p_status": _attr(station_attrs, "pick_source_p"),
@@ -185,12 +190,14 @@ def _build_metadata(
         md["trace_unit_physical"] = physical_info.get("unit", "")
         sens = physical_info.get("sensitivity", {})
         for comp in COMPONENT_ORDER:
-            md[f"trace_sensitivity_{comp.lower()}"] = _float(sens.get(comp), default=np.nan)
+            md[f"trace_sensitivity_{comp.lower()}"] = _float(
+                sens.get(comp), default=np.nan
+            )
 
     return md
 
 
-def _load_physical_index(physical_h5: Optional[str]) -> Optional[dict]:
+def _load_physical_index(physical_h5: str | Path | None) -> dict | None:
     """Index sensitivity values per (event_id, station_id) from the physical HDF5.
 
     Returns a dict keyed by (event_id, station_id) with:
@@ -229,7 +236,7 @@ def _load_physical_index(physical_h5: Optional[str]) -> Optional[dict]:
     return index
 
 
-def _load_stations_df(stations_csv: Optional[str]) -> Optional[pd.DataFrame]:
+def _load_stations_df(stations_csv: str | Path | None) -> pd.DataFrame | None:
     if not stations_csv or not os.path.exists(stations_csv):
         return None
     df = pd.read_csv(stations_csv)
@@ -240,12 +247,12 @@ def _load_stations_df(stations_csv: Optional[str]) -> Optional[pd.DataFrame]:
 
 
 def convert_year(
-    src_h5: str,
-    out_dir: str,
+    src_h5: str | Path,
+    out_dir: str | Path,
     chunk_label: str,
     units: str = "counts",
-    stations_csv: Optional[str] = None,
-    physical_h5: Optional[str] = None,
+    stations_csv: str | Path | None = None,
+    physical_h5: str | Path | None = None,
     bucket_size: int = 1024,
     overwrite: bool = False,
 ) -> int:
@@ -341,7 +348,7 @@ def convert_year(
 
 def _update_chunks_file(out_dir: Path, chunk_label: str):
     chunks_file = out_dir / "chunks"
-    existing: List[str] = []
+    existing: list[str] = []
     if chunks_file.exists():
         existing = [
             line.strip()
@@ -357,8 +364,8 @@ def convert_all(
     src_dir: str,
     out_dir: str,
     tag: str = "ROMPLUS",
-    years: Optional[Iterable[int]] = None,
-    stations_csv: Optional[str] = None,
+    years: Iterable[int] | None = None,
+    stations_csv: str | Path | None = None,
     include_physical: bool = True,
     bucket_size: int = 1024,
     overwrite: bool = False,
@@ -401,7 +408,9 @@ def convert_all(
             logger.warning("Year %s not found in %s, skip", year, src_dir)
             continue
         chunk_label = str(year)
-        phys_path = str(physical_available[year]) if year in physical_available else None
+        phys_path = (
+            str(physical_available[year]) if year in physical_available else None
+        )
         n = convert_year(
             src_h5=str(counts_available[year]),
             out_dir=str(out_dir_p),
@@ -456,9 +465,7 @@ def _expand_years(spec: str) -> list[int] | None:
             else:
                 out.add(int(chunk))
         except ValueError as e:
-            raise ValueError(
-                f"invalid year token {chunk!r} in --years={spec!r}"
-            ) from e
+            raise ValueError(f"invalid year token {chunk!r} in --years={spec!r}") from e
     return sorted(out)
 
 
