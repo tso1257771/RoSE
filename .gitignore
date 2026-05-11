@@ -21,7 +21,8 @@ eval/
 # Output of application/seisbench-rose-benchmark/scripts/reproduce_all.sh
 # (per-model JSONs + aggregated CSVs). The committed reference numbers are the
 # *.csv files directly under results/; only results/runs/ is generated.
-results/runs/
+# (Full path: a pattern with a mid-slash is anchored to this .gitignore's dir.)
+application/seisbench-rose-benchmark/results/runs/
 
 # Derived split index (full train/dev/test assignment for the local copy of the
 # RoSE dataset). Regenerated idempotently by

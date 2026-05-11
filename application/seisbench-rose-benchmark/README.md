@@ -9,7 +9,7 @@ pre-computed result tables reported in the paper.
 |---|---|---|
 | **EQT-RoSE**       | PyTorch (SeisBench) | EQTransformer fine-tuned on the RoSE training split (released 2026-04-30)                          |
 | **PhaseNet-RoSE**  | PyTorch (SeisBench) | PhaseNet fine-tuned on the RoSE training split                                                     |
-| **RED-PAN-60s**    | TensorFlow / Keras  | RED-PAN multi-task attention R2U-Net, 60 s window, TaiwanCWB `240107` retraining (no RoSE/STEAD exposure) |
+| **RED-PAN-60s**    | TensorFlow / Keras  | RED-PAN multitask attention (R2U-Net), 60 s window — retrained outside SeisBench (Liao et al. 2022 recipe) on Taiwan + STEAD + INSTANCE + **RoSE**, warm-started from the published RED-PAN(60 s) weights |
 
 Per-model details (architecture, pretraining, fine-tuning recipe, dev loss):
 see [`models/README.md`](models/README.md).
