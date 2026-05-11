@@ -11,6 +11,13 @@ scipy>=1.10
 matplotlib==3.8.0
 tqdm>=4.65
 
-# Training (tutorial 02). For CUDA, install a matching wheel from
-# https://download.pytorch.org/whl/cu121/ instead of the public PyPI build.
+# Training + benchmarking (training/, benchmark/). For CUDA, install a matching
+# wheel from https://download.pytorch.org/whl/cu121/ instead of the public PyPI
+# build.
 torch>=2.1,<3
+scikit-learn>=1.2
+
+# Only needed for the RED-PAN-60s benchmark (benchmark/redpan_inference + the
+# Keras model under application/seisbench-rose-benchmark/models/redpan_tf60/).
+# Uncomment if you want to run that comparison:
+# tensorflow>=2.13
