@@ -7,8 +7,8 @@ RED-PAN-60s).
 ## Layout
 - **`rose/`** — importable loader + helpers (`splits.hash_split`, `checkpoint_io.safe_torch_load`)
 - **`training/`** — fine-tune SeisBench EQT / PhaseNet on RoSE (DDP, INSTANCE-init)
-- **`benchmark/`** — RoSE / STEAD picker scoring; vendored `redpan_inference/` (TF subset)
-- **`application/seisbench-rose-benchmark/`** — published release: 3 checkpoints + unified loaders (`benchmarks.models.load_eqt_rose`, `…_phasenet_rose`, `…_redpan_tf60`) + results CSVs + `SHA256SUMS`
+- **`benchmark/`** — the internal benchmark *pipeline* (all 9 pickers); `regenerate_results.sh` chains it and *produces* `application/seisbench-rose-benchmark/results/*.csv`; vendored `redpan_inference/` (TF subset). See `benchmark/README.md`.
+- **`application/seisbench-rose-benchmark/`** — the *self-contained release bundle* (a copy — imports nothing from `benchmark/` or `rose`): 3 checkpoints + `SHA256SUMS` + unified loaders (`benchmarks.models.load_eqt_rose`, `…_phasenet_rose`, `…_redpan_tf60`) + the pre-computed results CSVs + a quick `scripts/reproduce_all.sh` sanity re-scorer. **Not** the same as the top-level `benchmark/`.
 - **`examples/`** — four numbered tutorials (01 load → 02 INSTANCE demo → 03 ground motion → 04 all-three-pickers inference)
 - **`docs/`** — `DATASET.md` (native HDF5) + `SEISBENCH_FORMAT.md` (column reference)
 
