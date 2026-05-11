@@ -53,6 +53,19 @@ MODEL_HAS_DETECTION_HEAD = {
 }
 
 
+def _num(x, default: float = float("nan")) -> float:
+    """Parse a CSV cell to float; '' / non-numeric -> ``default`` (NaN).
+
+    The output CSVs intentionally write '' for NaN metrics (e.g. a model that
+    evaluated zero traces in a subset run), so the headline printers below must
+    not choke on them.
+    """
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return default
+
+
 def f1_score(precision: float, recall: float) -> float:
     if precision + recall <= 0:
         return float("nan")
@@ -237,16 +250,20 @@ def print_picking_headline(picking_csv: Path, threshold: str = "0.3") -> None:
     with picking_csv.open() as f:
         rows = list(csv.DictReader(f))
     rows = [r for r in rows if r["threshold"] == threshold]
-    rows.sort(key=lambda r: -(float(r["P_F1"]) + float(r["S_F1"])))
+
+    def _key(r):
+        v = _num(r["P_F1"], 0.0) + _num(r["S_F1"], 0.0)
+        return -v
+    rows.sort(key=_key)
     for r in rows:
         print(f"  {r['model']:<22}"
               f"{r['P_true_pos']:>7}{r['P_false_neg']:>7}{r['P_false_pos_on_noise']:>6}"
-              f"{float(r['P_precision']):>8.3f}{float(r['P_recall']):>7.3f}{float(r['P_F1']):>7.3f}"
+              f"{_num(r['P_precision']):>8.3f}{_num(r['P_recall']):>7.3f}{_num(r['P_F1']):>7.3f}"
               f"  "
               f"{r['S_true_pos']:>7}{r['S_false_neg']:>7}{r['S_false_pos_on_noise']:>6}"
-              f"{float(r['S_precision']):>8.3f}{float(r['S_recall']):>7.3f}{float(r['S_F1']):>7.3f}"
+              f"{_num(r['S_precision']):>8.3f}{_num(r['S_recall']):>7.3f}{_num(r['S_F1']):>7.3f}"
               f"  "
-              f"{float(r['noise_trace_fp_rate'])*100:>9.2f}%")
+              f"{_num(r['noise_trace_fp_rate'])*100:>9.2f}%")
 
 
 def print_detection_headline(detection_csv: Path, threshold: str = "0.3") -> None:
@@ -266,23 +283,18 @@ def print_detection_headline(detection_csv: Path, threshold: str = "0.3") -> Non
         rows = list(csv.DictReader(f))
     rows = [r for r in rows if r["threshold"] == threshold]
 
-    def sort_key(r):
-        try:
-            return -float(r["F1"])
-        except Exception:
-            return 0.0
-    rows.sort(key=sort_key)
+    rows.sort(key=lambda r: -_num(r["F1"], 0.0))
     for r in rows:
         if r["has_detection_head"] == "False":
             print(f"  {r['model']:<22}    (no detection head — not applicable)")
             continue
         print(f"  {r['model']:<22}"
               f"{r['true_pos']:>7}{r['false_neg']:>7}{r['false_pos']:>6}{r['true_neg']:>7}"
-              f"{float(r['precision']):>11.3f}{float(r['recall']):>9.4f}"
-              f"{float(r['F1']):>8.4f}{float(r['matthews_corr']):>10.4f}"
-              f"{float(r['iou_mean_on_true_pos']):>7.3f}"
-              f"{float(r['start_time_mae_seconds']):>10.3f}"
-              f"{float(r['end_time_mae_seconds']):>9.3f}")
+              f"{_num(r['precision']):>11.3f}{_num(r['recall']):>9.4f}"
+              f"{_num(r['F1']):>8.4f}{_num(r['matthews_corr']):>10.4f}"
+              f"{_num(r['iou_mean_on_true_pos']):>7.3f}"
+              f"{_num(r['start_time_mae_seconds']):>10.3f}"
+              f"{_num(r['end_time_mae_seconds']):>9.3f}")
 
 
 def main() -> None:

@@ -218,6 +218,10 @@ def evaluate_model(name, model_kind, model, ev_df, noise_df, ev_wf_dir,
     base_thr = float(min(thresholds))
     thresholds = sorted(set(float(t) for t in thresholds))
     rng = np.random.default_rng(42)
+    # 0 (or negative / None) means "use the full pool" — consistent with
+    # bench_pickers_rose.py / bench_redpan_rose.py / bench_noise_fp.py.
+    n_events = len(ev_df) if not n_events or n_events < 0 else n_events
+    n_noise = len(noise_df) if not n_noise or n_noise < 0 else n_noise
     ev_idx = rng.choice(len(ev_df), size=min(n_events, len(ev_df)),
                         replace=False)
     nz_idx = rng.choice(len(noise_df), size=min(n_noise, len(noise_df)),
@@ -423,8 +427,10 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--stead-dir", default=(str(STEAD_DEFAULT) if STEAD_DEFAULT else None))
     ap.add_argument("--out-dir", required=True)
-    ap.add_argument("--num-events", type=int, default=2000)
-    ap.add_argument("--num-noise", type=int, default=1000)
+    ap.add_argument("--num-events", type=int, default=2000,
+                    help="Sample N event traces (0 = full STEAD test pool).")
+    ap.add_argument("--num-noise", type=int, default=1000,
+                    help="Sample N noise traces (0 = full STEAD noise pool).")
     ap.add_argument("--pick-tol-p", type=float, default=0.5,
                     help="P-pick matching tolerance (s). pick-benchmark = 0.5.")
     ap.add_argument("--pick-tol-s", type=float, default=1.0,
