@@ -1,0 +1,4 @@
+# PyTorch + SeisBench: required for EQT-RoSE-v3 and PhaseNet-RoSE-v2.
+# Install on top of env/requirements.txt.
+torch>=2.0,<3.0
+seisbench>=0.7,<0.9

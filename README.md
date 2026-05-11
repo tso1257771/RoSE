@@ -20,7 +20,7 @@ chunks of bucketed HDF5 plus per-trace metadata.
 ## Layout
 
 ```
-seisbench_integration/
+RoSE/
 ├── README.md
 ├── docs/
 │   ├── DATASET.md           # native HDF5 schema (intermediate build)
@@ -29,11 +29,33 @@ seisbench_integration/
 │   ├── __init__.py
 │   ├── convert.py           # native HDF5  →  SeisBench format
 │   ├── dataset.py           # RoSE(WaveformDataset) wrapper
-│   └── qc.py                # waveform quality-control primitives
+│   ├── qc.py                # waveform quality-control primitives
+│   └── splits.py            # deterministic hash split (vendored from RED-PAN)
 ├── examples/                # tutorials targeting the published dataset
 │   ├── 01_load_and_browse.py
 │   ├── 03_eqt_instance_vrancea.py
 │   └── 04_event_ground_motion.py
+├── training/                # fine-tune EQTransformer / PhaseNet on RoSE
+│   ├── build_rose_split_index.py   # write the SeisBench `split` column
+│   ├── normalize_rose_times.py
+│   ├── train_eqt_rose.py
+│   ├── train_phasenet_rose.py
+│   └── cloud/               # TWCC/cloud launcher shells + JSON configs
+├── benchmark/               # evaluate pickers on the RoSE / STEAD test sets
+│   ├── bench_pickers_rose.py        # canonical SeisBench-API RoSE benchmark
+│   ├── bench_stead_test.py  bench_joint_rose.py  bench_redpan_rose.py
+│   ├── bench_noise_fp.py            # false-positive rate on noise traces
+│   ├── build_rose_final_benchmark.py  build_rose_residual_stats.py
+│   ├── build_stead_full_benchmark.py  eval_eqt_rose.py  viz_models_rose.py
+│   └── redpan_inference/    # minimal RED-PAN-60s TF inference (vendored)
+├── application/             # self-contained published benchmark release
+│   └── seisbench-rose-benchmark/
+│       ├── models/          # EQT-RoSE-v3, PhaseNet-RoSE-v2, RED-PAN-60s ckpts
+│       │                    # + SHA256SUMS for verification
+│       ├── benchmarks/      # unified loaders + runners + table builders
+│       ├── pickerbench/     # matching / residual stats / leaderboard
+│       ├── redpan_inference/  results/  data/  env/  scripts/
+│       └── README.md
 ├── stationxml_sources/      # response-archive build helpers
 │   └── sc3ml_niep/
 │       └── sc3ml_to_stationxml.py   # SeisComP SC3ML → FDSN StationXML
@@ -60,7 +82,7 @@ The package definition lives in `pyproject.toml`. We recommend
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 2) create an isolated env and install the package
-cd seisbench_integration
+cd RoSE
 uv venv --python 3.11
 source .venv/bin/activate
 
@@ -152,6 +174,66 @@ trace lacks a valid response (~4 % of traces).
    removes instrument response from the bundled StationXML, and extracts
    PGA/PGV/PGD per pick source. Requires `data/rose_stationxml/` to be
    mounted alongside the dataset.
+
+## Training & benchmarking
+
+Three directories hold the ML pipeline behind the published pickers. The
+training/benchmark scripts read their default paths from environment variables
+(see `.env.example`) and accept explicit `--rose-dir` / `--stead-dir` /
+`--out-dir` flags as overrides.
+
+```bash
+pip install -e ".[cuda,bench]"           # torch + scikit-learn
+cp .env.example .env  # then edit, or:
+export ROSE_DATA_DIR=/path/to/rose       # waveform dataset (Zenodo)
+export STEAD_DIR=/path/to/STEAD/benchmark_stead   # for STEAD benchmarks
+export ROSE_TRAIN_OUT_DIR=checkpoints    # where train_*.py writes
+export ROSE_EVAL_DIR=eval                # where benchmark outputs land
+```
+
+* **`training/`** — fine-tune SeisBench `EQTransformer` / `PhaseNet` from the
+  INSTANCE pretrained weights on the RoSE training split (DDP, AMP, AdamW).
+  First materialise the split column, then train:
+
+  ```bash
+  python training/build_rose_split_index.py
+  python training/train_eqt_rose.py      --epochs 30 --batch-size 128 --lr 1e-4
+  python training/train_phasenet_rose.py --epochs 30 --batch-size 256 --lr 1e-4
+  ```
+
+  `build_rose_split_index.py` uses RED-PAN's deterministic `hash_split`
+  (salt `ROMPLUS-singleEQ-v1`, vendored in `rose/splits.py`) so every trace of
+  one earthquake stays in the same split — no event-level leakage. It writes
+  `rose_split_index.{csv,json}` at the repo root (gitignored — derived
+  artifact); the *test*-split rows are pinned separately under
+  `application/seisbench-rose-benchmark/data/rose_test_index.csv` so benchmark
+  composition is reproducible without re-running the splitter. The `cloud/`
+  subdir has the TWCC launcher shells used for the published runs.
+
+* **`benchmark/`** — evaluate pickers on the **RoSE** and **STEAD** test sets
+  (picking precision/recall/F1, residual stats, trace-level event-vs-noise).
+  `bench_pickers_rose.py` is the canonical SeisBench-API entry point;
+  `bench_redpan_rose.py` / `bench_stead_test.py` add the RED-PAN-60s comparison
+  (needs the `tf` extra). The exact test-set composition is pinned by the
+  index files under `application/seisbench-rose-benchmark/data/` — regenerate
+  them with `python benchmark/build_test_indices.py [--stead-dir $STEAD_DIR]`.
+
+* **`application/seisbench-rose-benchmark/`** — the self-contained release:
+  the three model checkpoints (EQT-RoSE-v3, PhaseNet-RoSE-v2, RED-PAN-60s) +
+  `models/SHA256SUMS` (verify with `cd application/seisbench-rose-benchmark/models && sha256sum -c SHA256SUMS`),
+  unified loaders (`benchmarks/models.py` → `load_eqt_rose_v3()` etc.), the
+  `pickerbench` scoring module, the bundled `redpan_inference` subset, the
+  published `results/*.csv`, and `scripts/reproduce_all.sh`. It has its own
+  `README.md` and per-framework `env/requirements*.txt`. See
+  `application/seisbench-rose-benchmark/models/README.md` for the model cards
+  (pretraining → fine-tuning provenance + the loader's safe-pickle policy) and
+  `data/README.md` for the test-set index files and waveform-download
+  instructions.
+
+All `.pt` checkpoints are loaded via `rose.checkpoint_io.safe_torch_load`,
+which forces `torch.load(weights_only=True)` — the restricted unpickler — so
+running the scripts on third-party `.pt` files doesn't expose you to the
+classic pickle-deserialization RCE.
 
 ## Tests
 
