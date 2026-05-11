@@ -37,11 +37,88 @@ overwriting.
 ## Threshold sweep
 
 Each CSV has rows for every (model, threshold) combination over the
-six-point sweep `{0.05, 0.10, 0.20, 0.30, 0.50, 0.70}`.
+six-point sweep `{0.05, 0.10, 0.20, 0.30, 0.50, 0.70}`. The tables below are at
+**threshold 0.30**; the bold rows are the three checkpoints in `../models/`,
+the rest are off-the-shelf SeisBench baselines for context.
 
-## Headline numbers at threshold 0.30
+## Leaderboard — RoSE pool, threshold 0.30
 
-| Pool  | Best phase F1 (P / S)             | Best detection F1                  |
-|---|---|---|
-| RoSE  | RED-PAN-60s **0.822 / 0.827**     | EQT-RoSE **0.977** (MCC 0.945)  |
-| STEAD | RED-PAN-60s **0.972 / 0.980**     | EQT-stead **0.998** (MCC 0.988) — see RoSE-fine-tuned counterpart EQT-RoSE at 0.991 |
+Phase picking (FP counted on dedicated STEAD-noise traces) + trace-level
+event-vs-noise detection (only meaningful for models with a detection head):
+
+| Model | P prec | P rec | **P F1** | S prec | S rec | **S F1** | det F1 | det MCC |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| **EQT-RoSE**        | 0.978 | 0.688 | 0.808 | 0.945 | 0.598 | 0.733 | **0.977** | **0.945** |
+| **PhaseNet-RoSE**   | 0.945 | 0.714 | 0.813 | 0.918 | 0.716 | 0.804 | — | — |
+| **RED-PAN-60s**     | 0.975 | 0.711 | **0.822** | 0.983 | 0.713 | **0.827** | 0.930 | 0.849 |
+| EQT-instance        | 0.971 | 0.669 | 0.792 | 0.977 | 0.366 | 0.533 | 0.758 | 0.606 |
+| PhaseNet-instance   | 0.970 | 0.673 | 0.795 | 0.983 | 0.370 | 0.538 | — | — |
+| EQT-ethz            | 0.860 | 0.606 | 0.711 | 0.885 | 0.406 | 0.557 | 0.626 | 0.358 |
+| PhaseNet-ethz       | 0.930 | 0.561 | 0.700 | 0.926 | 0.306 | 0.460 | — | — |
+| EQT-stead           | 0.992 | 0.522 | 0.684 | 0.985 | 0.571 | 0.723 | 0.847 | 0.726 |
+| PhaseNet-stead      | 0.991 | 0.379 | 0.548 | 0.980 | 0.690 | 0.810 | — | — |
+
+Onset-time residuals over matched (true-positive) picks — MAE, MAD (≈ IQR/2),
+RMSE, IQR in seconds (`rose_residual_stats.csv`; baselines omitted here):
+
+| Model | P n | P MAE | P MAD | P RMSE | P IQR | S n | S MAE | S MAD | S RMSE | S IQR |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| EQT-RoSE       | 19 882 | 0.085 | 0.045 | 0.123 | 0.090 | 18 410 | 0.137 | 0.081 | 0.221 | 0.161 |
+| PhaseNet-RoSE  | 20 624 | 0.074 | 0.036 | 0.120 | 0.072 | 22 029 | 0.151 | 0.074 | 0.257 | 0.148 |
+| RED-PAN-60s    | 20 547 | 0.071 | 0.035 | 0.122 | 0.069 | 21 954 | 0.141 | 0.073 | 0.256 | 0.147 |
+
+## Leaderboard — STEAD pool, threshold 0.30
+
+Phase picking (canonical events+noise FP convention) + trace-level
+event-vs-noise (T1):
+
+| Model | **P F1** | **S F1** | T1 F1 | T1 MCC | T1 AUC |
+|---|--:|--:|--:|--:|--:|
+| **EQT-RoSE**        | 0.949 | 0.960 | 0.991 | 0.951 | 0.986 |
+| **PhaseNet-RoSE**   | 0.845 | 0.960 | 0.986 | 0.920 | —¹ |
+| **RED-PAN-60s**     | **0.972** | **0.980** | **0.996** | **0.977** | **0.998** |
+| EQT-instance        | 0.842 | 0.923 | 0.994 | 0.970 | 0.967 |
+| PhaseNet-instance   | 0.950 | 0.902 | 0.981 | 0.906 | —¹ |
+| EQT-ethz            | 0.906 | 0.879 | 0.980 | 0.888 | 0.939 |
+| PhaseNet-ethz       | 0.705 | 0.844 | 0.992 | 0.954 | —¹ |
+| EQT-stead           | 0.811 | 0.894 | 0.998 | 0.988 | 0.999 |
+| PhaseNet-stead      | 0.931 | 0.983 | 0.994 | 0.965 | —¹ |
+
+¹ PhaseNet has no detection head, so T1 is just "did it emit any pick at the
+threshold" — there's no per-trace probability score, hence no ROC-AUC.
+
+**TL;DR:** on RoSE, **RED-PAN-60s** has the best phase-pick F1 (P 0.822 /
+S 0.827) and **EQT-RoSE** the best event-detection F1 (0.977, MCC 0.945);
+on STEAD, **RED-PAN-60s** again leads phase picking (0.972 / 0.980) and the
+STEAD-fine-tuned EQT-stead leads T1 (0.998), with EQT-RoSE close behind (0.991).
+
+## EQT-RoSE — Münchmeyer-2022 / Section-3 protocol
+
+Produced by `benchmark/eval_eqt_rose.py --ckpt ../models/eqt_rose/eqt_rose.pt
+--rose-dir <rose>` on the full 32 374-trace RoSE test split (a *different*
+evaluation protocol from the pipeline above — SeisBench fixed-window generator,
+picks recovered from the Gaussian label channels, and a synthesised post-event
+**coda** window as the T1 negative since RoSE has no dedicated noise traces):
+
+| Task | Metric | EQT-RoSE |
+|---|---|--:|
+| T1 — event detection | F1 / AUC | 0.928 / 0.57 ⚠️ |
+| T2 — phase identification (P vs S) | MCC (n = 34 140) | 0.730 |
+| T3 — onset time, **P** | MAE / RMSE / IQR (n = 11 918) | 0.072 s / 0.111 s / 0.08 s |
+| T3 — onset time, **S** | MAE / RMSE / IQR (n = 16 984) | 0.162 s / 0.209 s / 0.25 s |
+
+⚠️ The T1 AUC (~0.57) is artificially depressed because EQT's training label
+marks samples up to `S + 1.4·(S−P)` as event-positive, so the first half of
+each coda-window "negative" is still in-event by EQT's own definition — treat
+T1 here as advisory only (use `--skip-t1` to suppress). The pipeline's
+STEAD-noise-based T1 for EQT-RoSE is F1 0.977 / AUC 0.986 (`rose_detection.csv`);
+T2/T3 above are robust.
+
+## Regenerating
+
+`bash benchmark/regenerate_results.sh --update-release` rebuilds all five CSVs
+(see `../benchmark/README.md`). Stages 4 & 6 — `build_rose_final_benchmark.py`
+and `build_stead_full_benchmark.py` — are what aggregate the per-model
+inference JSONs into these tables; both also print the threshold-0.30
+leaderboard to stdout (`python benchmark/build_rose_final_benchmark.py
+--eval-dir <eval-dir> --threshold 0.3`, likewise for STEAD).
