@@ -596,11 +596,12 @@ def load_custom_eqt(ckpt_path: str, device: torch.device,
     """Load a custom EQT-on-RoSE checkpoint.
 
     inference_norm: how the classify pipeline should normalize batches in
-    annotate_batch_pre. Pass None when training did NOT include
-    normalization in the augmentation (the default for our train_eqt_rose
-    pipeline) — this avoids a train/test preprocessing mismatch that
-    would otherwise destroy recall under model.classify.
-    Set "std" or "peak" to inherit SeisBench's normal inference path.
+    annotate_batch_pre. The bundled eqt_rose.pt checkpoint was trained
+    with sbg.Normalize(amp_norm_type="peak") — its stored config has
+    norm="peak" — so callers should pass "peak" (this is the default of
+    --custom-inference-norm). Pass None only when the checkpoint was
+    trained without any Normalize augmentation; mismatching train-time
+    and inference-time normalization destroys recall.
     """
     state = safe_torch_load(ckpt_path, map_location=device)
     cfg = state.get("config", {})
@@ -653,13 +654,15 @@ def main() -> None:
                     help="Path to user's EQT-RoSE checkpoint (.pt).")
     ap.add_argument("--custom-name", default="EQT-RoSE",
                     help="Display name for the custom EQT checkpoint.")
-    ap.add_argument("--custom-inference-norm", default="none",
+    ap.add_argument("--custom-inference-norm", default="peak",
                     choices=["none", "std", "peak"],
                     help="Inference normalization for the custom EQT. "
-                         "'none' (default) matches our train_eqt_rose pipeline "
-                         "which had no Normalize augmentation. Use 'peak' if "
-                         "the checkpoint was trained with sbg.Normalize "
-                         "(amp_norm_type='peak').")
+                         "'peak' (default) matches the bundled eqt_rose.pt "
+                         "checkpoint, which was trained with sbg.Normalize "
+                         "(amp_norm_type='peak'); see the 'norm' field in the "
+                         "checkpoint's stored config. Use 'none' only for a "
+                         "checkpoint trained with no Normalize augmentation, "
+                         "and 'std' for sbg.Normalize(amp_norm_type='std').")
     ap.add_argument("--custom-phasenet", default=None,
                     help="Path to user's PhaseNet-RoSE checkpoint (.pt).")
     ap.add_argument("--custom-phasenet-name", default="PhaseNet-RoSE",
