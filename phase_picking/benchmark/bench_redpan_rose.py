@@ -77,6 +77,12 @@ class SimpleDetection:
 
 
 def configure_tf_memory_growth(intra_threads: int | None = None):
+    # Force CPU-only by default to sidestep cuDNN version mismatches that
+    # silently fail every conv1d (e.g. "No DNN in stream executor"). Matches
+    # the CPU path bench_stead_test.py uses for the same RED-PAN model.
+    # Users with a working CUDA/cuDNN stack can opt back in by exporting
+    # CUDA_VISIBLE_DEVICES before invoking.
+    os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
     import tensorflow as tf
     gpus = tf.config.list_physical_devices("GPU")
     for g in gpus:
@@ -178,6 +184,10 @@ def evaluate_redpan_sweep(
         for t in thresholds
     }
     n_evaluated, n_failed = 0, 0
+    # Track failure modes so a silent 100% n_failed loop is no longer invisible.
+    from collections import Counter
+    failure_counts: Counter[str] = Counter()
+    LOG_FIRST_N = 5  # surface the first few full tracebacks at WARNING
     md = test_dataset.metadata.reset_index(drop=True)
     t0 = time.time()
     dt = 1.0 / cfg.sampling_rate
@@ -185,7 +195,11 @@ def evaluate_redpan_sweep(
     for k, idx in enumerate(indices):
         try:
             wf, _ = test_dataset.get_sample(int(idx))
-        except Exception:
+        except Exception as exc:
+            key = f"get_sample/{type(exc).__name__}"
+            if failure_counts[key] < LOG_FIRST_N:
+                logger.warning("get_sample failed on idx %d: %s: %s", idx, type(exc).__name__, exc)
+            failure_counts[key] += 1
             n_failed += 1
             continue
         meta = md.iloc[int(idx)]
@@ -200,7 +214,13 @@ def evaluate_redpan_sweep(
         try:
             p_arr, s_arr, m_arr = redpan.predict(stream, postprocess=False)
         except Exception as exc:
-            logger.debug("predict failed on idx %d: %s", idx, exc)
+            key = f"predict/{type(exc).__name__}"
+            if failure_counts[key] < LOG_FIRST_N:
+                logger.warning(
+                    "predict failed on idx %d: %s: %s", idx, type(exc).__name__, exc,
+                    exc_info=failure_counts[key] == 0,  # full traceback on the very first
+                )
+            failure_counts[key] += 1
             n_failed += 1
             continue
 
@@ -247,6 +267,12 @@ def evaluate_redpan_sweep(
                         k + 1, len(indices), elapsed, eta)
 
     elapsed = time.time() - t0
+    if n_failed:
+        top = failure_counts.most_common(5)
+        breakdown = ", ".join(f"{k}={v}" for k, v in top)
+        log_fn = logger.error if n_failed == len(indices) else logger.warning
+        log_fn("evaluation summary: %d/%d traces failed (top causes: %s)",
+               n_failed, len(indices), breakdown)
     return {
         thr: _aggregate_summary(
             d["stats"], d["mcc_true"], d["mcc_pred"],
