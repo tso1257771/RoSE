@@ -459,7 +459,14 @@ def evaluate_model_sweep(
     classify_kwargs = {
         "P_threshold": base_thresh,
         "S_threshold": base_thresh,
-        "detection_threshold": cfg.detection_threshold,
+        # Sweep detection alongside picks: use the lowest sweep threshold
+        # at classify time so the returned detection list is the superset.
+        # The per-threshold `[d for d in all_detections if peak_value >= thr]`
+        # filter below then yields a real sweep. (Previously this was
+        # cfg.detection_threshold = 0.3, making thr<0.3 rows degenerate;
+        # see e.g. EQT-RoSE's rose_detection.csv where tp/fn were
+        # identical at thresholds 0.05/0.1/0.2/0.3 prior to this fix.)
+        "detection_threshold": base_thresh,
     }
 
     # Per-threshold accumulators.
