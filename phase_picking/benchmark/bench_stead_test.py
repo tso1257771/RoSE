@@ -83,6 +83,27 @@ class SimpleDetection:
     peak_value: float
 
 
+def _ensure_cudnn_on_ld_library_path() -> None:
+    """Re-exec ourselves with LD_LIBRARY_PATH including the pip-bundled
+    cuDNN dir, if it's not already there. See bench_redpan_rose.py for
+    the full rationale (TF 2.16 wants cuDNN 8.9; this box's system
+    cuDNN is 8.8.1, which crashes every conv1d). No-op if the bundled
+    libcudnn dir is absent or already on the path. Only safe from a
+    __main__ entry point — importing the module shouldn't replace the
+    host process.
+    """
+    py_lib = Path(sys.prefix) / "lib" \
+        / f"python{sys.version_info.major}.{sys.version_info.minor}" \
+        / "site-packages" / "nvidia" / "cudnn" / "lib"
+    if not py_lib.is_dir() or not any(py_lib.glob("libcudnn*.so*")):
+        return
+    current = os.environ.get("LD_LIBRARY_PATH", "")
+    if str(py_lib) in current.split(":"):
+        return
+    os.environ["LD_LIBRARY_PATH"] = f"{py_lib}:{current}" if current else str(py_lib)
+    os.execve(sys.executable, [sys.executable] + sys.argv, os.environ)
+
+
 # ---------- STEAD test loaders -----------------------------------------------
 
 STEAD_DEFAULT = Path(os.environ["STEAD_DIR"]) if "STEAD_DIR" in os.environ else None
@@ -195,11 +216,59 @@ def predict_redpan(redpan, stream: Stream):
 
 # ---------- evaluation -------------------------------------------------------
 
+def _stead_partial_path(out_dir: Path, model_name: str) -> Path:
+    """`<out_dir>/<model>.partial.json` — incremental dump location."""
+    return out_dir / f"{model_name}.partial.json"
+
+
+def _stead_dump_partial(path: Path, *, per_thr: dict, event_max_det: list,
+                        noise_max_det: list, completed_ev: set,
+                        completed_nz: set, n_failed: int,
+                        elapsed_s: float) -> None:
+    """Atomically dump in-progress state for resume after a kill."""
+    payload = {
+        "per_thr": {str(t): d for t, d in per_thr.items()},
+        "event_max_det": event_max_det,
+        "noise_max_det": noise_max_det,
+        "completed_ev": sorted(completed_ev),
+        "completed_nz": sorted(completed_nz),
+        "n_failed": n_failed,
+        "elapsed_s": elapsed_s,
+    }
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, default=str))
+    tmp.replace(path)
+
+
+def _stead_load_partial(path: Path, thresholds: list[float]):
+    """Returns the loaded state tuple or None if the sweep grid changed
+    (resume only works when the threshold set is identical)."""
+    if not path.is_file():
+        return None
+    payload = json.loads(path.read_text())
+    saved = {float(s) for s in payload["per_thr"]}
+    if saved != set(thresholds):
+        logger.warning("partial file %s threshold set %s != current %s; ignoring",
+                       path, sorted(saved), sorted(thresholds))
+        return None
+    return (
+        {float(t): d for t, d in payload["per_thr"].items()},
+        list(payload.get("event_max_det", [])),
+        list(payload.get("noise_max_det", [])),
+        set(int(i) for i in payload.get("completed_ev", [])),
+        set(int(i) for i in payload.get("completed_nz", [])),
+        int(payload.get("n_failed", 0)),
+        float(payload.get("elapsed_s", 0.0)),
+    )
+
+
 def evaluate_model(name, model_kind, model, ev_df, noise_df, ev_wf_dir,
                    nz_wf_dir, n_events, n_noise,
                    thresholds: list[float],
                    pick_tol_s=None, bandpass=(1.0, 45.0),
-                   shard: int = 0, total_shards: int = 1):
+                   shard: int = 0, total_shards: int = 1,
+                   *, partial_path: Path | None = None,
+                   save_every: int = 500):
     """If total_shards > 1, evaluate only this process's slice of the
     sampled (event + noise) indices: shard k of N takes indices where
     (i % N) == k. Use to parallelize across processes; merge per-shard
@@ -250,13 +319,30 @@ def evaluate_model(name, model_kind, model, ev_df, noise_df, ev_wf_dir,
     }
     event_max_det = []   # collected once; AUC is threshold-independent
     noise_max_det = []
+    completed_ev: set[int] = set()
+    completed_nz: set[int] = set()
+    elapsed_carry = 0.0
 
     n_failed = 0
+    # Resume if a usable partial dump exists.
+    if partial_path is not None:
+        loaded = _stead_load_partial(partial_path, thresholds)
+        if loaded is not None:
+            (per_thr, event_max_det, noise_max_det,
+             completed_ev, completed_nz, n_failed, elapsed_carry) = loaded
+            logger.info(
+                "[%s] resuming from %s: %d events + %d noise already done "
+                "(%d failed, %.0fs prior elapsed)",
+                name, partial_path, len(completed_ev), len(completed_nz),
+                n_failed, elapsed_carry,
+            )
     t0 = time.time()
     components = "ENZ" if model_kind == "redpan" else "ZNE"
 
     # ---- events ----
     for k, i in enumerate(ev_idx):
+        if int(i) in completed_ev:
+            continue
         row = ev_df.iloc[int(i)]
         try:
             arr, true_picks, st0 = load_stead_event(
@@ -320,14 +406,27 @@ def evaluate_model(name, model_kind, model, ev_df, noise_df, ev_wf_dir,
             if det_summary is not None:
                 acc["det_records"].append(det_summary)
 
+        completed_ev.add(int(i))
         if (k + 1) % 200 == 0:
-            elapsed = time.time() - t0
-            eta = elapsed / (k + 1) * (len(ev_idx) + len(nz_idx) - k - 1)
+            elapsed = elapsed_carry + (time.time() - t0)
+            done = len(completed_ev) + len(completed_nz) + n_failed
+            total = len(ev_idx) + len(nz_idx)
+            eta = (elapsed / done * (total - done)) if done else 0.0
             logger.info("  events %d/%d (%.0fs elapsed, ETA %.0fs)",
-                        k + 1, len(ev_idx), elapsed, eta)
+                        len(completed_ev), len(ev_idx), elapsed, eta)
+        if (partial_path is not None and save_every
+                and len(completed_ev) > 0 and len(completed_ev) % save_every == 0):
+            _stead_dump_partial(
+                partial_path, per_thr=per_thr,
+                event_max_det=event_max_det, noise_max_det=noise_max_det,
+                completed_ev=completed_ev, completed_nz=completed_nz,
+                n_failed=n_failed, elapsed_s=elapsed_carry + (time.time() - t0),
+            )
 
     # ---- noise ----
     for k, i in enumerate(nz_idx):
+        if int(i) in completed_nz:
+            continue
         row = noise_df.iloc[int(i)]
         try:
             arr, st0 = load_stead_noise(int(i), row["trace_name"], nz_wf_dir)
@@ -363,11 +462,22 @@ def evaluate_model(name, model_kind, model, ev_df, noise_df, ev_wf_dir,
                 1 if len(picks_above_nz) > 0 else 0
             )
 
+        completed_nz.add(int(i))
         if (k + 1) % 200 == 0:
-            elapsed = time.time() - t0
-            eta = elapsed / (len(ev_idx) + k + 1) * (len(nz_idx) - k - 1)
+            elapsed = elapsed_carry + (time.time() - t0)
+            done = len(completed_ev) + len(completed_nz) + n_failed
+            total = len(ev_idx) + len(nz_idx)
+            eta = (elapsed / done * (total - done)) if done else 0.0
             logger.info("  noise %d/%d (%.0fs elapsed, ETA %.0fs)",
-                        k + 1, len(nz_idx), elapsed, eta)
+                        len(completed_nz), len(nz_idx), elapsed, eta)
+        if (partial_path is not None and save_every
+                and len(completed_nz) > 0 and len(completed_nz) % save_every == 0):
+            _stead_dump_partial(
+                partial_path, per_thr=per_thr,
+                event_max_det=event_max_det, noise_max_det=noise_max_det,
+                completed_ev=completed_ev, completed_nz=completed_nz,
+                n_failed=n_failed, elapsed_s=elapsed_carry + (time.time() - t0),
+            )
 
     # AUC of detection-head score is threshold-independent (computed once)
     ev_scores = np.asarray(event_max_det, dtype=np.float64)
@@ -386,7 +496,14 @@ def evaluate_model(name, model_kind, model, ev_df, noise_df, ev_wf_dir,
 
     from sklearn.metrics import (precision_score, recall_score,
                                  matthews_corrcoef as _mcc)
-    elapsed = time.time() - t0
+    elapsed = elapsed_carry + (time.time() - t0)
+    # Clean shutdown: drop the partial file now that we have the aggregated
+    # result. Leave it on exception so the next run can resume.
+    if partial_path is not None and partial_path.is_file():
+        try:
+            partial_path.unlink()
+        except OSError:
+            pass
     out_per_thr: dict[str, dict] = {}
     for thr in thresholds:
         acc = per_thr[thr]
@@ -424,6 +541,9 @@ def evaluate_model(name, model_kind, model, ev_df, noise_df, ev_wf_dir,
 # ---------- main -------------------------------------------------------------
 
 def main() -> None:
+    # Ensure cuDNN-matching LD_LIBRARY_PATH is set up before any TF import
+    # downstream (see bench_redpan_rose.py for the full rationale).
+    _ensure_cudnn_on_ld_library_path()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--stead-dir", default=(str(STEAD_DEFAULT) if STEAD_DEFAULT else None))
     ap.add_argument("--out-dir", required=True)
@@ -465,6 +585,13 @@ def main() -> None:
                          "processes. Each shard processes indices where "
                          "(i %% total_shards) == shard.")
     ap.add_argument("--total-shards", type=int, default=1)
+    ap.add_argument("--resume", action="store_true",
+                    help="Resume from <out_dir>/<model>.partial.json if it "
+                         "exists. Partial state is dumped every "
+                         "--save-every traces during evaluation.")
+    ap.add_argument("--save-every", type=int, default=500,
+                    help="Dump partial state every N successful evaluations "
+                         "(0 = never). Only meaningful with --resume.")
     args = ap.parse_args()
     if args.stead_dir is None:
         ap.error("--stead-dir is required (or set the STEAD_DIR environment variable)")
@@ -539,30 +666,33 @@ def main() -> None:
                 m.to("cpu").eval()
                 kind = "seisbench"
             elif model_id == "redpan":
-                os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+                # cuDNN path is set up at main() entry via
+                # _ensure_cudnn_on_ld_library_path() so TF dlopens the right
+                # libcudnn here.
                 import tensorflow as tf
                 for g in tf.config.list_physical_devices("GPU"):
                     try:
                         tf.config.experimental.set_memory_growth(g, True)
                     except RuntimeError:
                         pass
-                # Cap TF threads to avoid over-subscription when multiple
-                # shards run in parallel on the same machine.
-                # n cores per process = max(1, total_cores // total_shards)
-                try:
-                    n_threads = max(
-                        1, os.cpu_count() // max(1, args.total_shards),
-                    )
-                    tf.config.threading.set_intra_op_parallelism_threads(
-                        n_threads)
-                    tf.config.threading.set_inter_op_parallelism_threads(
-                        n_threads)
-                    logger.info("TF threading capped to %d intra/inter "
-                                "ops per process (cores=%d, shards=%d)",
-                                n_threads, os.cpu_count(),
-                                args.total_shards)
-                except Exception:
-                    pass
+                # On CPU, cap TF threads to avoid over-subscription when
+                # multiple shards run in parallel on the same machine.
+                # On GPU, intra/inter-op threading is irrelevant.
+                if not tf.config.list_physical_devices("GPU"):
+                    try:
+                        n_threads = max(
+                            1, os.cpu_count() // max(1, args.total_shards),
+                        )
+                        tf.config.threading.set_intra_op_parallelism_threads(
+                            n_threads)
+                        tf.config.threading.set_inter_op_parallelism_threads(
+                            n_threads)
+                        logger.info("TF threading capped to %d intra/inter "
+                                    "ops per process (cores=%d, shards=%d)",
+                                    n_threads, os.cpu_count(),
+                                    args.total_shards)
+                    except Exception:
+                        pass
                 from rose.redpan_inference.core import REDPAN
                 tf_model = tf.keras.models.load_model(args.redpan_tf,
                                                      compile=False)
@@ -582,12 +712,16 @@ def main() -> None:
             {float(x.strip()) for x in args.sweep_thresholds.split(",")
              if x.strip()}
         )
+        partial_path = (
+            _stead_partial_path(out_dir, model_id) if args.resume else None
+        )
         per_thr = evaluate_model(
             model_id, kind, m, ev_df, noise_df, ev_wf_dir, nz_wf_dir,
             args.num_events, args.num_noise,
             thresholds=thresholds,
             pick_tol_s=pick_tol, bandpass=bandpass,
             shard=args.shard, total_shards=args.total_shards,
+            partial_path=partial_path, save_every=int(args.save_every),
         )
         all_results[model_id] = per_thr
         suffix = (f".shard{args.shard}of{args.total_shards}"
