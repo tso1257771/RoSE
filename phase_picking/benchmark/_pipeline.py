@@ -58,17 +58,46 @@ def run(cmd: list[str], *, env: dict | None = None, label: str | None = None) ->
     subprocess.run(cmd, check=True, env=env)
 
 
+def _bundled_cudnn_lib_dir() -> Path | None:
+    """Locate the pip-installed nvidia-cudnn-cu12 libcudnn dir, if present.
+
+    TF 2.16 was built against cuDNN 8.9; on boxes whose system cuDNN is older
+    (e.g. 8.8.1 from /usr/local/cuda-11.8/) TF dies with "No DNN in stream
+    executor" on every conv1d. The nvidia-cudnn-cu12==8.9.* pip package
+    ships a matching ``libcudnn.so.8``; prepending its dir to LD_LIBRARY_PATH
+    makes ld.so find the right one first.
+    """
+    py_lib = Path(sys.executable).resolve().parent.parent / "lib" \
+        / f"python{sys.version_info.major}.{sys.version_info.minor}" \
+        / "site-packages" / "nvidia" / "cudnn" / "lib"
+    if py_lib.is_dir() and any(py_lib.glob("libcudnn*.so*")):
+        return py_lib
+    return None
+
+
 def threadcap_env(threads: int) -> dict:
     """Env copy that caps each scientific-stack library to ``threads`` OS threads.
 
     Used when running several stage scripts concurrently so N workers × T threads
     doesn't oversubscribe the cores (and the bench_*.py also get ``--tf-threads T``).
+
+    Also prepends the pip-bundled cuDNN dir to ``LD_LIBRARY_PATH`` so TF picks
+    the right libcudnn at runtime (see ``_bundled_cudnn_lib_dir``); doing it
+    here means the bench subprocesses get it via their environ at exec time,
+    before Python or any C extension loads.
     """
     e = dict(os.environ)
     for k in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
               "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
               "TF_NUM_INTRAOP_THREADS", "TF_NUM_INTEROP_THREADS"):
         e[k] = str(threads)
+    cudnn_dir = _bundled_cudnn_lib_dir()
+    if cudnn_dir is not None:
+        existing = e.get("LD_LIBRARY_PATH", "")
+        if str(cudnn_dir) not in existing.split(":"):
+            e["LD_LIBRARY_PATH"] = (
+                f"{cudnn_dir}:{existing}" if existing else str(cudnn_dir)
+            )
     return e
 
 
