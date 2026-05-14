@@ -67,7 +67,12 @@ def main() -> None:
     pt_models = list(cfg.get("pytorch_model_ids") or _PT_MODELS_ALL)
     jobs = max(1, int(args.jobs))
     tpt = max(1, (os.cpu_count() or jobs) // jobs)   # threads per task
-    env = threadcap_env(tpt) if jobs > 1 else None
+    # threadcap_env both caps OMP/MKL/.../TF intra+inter threads AND prepends
+    # the pip-bundled cuDNN dir to LD_LIBRARY_PATH so TF finds a libcudnn
+    # matching its build version. Apply unconditionally — when jobs==1 the
+    # thread cap is a no-op (= 1 worker × cores threads) but the cuDNN path
+    # is still important.
+    env = threadcap_env(tpt)
 
     need_rose = not args.skip_rose
     need_stead = (not args.skip_stead) or need_rose   # the RoSE FP convention needs STEAD noise too
@@ -92,6 +97,10 @@ def main() -> None:
     # long pole. The 8 PyTorch-STEAD runs and rose-pickers are comparatively cheap.
     redpan_tasks: list[tuple[str, list[str], dict | None]] = []
     cheap_tasks: list[tuple[str, list[str], dict | None]] = []
+    # The two long-pole TF scripts checkpoint their state to <out_dir>/<model>.partial.json
+    # every 500 traces and pick up where they left off on relaunch — pass --resume so a
+    # killed/crashed run loses minutes, not hours. The cheaper PyTorch passes (<30 min
+    # each on GPU) restart from scratch, so they don't bother.
     if not args.skip_stead:
         redpan_tasks.append((
             "stead redpan (long pole)",
@@ -99,6 +108,7 @@ def main() -> None:
                 "--stead-dir", cfg["stead_dir"], "--out-dir", str(eval_dir / "bench_stead_full"),
                 "--num-events", n, "--num-noise", n, "--sweep-thresholds", thr, *bp,
                 "--models", "redpan", "--redpan-tf", ck["redpan_tf60"],
+                "--resume",
             ], env))
     if not args.skip_rose:
         redpan_tasks.append((
@@ -107,6 +117,7 @@ def main() -> None:
                 "--model-path", ck["redpan_tf60"], "--rose-dir", cfg["rose_dir"],
                 "--out-dir", str(eval_dir / "bench_redpan_rose_full"),
                 "--num-test", n, "--sweep-thresholds", thr, *bp, "--tf-threads", str(tpt),
+                "--resume",
             ], env))
         redpan_tasks.append((
             "noise-fp (9 models)",

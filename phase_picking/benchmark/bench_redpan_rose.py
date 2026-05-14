@@ -76,13 +76,32 @@ class SimpleDetection:
     peak_value: float
 
 
+def _ensure_cudnn_on_ld_library_path() -> None:
+    """Re-exec ourselves with LD_LIBRARY_PATH including the pip-bundled
+    cuDNN dir, if it's not already there. TF 2.16 was built against
+    cuDNN 8.9; on boxes whose system cuDNN is older (e.g. 8.8.1 under
+    /usr/local/cuda-11.8/) TF crashes every conv1d with "No DNN in
+    stream executor". ld.so reads LD_LIBRARY_PATH at exec time — not
+    from runtime os.environ changes — so we have to re-exec.
+
+    No-op if the bundled libcudnn dir is absent, or already on the
+    path. Only call this from a __main__ entry point; importing the
+    module shouldn't replace the host process.
+    """
+    import sys
+    py_lib = Path(sys.prefix) / "lib" \
+        / f"python{sys.version_info.major}.{sys.version_info.minor}" \
+        / "site-packages" / "nvidia" / "cudnn" / "lib"
+    if not py_lib.is_dir() or not any(py_lib.glob("libcudnn*.so*")):
+        return
+    current = os.environ.get("LD_LIBRARY_PATH", "")
+    if str(py_lib) in current.split(":"):
+        return
+    os.environ["LD_LIBRARY_PATH"] = f"{py_lib}:{current}" if current else str(py_lib)
+    os.execve(sys.executable, [sys.executable] + sys.argv, os.environ)
+
+
 def configure_tf_memory_growth(intra_threads: int | None = None):
-    # Force CPU-only by default to sidestep cuDNN version mismatches that
-    # silently fail every conv1d (e.g. "No DNN in stream executor"). Matches
-    # the CPU path bench_stead_test.py uses for the same RED-PAN model.
-    # Users with a working CUDA/cuDNN stack can opt back in by exporting
-    # CUDA_VISIBLE_DEVICES before invoking.
-    os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
     import tensorflow as tf
     gpus = tf.config.list_physical_devices("GPU")
     for g in gpus:
@@ -90,7 +109,11 @@ def configure_tf_memory_growth(intra_threads: int | None = None):
             tf.config.experimental.set_memory_growth(g, True)
         except RuntimeError:
             pass
-    if intra_threads is not None and intra_threads > 0:
+    if gpus:
+        logger.info("TF GPU enabled: %s", [g.name for g in gpus])
+    # When running on GPU, intra/inter-op threading doesn't help; only set
+    # it when forced to CPU (via CUDA_VISIBLE_DEVICES="" or absent GPU).
+    if not gpus and intra_threads is not None and intra_threads > 0:
         try:
             tf.config.threading.set_intra_op_parallelism_threads(intra_threads)
             tf.config.threading.set_inter_op_parallelism_threads(intra_threads)
@@ -166,12 +189,8 @@ def make_redpan_stream(wf_zne: np.ndarray, meta, sampling_rate: float,
                            components="ENZ", bandpass=bandpass)
 
 
-def evaluate_redpan_sweep(
-    redpan, test_dataset: sbd.WaveformDataset,
-    indices: np.ndarray, cfg: BenchConfig, thresholds: list[float],
-) -> dict:
-    base_thresh = min(thresholds)
-    per_thr: dict[float, dict] = {
+def _empty_per_thr(thresholds: list[float]) -> dict[float, dict]:
+    return {
         t: {
             "stats": {
                 "P": {"tp": 0, "fp": 0, "fn": 0, "residuals": []},
@@ -183,16 +202,91 @@ def evaluate_redpan_sweep(
         }
         for t in thresholds
     }
+
+
+def _partial_path(out_dir: Path, model_name: str) -> Path:
+    """`<out_dir>/<model>.partial.json` — incremental dump location."""
+    return out_dir / f"{model_name}.partial.json"
+
+
+def _dump_partial(path: Path, per_thr: dict[float, dict],
+                  completed: set[int], n_evaluated: int, n_failed: int,
+                  elapsed_s: float) -> None:
+    """Atomically dump in-progress state so the run can resume after a kill.
+
+    JSON keys are stringified floats (JSON doesn't preserve float keys);
+    every other value is naturally JSON-serializable. Atomic via
+    write-then-rename so a kill mid-write can't leave a corrupt file.
+    """
+    payload = {
+        "per_thr": {str(t): d for t, d in per_thr.items()},
+        "completed_indices": sorted(completed),
+        "n_evaluated": n_evaluated,
+        "n_failed": n_failed,
+        "elapsed_s": elapsed_s,
+    }
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, default=str))
+    tmp.replace(path)
+
+
+def _load_partial(path: Path, thresholds: list[float]
+                  ) -> tuple[dict[float, dict], set[int], int, int, float] | None:
+    """Inverse of `_dump_partial`. Returns None if the file's threshold set
+    doesn't exactly match the current sweep (resume only works when the
+    sweep grid is identical)."""
+    if not path.is_file():
+        return None
+    payload = json.loads(path.read_text())
+    saved = {float(s) for s in payload["per_thr"]}
+    if saved != set(thresholds):
+        logger.warning("partial file %s has threshold set %s != current %s; ignoring",
+                       path, sorted(saved), sorted(thresholds))
+        return None
+    per_thr = {float(t): d for t, d in payload["per_thr"].items()}
+    completed = set(int(i) for i in payload["completed_indices"])
+    return (per_thr, completed,
+            int(payload["n_evaluated"]), int(payload["n_failed"]),
+            float(payload.get("elapsed_s", 0.0)))
+
+
+def evaluate_redpan_sweep(
+    redpan, test_dataset: sbd.WaveformDataset,
+    indices: np.ndarray, cfg: BenchConfig, thresholds: list[float],
+    *, partial_path: Path | None = None, save_every: int = 500,
+) -> dict:
+    """Sweep RED-PAN over `indices`, optionally checkpointing to
+    ``partial_path`` every ``save_every`` evaluated traces so the run can
+    resume after a kill. Pass ``partial_path=None`` to disable checkpointing.
+    """
+    base_thresh = min(thresholds)
+    per_thr = _empty_per_thr(thresholds)
     n_evaluated, n_failed = 0, 0
+    completed: set[int] = set()
+    elapsed_carry = 0.0
     # Track failure modes so a silent 100% n_failed loop is no longer invisible.
     from collections import Counter
     failure_counts: Counter[str] = Counter()
     LOG_FIRST_N = 5  # surface the first few full tracebacks at WARNING
+
+    # Resume if a usable partial dump exists.
+    if partial_path is not None:
+        loaded = _load_partial(partial_path, thresholds)
+        if loaded is not None:
+            per_thr, completed, n_evaluated, n_failed, elapsed_carry = loaded
+            logger.info(
+                "resuming from %s: %d already done (%d evaluated, %d failed, "
+                "%.0fs prior elapsed)",
+                partial_path, len(completed), n_evaluated, n_failed, elapsed_carry,
+            )
+
     md = test_dataset.metadata.reset_index(drop=True)
     t0 = time.time()
     dt = 1.0 / cfg.sampling_rate
 
     for k, idx in enumerate(indices):
+        if int(idx) in completed:
+            continue
         try:
             wf, _ = test_dataset.get_sample(int(idx))
         except Exception as exc:
@@ -260,13 +354,28 @@ def evaluate_redpan_sweep(
                 per_thr[thr]["det_records"].append(det_summary)
 
         n_evaluated += 1
+        completed.add(int(idx))
         if (k + 1) % 100 == 0:
-            elapsed = time.time() - t0
-            eta = elapsed / (k + 1) * (len(indices) - k - 1)
+            elapsed = elapsed_carry + (time.time() - t0)
+            done = n_evaluated + n_failed
+            eta = (elapsed / done * (len(indices) - done)) if done else 0.0
             logger.info("  %d/%d traces (%.1fs elapsed, ETA %.1fs)",
-                        k + 1, len(indices), elapsed, eta)
+                        done, len(indices), elapsed, eta)
+        if (partial_path is not None and save_every
+                and n_evaluated > 0 and n_evaluated % save_every == 0):
+            _dump_partial(
+                partial_path, per_thr, completed, n_evaluated, n_failed,
+                elapsed_carry + (time.time() - t0),
+            )
 
-    elapsed = time.time() - t0
+    elapsed = elapsed_carry + (time.time() - t0)
+    # Clean shutdown: the partial file is no longer needed once we have the
+    # final aggregated result. Leave it on exception (caller writes final).
+    if partial_path is not None and partial_path.is_file():
+        try:
+            partial_path.unlink()
+        except OSError:
+            pass
     if n_failed:
         top = failure_counts.most_common(5)
         breakdown = ", ".join(f"{k}={v}" for k, v in top)
@@ -284,6 +393,10 @@ def evaluate_redpan_sweep(
 
 
 def main() -> None:
+    # Ensure the right cuDNN is visible to ld.so BEFORE anything imports TF.
+    # This re-execs if LD_LIBRARY_PATH needs amending. No-op when the
+    # wrapping subprocess (run_inference.py via threadcap_env) already set it.
+    _ensure_cudnn_on_ld_library_path()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--model-path", required=True,
                     help="Path to TF Keras model (.hdf5)")
@@ -313,6 +426,13 @@ def main() -> None:
                          "Set to 2 when running alongside other CPU jobs.")
     ap.add_argument("--model-name", default="RED-PAN-60s",
                     help="Display name in the output CSV.")
+    ap.add_argument("--resume", action="store_true",
+                    help="Resume from <out_dir>/<model>.partial.json if it "
+                         "exists. Partial state is dumped every "
+                         "--save-every traces during evaluation.")
+    ap.add_argument("--save-every", type=int, default=500,
+                    help="Dump partial state every N successful evaluations "
+                         "(0 = never). Only meaningful with --resume.")
     args = ap.parse_args()
     if args.rose_dir is None:
         ap.error("--rose-dir is required (or set the ROSE_DATA_DIR environment variable)")
@@ -374,7 +494,11 @@ def main() -> None:
         batch_size=args.batch_size,
     )
 
-    sweep = evaluate_redpan_sweep(redpan, test, indices, cfg, thresholds)
+    partial_path = _partial_path(out_dir, args.model_name) if args.resume else None
+    sweep = evaluate_redpan_sweep(
+        redpan, test, indices, cfg, thresholds,
+        partial_path=partial_path, save_every=int(args.save_every),
+    )
 
     out_json = out_dir / f"{args.model_name}.json"
     with out_json.open("w") as fh:
