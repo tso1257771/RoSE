@@ -81,12 +81,24 @@ def matthews_corr(tp: int, fp: int, fn: int, tn: int) -> float:
 
 def load_sweep_rows(eval_dir: Path) -> list[dict]:
     rows = []
+    missing: list[Path] = []
     for fname in [
         eval_dir / "bench_rose_full_sweep" / "sweep_comparison.csv",
         eval_dir / "bench_redpan_rose_full" / "sweep_comparison.csv",
     ]:
+        if not fname.is_file():
+            missing.append(fname)
+            continue
         with fname.open() as f:
             rows.extend(csv.DictReader(f))
+    if missing:
+        missing_list = "\n  - ".join(str(p) for p in missing)
+        hint = ("Run benchmark/run_inference.py first (or pass "
+                "--skip-rose if you only care about the STEAD leg).")
+        raise FileNotFoundError(
+            "Missing per-model sweep output(s):\n  - "
+            f"{missing_list}\n{hint}"
+        )
     return rows
 
 

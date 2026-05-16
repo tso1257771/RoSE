@@ -63,7 +63,8 @@ def array_to_stream(arr_enz: np.ndarray, starttime: UTCDateTime,
         tr = Trace(data=data[:, i].astype(np.float32))
         tr.stats.starttime = starttime
         tr.stats.sampling_rate = SAMPLING_RATE
-        tr.stats.network = "XX"; tr.stats.station = "STA"
+        tr.stats.network = "XX"
+        tr.stats.station = "STA"
         tr.stats.channel = f"HH{comp}"
         traces.append(tr)
     s = Stream(traces)
@@ -288,14 +289,16 @@ def main() -> None:
                     in_samples=int(cfg_ckpt.get("model_window", 6000)),
                     sampling_rate=int(cfg_ckpt.get("sampling_rate", 100)),
                     phases=["P", "S"], norm="peak")
-                m.load_state_dict(state["model"]); m.norm = "peak"
+                m.load_state_dict(state["model"])
+                m.norm = "peak"
                 m.to("cpu").eval()
                 kind, comps = "seisbench", "ZNE"
             elif model_id == "phasenet_rose":
                 state = safe_torch_load(args.phasenet_rose_ckpt, map_location="cpu")
                 m = sbm.PhaseNet(phases="PSN", norm="peak",
                                  default_args={"blinding": (200, 200)})
-                m.load_state_dict(state["model"]); m.norm = "peak"
+                m.load_state_dict(state["model"])
+                m.norm = "peak"
                 m.to("cpu").eval()
                 kind, comps = "seisbench", "ZNE"
             elif model_id in pretrained_map:

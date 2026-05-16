@@ -230,7 +230,8 @@ def print_picking_headline(csv_path: Path, threshold: str = "0.3") -> None:
           f"{'  ':>2}"
           f"{'S_TP':>8}{'S_FP':>7}{'S_FN':>7}{'S_F1':>7}{'S_MAE':>8}{'S_MAD':>8}{'S_std':>8}")
     print("-" * 132)
-    rows = list(csv.DictReader(open(csv_path)))
+    with open(csv_path) as fh:
+        rows = list(csv.DictReader(fh))
     rows = [r for r in rows if r["threshold"] == threshold]
     rows.sort(key=lambda r: -(float(r["P_F1"]) + float(r["S_F1"])))
     for r in rows:
@@ -253,11 +254,14 @@ def print_detection_headline(csv_path: Path, threshold: str = "0.3") -> None:
           f"{'T1_F1':>8}{'T1_prec':>9}{'T1_rec':>9}{'T1_MCC':>8}{'T1_AUC':>8}"
           f"  {'detRec':>8}{'IoU':>7}{'startMAE':>10}{'endMAE':>9}")
     print("-" * 130)
-    rows = list(csv.DictReader(open(csv_path)))
+    with open(csv_path) as fh:
+        rows = list(csv.DictReader(fh))
     rows = [r for r in rows if r["threshold"] == threshold]
     def k(r):
-        try: return -float(r["T1_F1"])
-        except: return 0.0
+        try:
+            return -float(r["T1_F1"])
+        except (TypeError, ValueError):
+            return 0.0
     rows.sort(key=k)
     for r in rows:
         det_str = ""

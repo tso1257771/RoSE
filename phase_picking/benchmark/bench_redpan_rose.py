@@ -28,6 +28,7 @@ import logging
 import os
 import sys
 import time
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -84,12 +85,16 @@ def _ensure_cudnn_on_ld_library_path() -> None:
     stream executor". ld.so reads LD_LIBRARY_PATH at exec time — not
     from runtime os.environ changes — so we have to re-exec.
 
+    The lookup path matches `_pipeline._bundled_cudnn_lib_dir` (derived
+    from `sys.executable` so editable installs and venvs both resolve
+    to the right interpreter's site-packages).
+
     No-op if the bundled libcudnn dir is absent, or already on the
     path. Only call this from a __main__ entry point; importing the
     module shouldn't replace the host process.
     """
     import sys
-    py_lib = Path(sys.prefix) / "lib" \
+    py_lib = Path(sys.executable).resolve().parent.parent / "lib" \
         / f"python{sys.version_info.major}.{sys.version_info.minor}" \
         / "site-packages" / "nvidia" / "cudnn" / "lib"
     if not py_lib.is_dir() or not any(py_lib.glob("libcudnn*.so*")):
@@ -265,7 +270,6 @@ def evaluate_redpan_sweep(
     completed: set[int] = set()
     elapsed_carry = 0.0
     # Track failure modes so a silent 100% n_failed loop is no longer invisible.
-    from collections import Counter
     failure_counts: Counter[str] = Counter()
     LOG_FIRST_N = 5  # surface the first few full tracebacks at WARNING
 

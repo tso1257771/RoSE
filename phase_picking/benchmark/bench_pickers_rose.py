@@ -78,7 +78,8 @@ class BenchConfig:
     p_threshold: float
     s_threshold: float
     detection_threshold: float
-    pick_tol_s: object   # float or dict {"P": .., "S": ..}
+    # float (uniform) or dict {"P": 0.5, "S": 1.0} (pick-benchmark convention).
+    pick_tol_s: float | dict[str, float]
     sampling_rate: int
     component_order: str
     bandpass: tuple[float, float] | None
@@ -386,6 +387,10 @@ def evaluate_model(
         try:
             wf, _ = test_dataset.get_sample(int(idx))
         except Exception as exc:
+            # Log at DEBUG so a 100% n_failed run still leaves evidence
+            # in the bench.log file when run with --log-level DEBUG.
+            logger.debug("get_sample failed on idx %d: %s: %s",
+                         idx, type(exc).__name__, exc)
             n_failed += 1
             continue
         meta = md.iloc[int(idx)]
@@ -577,7 +582,10 @@ def load_custom_phasenet(ckpt_path: str, device: torch.device,
                          inference_norm: str | None = None) -> torch.nn.Module:
     """Load a custom PhaseNet-on-RoSE checkpoint."""
     state = safe_torch_load(ckpt_path, map_location=device)
-    cfg = state.get("config", {})
+    # NOTE: unlike EQT, the SeisBench PhaseNet constructor doesn't consult
+    # state['config'] — sampling rate and window length are fixed at 100 Hz /
+    # 3001 samples by the architecture. Pulling 'config' out is therefore
+    # unnecessary here; left as a comment so the asymmetry is documented.
     model = sbm.PhaseNet(
         phases="PSN",
         norm=inference_norm if inference_norm in ("std", "peak") else "peak",

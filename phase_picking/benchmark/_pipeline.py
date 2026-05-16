@@ -105,7 +105,11 @@ def run_parallel(tasks: list[tuple[str, list[str], dict | None]], jobs: int) -> 
     """Run ``(label, cmd, env)`` tasks through a ``jobs``-wide thread pool.
 
     Each worker just blocks in ``subprocess.run`` — the GIL is irrelevant — so
-    the actual stage processes run concurrently. First failure cancels the rest.
+    the actual stage processes run concurrently. On the first failure, queued
+    (not-yet-started) workers are cancelled and the exception re-raises after
+    already-running subprocesses finish on their own. ``Future.cancel()``
+    cannot interrupt a thread already inside ``subprocess.run``; if you need
+    eager cancellation, kill the runner's process group.
     """
     if jobs <= 1 or len(tasks) <= 1:
         for label, cmd, env in tasks:
