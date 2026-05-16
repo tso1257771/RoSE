@@ -51,6 +51,26 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["rose"]
 
+# Ruff configuration -------------------------------------------------------
+[tool.ruff]
+# Pin a stable target Python so ruff stops flagging f-strings / type unions
+# that are valid on the floor (3.10) but flagged on older defaults.
+target-version = "py310"
+
+[tool.ruff.lint.per-file-ignores]
+# Standalone scripts under phase_picking/benchmark/ and phase_picking/training/
+# do `sys.path.insert(0, ...)` BEFORE importing the rose package or sibling
+# modules — necessary so they can be run directly (without `pip install -e .`)
+# from a fresh clone or via run_inference.py's subprocess pool. Ruff E402
+# (module-import-not-at-top-of-file) flags every post-sys.path import; the
+# pattern is intentional and scoped to these two script directories.
+"phase_picking/benchmark/*.py" = ["E402"]
+"phase_picking/training/*.py"  = ["E402"]
+# Examples follow the same `sys.path` pattern so they can be run from a
+# checkout, plus a few inline `if cond: stmt` and trailing-print idioms
+# (E701/E702) that read cleanly in tutorial-style scripts.
+"examples/*.py" = ["E402", "E701", "E702"]
+
 # uv-specific configuration -------------------------------------------------
 # Route the [cuda] extra at the official PyTorch CUDA index instead of PyPI.
 [tool.uv]

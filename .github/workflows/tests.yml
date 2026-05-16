@@ -72,8 +72,10 @@ jobs:
 
       - name: Install uv
         # Official Astral action: pins the uv version and sets up its
-        # cache between runs (different cache dir than pip's).
-        uses: astral-sh/setup-uv@v3
+        # cache between runs (different cache dir than pip's). v5+
+        # runs on Node.js 24 (v3 was Node.js 20, soft-deprecated and
+        # hits a cache-restore 400 on hosted runners).
+        uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           cache-dependency-glob: |
