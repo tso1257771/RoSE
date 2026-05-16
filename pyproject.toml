@@ -12,7 +12,12 @@ authors = [{ name = "RoSE dataset contributors" }]
 
 # Core runtime — everything the rose loader and examples need EXCEPT torch.
 dependencies = [
-    "seisbench>=0.10,<0.11",
+    # Pinned at >=0.10 because the API rose.dataset.RoSE inherits from
+    # (seisbench.data.WaveformDataset) was reorganised between 0.9 and
+    # 0.10. No upper bound: drop the cap so the package works against
+    # newer SeisBench releases until/unless a real API break shows up,
+    # at which point pin to the affected major.
+    "seisbench>=0.10",
     "obspy>=1.4",
     "h5py>=3.8",
     "pandas>=2.0",
