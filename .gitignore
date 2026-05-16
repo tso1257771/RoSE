@@ -5,7 +5,8 @@
 # (~80 MB) — distributed separately on Zenodo, not in git. The two
 # compiled ROMPLUS source tables ARE versioned (catalog directly, picks
 # attached to each release as a GitHub Release asset due to size).
-data/
+# Note: `data/*` (not `data/`) so the !-exception below actually applies.
+data/*
 !data/Enhanced_ROMPLUS_catalog.csv
 
 # Run outputs: figures, per-event tables, MiniSEED exports.
