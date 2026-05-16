@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pandas as pd
 from copy import deepcopy
@@ -5,11 +7,13 @@ from scipy.signal import find_peaks
 from obspy.signal.trigger import trigger_onset
 from obspy import UTCDateTime
 
+logger = logging.getLogger(__name__)
+
 def picker_info(
     tar_mask,
     tar_p,
     tar_s,
-    args={"detection_threshold": 0.3, "P_threshold": 0.1, "S_threshold": 0.1},
+    args=None,
 ):
     """ 
     Performs detection and picking on predicted data.
@@ -37,6 +41,9 @@ def picker_info(
         P arrival, P probabiliy, 
         S arrival,  S probability]}
     """
+    if args is None:
+        args = {"detection_threshold": 0.3,
+                "P_threshold": 0.1, "S_threshold": 0.1}
     p_peaks = find_peaks(tar_p, height=args["P_threshold"], distance=100)[0]
     s_peaks = find_peaks(tar_s, height=args["S_threshold"], distance=100)[0]
     eq_detects = trigger_onset(
@@ -87,16 +94,17 @@ def picker_info(
                 potential_S[S_peak_idx],
                 tar_s[potential_S[S_peak_idx]],
             ]
-        except:
+        except (IndexError, ValueError):
+            # Skip trigger windows whose peak arrays are empty (no P/S
+            # peak within the window) — `argmax` raises on those. Other
+            # exceptions (KeyboardInterrupt, MemoryError) propagate.
             continue
     return eq_collections
 
-def extract_picks(raw_wf, P_stream, S_stream, M_stream, 
-        station_id=None, dt=0.01, 
-        p_amp_estimate_sec=1, s_amp_estimate_sec=3, 
-        starttime=None, endtime=None, args={
-        "detection_threshold":0.5, "P_threshold":0.3, "S_threshold":0.3
-        }
+def extract_picks(raw_wf, P_stream, S_stream, M_stream,
+        station_id=None, dt=0.01,
+        p_amp_estimate_sec=1, s_amp_estimate_sec=3,
+        starttime=None, endtime=None, args=None,
     ):
     """ 
     Performs detection and picking on predicted data.
@@ -135,6 +143,9 @@ def extract_picks(raw_wf, P_stream, S_stream, M_stream,
         Contains the information for the detected and picked event.            
         
     """
+    if args is None:
+        args = {"detection_threshold": 0.5,
+                "P_threshold": 0.3, "S_threshold": 0.3}
     if not station_id:
         station_id = raw_wf[0].id[:-1]
     init_stt = raw_wf[0].stats.starttime
@@ -142,10 +153,10 @@ def extract_picks(raw_wf, P_stream, S_stream, M_stream,
     p_amp_estimate_npts = int(p_amp_estimate_sec/dt)
     s_amp_estimate_npts = int(s_amp_estimate_sec/dt)
     matches = picker_info(
-        M_stream[0].data, 
-        P_stream[0].data, 
-        S_stream[0].data, 
-        args = args
+        M_stream[0].data,
+        P_stream[0].data,
+        S_stream[0].data,
+        args=args,
     )
 
     K_ct = 0
@@ -153,7 +164,7 @@ def extract_picks(raw_wf, P_stream, S_stream, M_stream,
     message_dfs = list()
     for k in range(len(matches_keys)):
         K = matches[matches_keys[k]]
-        if np.any([N==None for N in  [K[2], K[4]]]):
+        if K[2] is None or K[4] is None:
             continue
         if K[4] - K[2] < 100:
             continue
@@ -183,7 +194,7 @@ def extract_picks(raw_wf, P_stream, S_stream, M_stream,
         K_ct += 1
         
     if len(message_dfs) == 0:
-        print(f"No pair for {station_id} after checking phase-time orders")
+        logger.info("No pair for %s after checking phase-time orders", station_id)
         message_df_all = pd.DataFrame(
             columns=['id', 'timestamp', 'amp', 'prob', 'type', 'pick_idx'])
         return message_df_all         
@@ -199,7 +210,7 @@ def extract_picks(raw_wf, P_stream, S_stream, M_stream,
     keep_pick_idx = np.where(
         (msg_df_p.timestamp.values[1:] - msg_df_s.timestamp.values[:-1]) > 0)
     if len(keep_pick_idx) == 0:
-        print(f"No pair for {station_id} after checking phase-time orders")
+        logger.info("No pair for %s after checking phase-time orders", station_id)
         message_df_all = pd.DataFrame(
             columns=['id', 'timestamp', 'amp', 'prob', 'type', 'pick_idx'])
         return message_df_all

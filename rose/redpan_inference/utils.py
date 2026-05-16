@@ -244,25 +244,31 @@ def stream_standardize(st, data_length):
     return st
 
 
-def generate_matching_noise(reference_signal, output_length):
+def generate_matching_noise(reference_signal, output_length, rng=None):
     """
     Generate noise that matches the spectral characteristics of reference_signal.
     Uses spectral shaping to create realistic seismic background noise.
-    
+
     Args:
         reference_signal: Array of reference waveform data
         output_length: Length of output noise array
-        
+        rng: Optional `np.random.Generator` for reproducible noise. When
+             None (default), uses `np.random.default_rng()` — a fresh
+             generator each call, independent of the global `np.random`
+             state, so calls elsewhere can't shift our distribution.
+
     Returns:
         Noise array with matched spectral characteristics
     """
+    if rng is None:
+        rng = np.random.default_rng()
     if len(reference_signal) < 50:
-        return np.random.normal(np.mean(reference_signal), 
-                                max(np.std(reference_signal), 1e-6), output_length)
-    
+        return rng.normal(np.mean(reference_signal),
+                          max(np.std(reference_signal), 1e-6), output_length)
+
     ref_fft = np.fft.rfft(reference_signal)
     ref_amplitude = np.abs(ref_fft)
-    white_noise = np.random.normal(0, 1, output_length)
+    white_noise = rng.normal(0, 1, output_length)
     noise_fft = np.fft.rfft(white_noise)
     
     ref_freqs = np.linspace(0, 1, len(ref_amplitude))
@@ -280,7 +286,7 @@ def generate_matching_noise(reference_signal, output_length):
     return shaped_noise
 
 
-def make_sliding_boundary_pads(wf_np, pad_npts, dt=0.01):
+def make_sliding_boundary_pads(wf_np, pad_npts, dt=0.01, rng=None):
     """
     Create front and back padding arrays for sliding-window boundary extension.
 
@@ -292,6 +298,7 @@ def make_sliding_boundary_pads(wf_np, pad_npts, dt=0.01):
     wf_np    : (N, C) float32 ndarray  — channel-last waveform (already normalised)
     pad_npts : int   — number of samples to pad at each end (typically model.in_samples)
     dt       : float — sample interval in seconds (default 0.01 = 100 Hz)
+    rng      : np.random.Generator or None — forwarded to generate_matching_noise.
 
     Returns
     -------
@@ -306,7 +313,8 @@ def make_sliding_boundary_pads(wf_np, pad_npts, dt=0.01):
 
     for ch in range(n_ch):
         ref = wf_np[:min(noise_ref_n, npts), ch]
-        front_pad[:, ch] = generate_matching_noise(ref, pad_npts).astype(np.float32)
+        front_pad[:, ch] = generate_matching_noise(
+            ref, pad_npts, rng=rng).astype(np.float32)
         back_pad[:, ch]  = float(np.median(wf_np[:, ch]))
 
     return front_pad, back_pad
