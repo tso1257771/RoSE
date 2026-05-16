@@ -330,7 +330,9 @@ def main() -> None:
         eqt_pred, test, indices, cfg,
         p_thr=args.eqt_p, s_thr=args.eqt_s, det_thr=args.det_thr,
     )
-    del eqt; torch.cuda.empty_cache() if torch.cuda.is_available() else None
+    del eqt
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
     # -------- RED-PAN-60s --------
     logger.info("=== RED-PAN-60s ===")

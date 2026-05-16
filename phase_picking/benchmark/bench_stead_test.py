@@ -91,8 +91,10 @@ def _ensure_cudnn_on_ld_library_path() -> None:
     libcudnn dir is absent or already on the path. Only safe from a
     __main__ entry point — importing the module shouldn't replace the
     host process.
+
+    Path derivation matches `_pipeline._bundled_cudnn_lib_dir`.
     """
-    py_lib = Path(sys.prefix) / "lib" \
+    py_lib = Path(sys.executable).resolve().parent.parent / "lib" \
         / f"python{sys.version_info.major}.{sys.version_info.minor}" \
         / "site-packages" / "nvidia" / "cudnn" / "lib"
     if not py_lib.is_dir() or not any(py_lib.glob("libcudnn*.so*")):
@@ -269,22 +271,22 @@ def evaluate_model(name, model_kind, model, ev_df, noise_df, ev_wf_dir,
                    shard: int = 0, total_shards: int = 1,
                    *, partial_path: Path | None = None,
                    save_every: int = 500):
-    """If total_shards > 1, evaluate only this process's slice of the
-    sampled (event + noise) indices: shard k of N takes indices where
-    (i % N) == k. Use to parallelize across processes; merge per-shard
-    JSONs after."""
     """Run model.classify ONCE per trace at the minimum threshold;
     compute metrics at every threshold in `thresholds` by post-hoc
     filtering. Returns {threshold (str): summary}.
 
     pick_tol_s: float (uniform) or dict {"P": 0.5, "S": 1.0} —
     pick-benchmark convention default.
+
+    If total_shards > 1, evaluate only this process's slice of the
+    sampled (event + noise) indices: shard k of N takes indices where
+    (i % N) == k. Use to parallelize across processes; merge per-shard
+    JSONs after.
     """
     if pick_tol_s is None:
         pick_tol_s = {"P": 0.5, "S": 1.0}
     if not thresholds:
         thresholds = [0.30]
-    base_thr = float(min(thresholds))
     thresholds = sorted(set(float(t) for t in thresholds))
     rng = np.random.default_rng(42)
     # 0 (or negative / None) means "use the full pool" — consistent with
@@ -505,11 +507,15 @@ def evaluate_model(name, model_kind, model, ev_df, noise_df, ev_wf_dir,
         except OSError:
             pass
     out_per_thr: dict[str, dict] = {}
+    # Report the number actually completed (not the intended sample size)
+    # so downstream readers see a consistent n_evaluated + n_failed total.
+    # Matches the accumulator pattern in bench_pickers_rose.evaluate_*.
+    n_completed = len(completed_ev) + len(completed_nz)
     for thr in thresholds:
         acc = per_thr[thr]
         summary = _aggregate_summary(
             acc["stats"], acc["mcc_true"], acc["mcc_pred"],
-            n_evaluated=len(ev_idx) + len(nz_idx),
+            n_evaluated=n_completed,
             n_failed=n_failed, elapsed_s=elapsed,
             det_records=acc["det_records"],
         )
@@ -631,14 +637,16 @@ def main() -> None:
                     sampling_rate=int(cfg_ckpt.get("sampling_rate", 100)),
                     phases=["P", "S"], norm="peak",
                 )
-                m.load_state_dict(state["model"]); m.norm = "peak"
+                m.load_state_dict(state["model"])
+                m.norm = "peak"
                 m.to("cpu").eval()
                 kind = "seisbench"
             elif model_id == "phasenet_rose":
                 state = safe_torch_load(args.phasenet_rose_ckpt, map_location="cpu")
                 m = sbm.PhaseNet(phases="PSN", norm="peak",
                                  default_args={"blinding": (200, 200)})
-                m.load_state_dict(state["model"]); m.norm = "peak"
+                m.load_state_dict(state["model"])
+                m.norm = "peak"
                 m.to("cpu").eval()
                 kind = "seisbench"
             elif model_id == "eqt_instance":
