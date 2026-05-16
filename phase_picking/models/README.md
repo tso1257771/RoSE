@@ -145,10 +145,9 @@ sha256sum -c SHA256SUMS
 
 ## License
 
-The three `.pt` / `.hdf5` weight files in this directory are derivatives
-of the CC-BY-4.0 RoSE dataset and are distributed under **CC-BY-4.0** —
-see [`LICENSE-WEIGHTS`](LICENSE-WEIGHTS). The Python loaders in
-`rose.pickers`, this README, the model cards above, and `SHA256SUMS`
-remain under the repository-root **MIT** [`LICENSE`](../../LICENSE).
-Re-using the weights downstream therefore requires citation per
-CC-BY-4.0; re-using the code does not.
+Everything in this directory — the three `.pt` / `.hdf5` weight files,
+the Python loaders in `rose.pickers`, this README, the model cards
+above, and `SHA256SUMS` — is released under the repository-root **MIT**
+[`LICENSE`](../../LICENSE). The dataset the weights were trained on is
+distributed separately under its own terms; please cite the dataset
+record (DOI TBD) and the architecture paper for each model you use.

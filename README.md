@@ -284,20 +284,20 @@ with full citations: [`phase_picking/models/README.md`](phase_picking/models/REA
 
 ## License
 
-This repo dual-licenses code and data-derived artifacts:
+This repository is a software toolkit. Everything in it — the `rose`
+package, the `phase_picking/{benchmark,training}/` scripts, the three
+bundled model weights (`*.pt` / `*.hdf5`), the examples, tests, docs,
+configs, and `SHA256SUMS` — is released under the **MIT License**
+([`LICENSE`](LICENSE)).
 
-| What | License | File |
-|---|---|---|
-| **Code + docs** — the `rose` package, `phase_picking/{benchmark,training}/`, `examples/`, `tests/`, `docs/`, all `README.md`s and model cards, `SHA256SUMS`, and config files | **MIT** | [`LICENSE`](LICENSE) |
-| **Bundled model weights** — the three `.pt` / `.hdf5` files under `phase_picking/models/{eqt_rose,phasenet_rose,redpan_tf60}/` | **CC-BY-4.0** | [`phase_picking/models/LICENSE-WEIGHTS`](phase_picking/models/LICENSE-WEIGHTS) |
-| **The RoSE dataset** — the SeisBench-format waveforms + per-trace metadata distributed on Zenodo and mounted at `data/rose/` (not in this repo) | **CC-BY-4.0** | [`LICENSE-DATA`](LICENSE-DATA) |
+The **RoSE dataset itself** — the SeisBench-format waveforms +
+per-trace metadata that the toolkit consumes — is distributed
+separately from this repo. Its licensing terms are set by the dataset's
+rights holders and stated in the dataset's own record (Zenodo, DOI to
+be added at release); see the [Citation](#citation) section below.
+Third-party StationXML responses under `data/rose_stationxml/` carry
+their providers' terms (FDSN data centres / NIEP).
 
-The bundled weights are CC-BY-4.0 because they are derivatives of the
-CC-BY-4.0 dataset — the attribution requirement propagates to the
-trained models. The Python loaders that *use* the weights, plus all
-benchmark / training / example code, remain MIT.
-
-The dataset itself is derived from the NIEP **ROMPLUS** bulletin (a
-registered NIEP product) — cite ROMPLUS as well (see [Citation](#citation)
-above). Third-party StationXML responses under `data/rose_stationxml/`
-carry their providers' terms (FDSN data centres / NIEP).
+The dataset is derived from the NIEP **ROMPLUS** bulletin (a registered
+NIEP product). Cite ROMPLUS in addition to the dataset record when you
+use the data.
