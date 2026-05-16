@@ -364,12 +364,15 @@ def main() -> None:
         )
     model = model.to(device)
 
+    # Stash the resume payload so we can also restore optimizer state once
+    # the optimizer object exists (created below, after DDP wrapping).
+    resume_state: dict | None = None
     if args.resume:
         if is_main:
             logger.info("resuming from %s", args.resume)
-        state = safe_torch_load(args.resume, map_location=device)
+        resume_state = safe_torch_load(args.resume, map_location=device)
         unwrap(model).load_state_dict(
-            state["model"] if "model" in state else state
+            resume_state["model"] if "model" in resume_state else resume_state
         )
 
     if is_distributed:
@@ -416,12 +419,29 @@ def main() -> None:
 
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr)
 
+    # Restore Adam state (momentum buffers, step counts) if present in the
+    # resume payload. Without this, the optimizer restarts cold even though
+    # the model weights resume from epoch N — slows convergence after resume.
+    start_epoch = 1
+    if resume_state is not None and "optimizer" in resume_state:
+        try:
+            optimizer.load_state_dict(resume_state["optimizer"])
+            if is_main:
+                logger.info("  ↳ restored Adam optimizer state")
+        except (ValueError, KeyError, RuntimeError) as exc:
+            logger.warning("could not restore optimizer state from resume "
+                           "checkpoint (%s); continuing with fresh Adam", exc)
+    if resume_state is not None and "epoch" in resume_state:
+        start_epoch = int(resume_state["epoch"]) + 1
+        if is_main:
+            logger.info("  ↳ resuming at epoch %d", start_epoch)
+
     history: list[dict] = []
     best_dev = float("inf")
     best_path = out_dir / "eqt_rose_best.pt"
     last_path = out_dir / "eqt_rose_last.pt"
 
-    for epoch in range(1, cfg.epochs + 1):
+    for epoch in range(start_epoch, cfg.epochs + 1):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
         t0 = time.time()
@@ -444,6 +464,7 @@ def main() -> None:
 
             torch.save(
                 {"model": unwrap(model).state_dict(),
+                 "optimizer": optimizer.state_dict(),
                  "config": asdict(cfg),
                  "epoch": epoch, "dev_loss": dev_loss},
                 last_path,
@@ -452,6 +473,7 @@ def main() -> None:
                 best_dev = dev_loss
                 torch.save(
                     {"model": unwrap(model).state_dict(),
+                     "optimizer": optimizer.state_dict(),
                      "config": asdict(cfg),
                      "epoch": epoch, "dev_loss": dev_loss},
                     best_path,
