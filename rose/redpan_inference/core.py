@@ -6,6 +6,9 @@ Core REDPAN Implementation
 REDPAN class for continuous seismic phase picking. SeisBench-style
 direct array accumulation over sliding windows, with spectrum-matched
 noise padding for time alignment at the trace boundaries.
+
+Vendored (minimal subset) from https://github.com/tso1257771/RED-PAN
+under its MIT license; relicensed under the RoSE repo's MIT LICENSE.
 """
 
 import gc

@@ -284,12 +284,20 @@ with full citations: [`phase_picking/models/README.md`](phase_picking/models/REA
 
 ## License
 
+This repo dual-licenses code and data-derived artifacts:
+
 | What | License | File |
 |---|---|---|
-| **Code** — the `rose` package, `phase_picking/models/` loaders/cards, `phase_picking/benchmark/`, `phase_picking/training/`, `examples/`, scripts, and everything else in this repo | **MIT** | [`LICENSE`](LICENSE) |
+| **Code + docs** — the `rose` package, `phase_picking/{benchmark,training}/`, `examples/`, `tests/`, `docs/`, all `README.md`s and model cards, `SHA256SUMS`, and config files | **MIT** | [`LICENSE`](LICENSE) |
+| **Bundled model weights** — the three `.pt` / `.hdf5` files under `phase_picking/models/{eqt_rose,phasenet_rose,redpan_tf60}/` | **CC-BY-4.0** | [`phase_picking/models/LICENSE-WEIGHTS`](phase_picking/models/LICENSE-WEIGHTS) |
 | **The RoSE dataset** — the SeisBench-format waveforms + per-trace metadata distributed on Zenodo and mounted at `data/rose/` (not in this repo) | **CC-BY-4.0** | [`LICENSE-DATA`](LICENSE-DATA) |
 
-The dataset is derived from the NIEP **ROMPLUS** bulletin (a registered NIEP
-product); cite ROMPLUS as well — see [Citation](#citation) above. Third-party
-StationXML responses under `data/rose_stationxml/` carry their providers'
-terms (FDSN data centres / NIEP).
+The bundled weights are CC-BY-4.0 because they are derivatives of the
+CC-BY-4.0 dataset — the attribution requirement propagates to the
+trained models. The Python loaders that *use* the weights, plus all
+benchmark / training / example code, remain MIT.
+
+The dataset itself is derived from the NIEP **ROMPLUS** bulletin (a
+registered NIEP product) — cite ROMPLUS as well (see [Citation](#citation)
+above). Third-party StationXML responses under `data/rose_stationxml/`
+carry their providers' terms (FDSN data centres / NIEP).

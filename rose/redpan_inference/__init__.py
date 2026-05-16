@@ -1,11 +1,12 @@
 """Minimal RED-PAN inference subset (vendored).
 
 Self-contained subset of the upstream `redpan` package
-(https://github.com/tso1257771/RED-PAN) sufficient to run RED-PAN-60s
-inference on a single trace via the `REDPAN` class. The training,
-data-loading, and TF-Keras model-construction modules are not vendored
-because the published `phase_picking/models/redpan_tf60/train.hdf5` is the inference target.
-Used by `rose.pickers.load_redpan_tf60` and the `phase_picking/benchmark/` scripts.
+(https://github.com/tso1257771/RED-PAN, MIT-licensed) sufficient to run
+RED-PAN-60s inference on a single trace via the `REDPAN` class. The
+training, data-loading, and TF-Keras model-construction modules are not
+vendored because the published `phase_picking/models/redpan_tf60/train.hdf5`
+is the inference target. Used by `rose.pickers.load_redpan_tf60` and the
+`phase_picking/benchmark/` scripts. Relicensed under this repo's MIT LICENSE.
 
 Usage:
     import tensorflow as tf

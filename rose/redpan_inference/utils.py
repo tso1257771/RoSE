@@ -3,8 +3,11 @@
 Utility Functions for REDPAN
 =============================
 
-This module contains utility functions for weight calculation,
-waveform validation, and other helper functions.
+Weight-calculation, waveform-validation, and spectrum-matched
+noise-padding helpers used by `core.REDPAN`.
+
+Vendored (minimal subset) from https://github.com/tso1257771/RED-PAN
+under its MIT license; relicensed under the RoSE repo's MIT LICENSE.
 """
 
 import logging
