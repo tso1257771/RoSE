@@ -20,7 +20,20 @@ Usage:
     # on P_arr/S_arr, obspy.signal.trigger.trigger_onset on M_arr).
     P_arr, S_arr, M_arr = rp.predict(stream)
 """
-from .core import REDPAN
-
+# Lazy-load REDPAN so importing sibling submodules (e.g.
+# `rose.redpan_inference.utils.find_reference_signal`) doesn't force
+# TensorFlow to be installed.  Pattern is PEP 562 module-level
+# `__getattr__` (Python ≥ 3.7).
 __all__ = ["REDPAN"]
 __version__ = "1.0.0"
+
+
+def __getattr__(name):
+    if name == "REDPAN":
+        from .core import REDPAN  # may raise ModuleNotFoundError if .[tf] absent
+        return REDPAN
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    return sorted({*globals(), *__all__})
