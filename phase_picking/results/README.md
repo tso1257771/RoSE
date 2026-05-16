@@ -1,7 +1,7 @@
 # Pre-computed benchmark results
 
-These CSVs are the canonical benchmark numbers reported in the RoSE picker
-paper (TRANSFORM² Deliverable 3.4). They cover nine pickers: the three
+These CSVs are the canonical benchmark numbers for the RoSE pickers (the
+accompanying paper is in preparation). They cover nine pickers: the three
 checkpoints in `../models/` — **EQT-RoSE** and **PhaseNet-RoSE** (fine-tuned on
 the RoSE training split from INSTANCE init) and **RED-PAN-60s** (RED-PAN
 retrained on Taiwan + STEAD + INSTANCE + RoSE, warm-started from the published
@@ -50,24 +50,24 @@ event-vs-noise detection (only meaningful for models with a detection head):
 
 | Model | P prec | P rec | **P F1** | S prec | S rec | **S F1** | det F1 | det MCC |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|
-| **EQT-RoSE**        | 0.978 | 0.688 | 0.808 | 0.945 | 0.598 | 0.733 | **0.977** | **0.945** |
-| **PhaseNet-RoSE**   | 0.945 | 0.714 | 0.813 | 0.918 | 0.716 | 0.804 | — | — |
-| **RED-PAN-60s**     | 0.975 | 0.711 | **0.822** | 0.983 | 0.713 | **0.827** | 0.930 | 0.849 |
-| EQT-instance        | 0.971 | 0.669 | 0.792 | 0.977 | 0.366 | 0.533 | 0.758 | 0.606 |
-| PhaseNet-instance   | 0.970 | 0.673 | 0.795 | 0.983 | 0.370 | 0.538 | — | — |
-| EQT-ethz            | 0.860 | 0.606 | 0.711 | 0.885 | 0.406 | 0.557 | 0.626 | 0.358 |
-| PhaseNet-ethz       | 0.930 | 0.561 | 0.700 | 0.926 | 0.306 | 0.460 | — | — |
-| EQT-stead           | 0.992 | 0.522 | 0.684 | 0.985 | 0.571 | 0.723 | 0.847 | 0.726 |
-| PhaseNet-stead      | 0.991 | 0.379 | 0.548 | 0.980 | 0.690 | 0.810 | — | — |
+| **EQT-RoSE**        | 0.978 | 0.688 | 0.808 | 0.943 | 0.566 | 0.707 | **0.977** | **0.945** |
+| **PhaseNet-RoSE**   | 0.945 | 0.714 | 0.813 | 0.911 | 0.652 | 0.760 | — | — |
+| **RED-PAN-60s**     | 0.974 | 0.711 | **0.822** | 0.982 | 0.650 | **0.782** | 0.930 | 0.848 |
+| EQT-instance        | 0.971 | 0.669 | 0.792 | 0.975 | 0.348 | 0.513 | 0.758 | 0.606 |
+| PhaseNet-instance   | 0.970 | 0.673 | 0.795 | 0.982 | 0.352 | 0.519 | — | — |
+| EQT-ethz            | 0.860 | 0.606 | 0.711 | 0.879 | 0.381 | 0.532 | 0.626 | 0.358 |
+| PhaseNet-ethz       | 0.930 | 0.561 | 0.700 | 0.923 | 0.292 | 0.444 | — | — |
+| EQT-stead           | 0.992 | 0.522 | 0.684 | 0.984 | 0.525 | 0.685 | 0.847 | 0.726 |
+| PhaseNet-stead      | 0.991 | 0.379 | 0.548 | 0.978 | 0.623 | 0.761 | — | — |
 
 Onset-time residuals over matched (true-positive) picks — MAE, MAD (≈ IQR/2),
 RMSE, IQR in seconds (`rose_residual_stats.csv`; baselines omitted here):
 
 | Model | P n | P MAE | P MAD | P RMSE | P IQR | S n | S MAE | S MAD | S RMSE | S IQR |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
-| EQT-RoSE       | 19 882 | 0.085 | 0.045 | 0.123 | 0.090 | 18 410 | 0.137 | 0.081 | 0.221 | 0.161 |
-| PhaseNet-RoSE  | 20 624 | 0.074 | 0.036 | 0.120 | 0.072 | 22 029 | 0.151 | 0.074 | 0.257 | 0.148 |
-| RED-PAN-60s    | 20 547 | 0.071 | 0.035 | 0.122 | 0.069 | 21 954 | 0.141 | 0.073 | 0.256 | 0.147 |
+| EQT-RoSE       | 19 882 | 0.085 | 0.045 | 0.123 | 0.090 | 17 412 | 0.105 | 0.070 | 0.149 | 0.141 |
+| PhaseNet-RoSE  | 20 624 | 0.074 | 0.036 | 0.120 | 0.072 | 20 080 | 0.097 | 0.059 | 0.147 | 0.118 |
+| RED-PAN-60s    | 20 540 | 0.071 | 0.035 | 0.122 | 0.069 | 20 017 | 0.085 | 0.049 | 0.142 | 0.098 |
 
 ## Leaderboard — STEAD pool, threshold 0.30
 
@@ -90,7 +90,7 @@ event-vs-noise (T1):
 threshold" — there's no per-trace probability score, hence no ROC-AUC.
 
 **TL;DR:** on RoSE, **RED-PAN-60s** has the best phase-pick F1 (P 0.822 /
-S 0.827) and **EQT-RoSE** the best event-detection F1 (0.977, MCC 0.945);
+S 0.782) and **EQT-RoSE** the best event-detection F1 (0.977, MCC 0.945);
 on STEAD, **RED-PAN-60s** again leads phase picking (0.972 / 0.980) and the
 STEAD-fine-tuned EQT-stead leads T1 (0.998), with EQT-RoSE close behind (0.991).
 

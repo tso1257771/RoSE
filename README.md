@@ -80,18 +80,14 @@ data = RoSE("/path/to/data/rose", component_order="ZNE")  # PhaseNet/EQT order
 print(len(data), "traces")
 
 wf_counts, meta = data.get_sample(0)            # raw counts, shape (3, npts)
-wf_phys,   meta = data.get_sample_physical(0)   # M/S or M/S**2 — divides by per-trace sensitivity
-                                                # (raises ValueError if a trace lacks a usable
-                                                #  instrument response; see below)
+wf_phys,   meta = data.get_sample_physical(0)   # M/S or M/S**2; divides by per-trace
+                                                # sensitivity, raises on missing response
 ```
 
-The dataset stores **counts** on disk and the per-component sensitivity values
-in metadata; `get_sample_physical` does the divide for you and raises
-`ValueError` on the ~4 % of traces whose `trace_status_physical` is
-`partial_response` or `missing_response` (the [Provenance](#provenance) table
-breaks this down — only ~0.2 % come from stations with no public response at
-all). Why this design? See
-[`docs/SEISBENCH_FORMAT.md#units--instrument-response`](docs/SEISBENCH_FORMAT.md).
+Disk format: **counts**, ZNE, 100 Hz; physical units derive per trace from
+`trace_sensitivity_{e,n,z}` columns. ~4 % of traces have no usable response
+(see [Provenance](#provenance) for the breakdown). Full schema:
+[`docs/SEISBENCH_FORMAT.md`](docs/SEISBENCH_FORMAT.md).
 
 ---
 
@@ -165,7 +161,7 @@ the raw CSVs are `phase_picking/results/*.csv`.
 
 | Pool  | Best phase-pick F1 (P / S)        | Best event-detection F1                  |
 |---|---|---|
-| **RoSE**  | **RED-PAN-60s** 0.822 / 0.827     | **EQT-RoSE** 0.977 (MCC 0.945)           |
+| **RoSE**  | **RED-PAN-60s** 0.822 / 0.782     | **EQT-RoSE** 0.977 (MCC 0.945)           |
 | **STEAD** | **RED-PAN-60s** 0.972 / 0.980     | **EQT-stead** 0.998; **EQT-RoSE** 0.991  |
 
 (Produced by `bash phase_picking/benchmark/regenerate_results.sh` →
@@ -175,58 +171,31 @@ the raw CSVs are `phase_picking/results/*.csv`.
 
 ## Training & benchmarking
 
-`phase_picking/training/` and `phase_picking/benchmark/` hold the ML pipeline behind the published pickers.
-The scripts read default paths from environment variables (see `.env.example`)
-and accept explicit `--rose-dir` / `--stead-dir` / `--out-dir` overrides:
+The ML pipeline behind the published pickers lives under `phase_picking/`.
+Path inputs come from env vars (`ROSE_DATA_DIR`, `STEAD_DIR`; see
+`.env.example`) or `--rose-dir` / `--stead-dir` flags.
 
 ```bash
-pip install -e ".[cuda,bench]"              # torch + scikit-learn  (or ".[cpu,bench]")
-cp .env.example .env && $EDITOR .env        # set ROSE_DATA_DIR, STEAD_DIR, …
-set -a; source .env; set +a                 # export them — the scripts don't auto-load .env
+pip install -e ".[cuda,bench]"          # or ".[cpu,bench]"; .[tf] adds TF for RED-PAN-60s
+
+# Fine-tune EQT / PhaseNet on RoSE (DDP, AMP, Adam, INSTANCE-init)
+python phase_picking/training/build_rose_split_index.py
+python phase_picking/training/train_eqt_rose.py      --epochs 30 --batch-size 64  --lr 1e-4
+python phase_picking/training/train_phasenet_rose.py --epochs 30 --batch-size 256 --lr 1e-4
+
+# Reproduce the benchmark CSVs (all 9 pickers × RoSE/STEAD test sets)
+bash phase_picking/benchmark/regenerate_results.sh                # full run
+bash phase_picking/benchmark/regenerate_results.sh --num-test 200 # quick subset
 ```
 
-(Equivalently, pass `--rose-dir` / `--stead-dir` / `--out-dir` on each command;
-without one of these or the matching env var the scripts exit with a clear error.)
+Splits use `rose.splits.hash_split` (salt `ROMPLUS-singleEQ-v1`) — every
+trace of one earthquake stays in the same split, no event-level leakage.
+PyTorch checkpoints are loaded via `rose.checkpoint_io.safe_torch_load`
+(`weights_only=True`). The RED-PAN `.hdf5` is a Keras model — verify against
+`phase_picking/models/SHA256SUMS` before loading from untrusted sources.
 
-* **`phase_picking/training/`** — fine-tune SeisBench `EQTransformer` / `PhaseNet` from
-  the INSTANCE pretrained weights on the RoSE training split (DDP, AMP, Adam):
-
-  ```bash
-  python phase_picking/training/build_rose_split_index.py     # write the SeisBench `split` column
-  python phase_picking/training/train_eqt_rose.py      --epochs 30 --batch-size 64  --lr 1e-4
-  python phase_picking/training/train_phasenet_rose.py --epochs 30 --batch-size 256 --lr 1e-4
-  ```
-
-  `build_rose_split_index.py` uses RED-PAN's deterministic `hash_split` (salt
-  `ROMPLUS-singleEQ-v1`, vendored in `rose/splits.py`) so every trace of one
-  earthquake stays in the same split — no event-level leakage. The TWCC
-  launcher shells used for the published runs are under `phase_picking/training/cloud/`.
-
-* **`phase_picking/benchmark/`** — the benchmark **pipeline**: scores all 9 pickers (the 3
-  RoSE-trained checkpoints in `phase_picking/models/` + 6 off-the-shelf EQT/PhaseNet
-  baselines) on the RoSE / STEAD test sets and is what **produces** the
-  committed `phase_picking/results/*.csv`. Two stages + a config (`benchmark/config.json`):
-
-  ```bash
-  python phase_picking/benchmark/run_inference.py                       # (a) per-model inference  -> eval/
-  python phase_picking/benchmark/build_leaderboard.py --update-results  # (b) aggregate            -> phase_picking/results/*.csv
-  # or both at once:
-  bash phase_picking/benchmark/regenerate_results.sh                    # full run (~hours on CPU)
-  bash phase_picking/benchmark/regenerate_results.sh --num-test 200     # ~10-min subset
-  ```
-
-  `run_inference.py` calls the `bench_*.py` per (model, dataset); `build_leaderboard.py`
-  calls the `build_*.py` aggregators (which also print the threshold-0.30 tables).
-  See [`phase_picking/benchmark/README.md`](phase_picking/benchmark/README.md). The exact test-set composition
-  is pinned by the index files under `phase_picking/benchmark/data/` (regenerate them with
-  `python phase_picking/benchmark/build_test_indices.py [--stead-dir $STEAD_DIR]`).
-
-Every `.pt` checkpoint that `rose.pickers` and the `phase_picking/training/` + `phase_picking/benchmark/`
-scripts read is loaded via `rose.checkpoint_io.safe_torch_load`, which forces
-`torch.load(weights_only=True)` — the restricted unpickler — so loading a
-third-party `.pt` cannot trigger the classic pickle-deserialization RCE. (The
-RED-PAN-60s `.hdf5` is a Keras model; `tf.keras.models.load_model` can execute
-embedded code, so verify it against `phase_picking/models/SHA256SUMS` — see `phase_picking/models/README.md`.)
+Full details: [`phase_picking/benchmark/README.md`](phase_picking/benchmark/README.md)
+and [`phase_picking/models/README.md`](phase_picking/models/README.md).
 
 ---
 
@@ -253,11 +222,12 @@ The unit suite exercises the `rose` package directly (no large dataset needed):
 
 ```bash
 pip install -e ".[dev]"
-pytest tests/ -q          # 43 tests
+pytest tests/ -q          # 50 tests
 ```
 
-`tests/test_splits.py` golden-value pin tests guarantee the deterministic
-split partition remains bit-for-bit reproducible.
+`tests/test_splits.py` pins the deterministic split partition bit-for-bit.
+GitHub Actions runs the same suite on Python 3.10 / 3.11 / 3.12 for every
+push and PR (the badge at the top reflects current status).
 
 ---
 
@@ -303,13 +273,12 @@ RoSE/                              # ── the RoSE dataset + its Python API  (
 
 ## Citation
 
-If you use this dataset or the published checkpoints, please cite both the
-**ROMPLUS** source bulletin (NIEP) and the **RoSE** dataset paper that
-accompanies this compilation. See `docs/DATASET.md` for the native HDF5 schema,
-`docs/SEISBENCH_FORMAT.md` for the column reference, and `phase_picking/models/README.md` for
-the per-model cards and references (RED-PAN — Liao et al. 2022; SeisBench —
-Woollam et al. 2022; PhaseNet — Zhu & Beroza 2019; EQTransformer — Mousavi
-et al. 2020).
+The RoSE dataset paper is in preparation; the Zenodo DOI for the data bundle
+will be added here at release. In the meantime, please cite the **ROMPLUS**
+source bulletin (NIEP) and the model references the pickers extend:
+RED-PAN — Liao et al. 2022; SeisBench — Woollam et al. 2022; PhaseNet —
+Zhu & Beroza 2019; EQTransformer — Mousavi et al. 2020. Per-model cards
+with full citations: [`phase_picking/models/README.md`](phase_picking/models/README.md).
 
 ---
 
