@@ -78,19 +78,12 @@ class SimpleDetection:
 
 
 def _ensure_cudnn_on_ld_library_path() -> None:
-    """Re-exec ourselves with LD_LIBRARY_PATH including the pip-bundled
-    cuDNN dir, if it's not already there. TF 2.16 was built against
-    cuDNN 8.9; on boxes whose system cuDNN is older (e.g. 8.8.1 under
-    /usr/local/cuda-11.8/) TF crashes every conv1d with "No DNN in
-    stream executor". ld.so reads LD_LIBRARY_PATH at exec time — not
-    from runtime os.environ changes — so we have to re-exec.
+    """Re-exec with ``LD_LIBRARY_PATH`` prepended with the pip-bundled
+    cuDNN dir if it's not already on the path. ld.so reads the var at
+    exec time, not from runtime ``os.environ`` mutations.
 
-    The lookup path matches `_pipeline._bundled_cudnn_lib_dir` (derived
-    from `sys.executable` so editable installs and venvs both resolve
-    to the right interpreter's site-packages).
-
-    No-op if the bundled libcudnn dir is absent, or already on the
-    path. Only call this from a __main__ entry point; importing the
+    No-op when the bundled lib dir is absent or already on the path.
+    Only safe to call from a ``__main__`` entry point — importing the
     module shouldn't replace the host process.
     """
     import sys
@@ -116,8 +109,7 @@ def configure_tf_memory_growth(intra_threads: int | None = None):
             pass
     if gpus:
         logger.info("TF GPU enabled: %s", [g.name for g in gpus])
-    # When running on GPU, intra/inter-op threading doesn't help; only set
-    # it when forced to CPU (via CUDA_VISIBLE_DEVICES="" or absent GPU).
+    # intra/inter-op threading only matters on CPU.
     if not gpus and intra_threads is not None and intra_threads > 0:
         try:
             tf.config.threading.set_intra_op_parallelism_threads(intra_threads)
@@ -269,9 +261,9 @@ def evaluate_redpan_sweep(
     n_evaluated, n_failed = 0, 0
     completed: set[int] = set()
     elapsed_carry = 0.0
-    # Track failure modes so a silent 100% n_failed loop is no longer invisible.
+    # Per-cause failure tally — surfaced at WARNING when any traces fail.
     failure_counts: Counter[str] = Counter()
-    LOG_FIRST_N = 5  # surface the first few full tracebacks at WARNING
+    LOG_FIRST_N = 5  # log this many full tracebacks per cause
 
     # Resume if a usable partial dump exists.
     if partial_path is not None:
@@ -397,9 +389,7 @@ def evaluate_redpan_sweep(
 
 
 def main() -> None:
-    # Ensure the right cuDNN is visible to ld.so BEFORE anything imports TF.
-    # This re-execs if LD_LIBRARY_PATH needs amending. No-op when the
-    # wrapping subprocess (run_inference.py via threadcap_env) already set it.
+    # Must run before any TF import downstream.
     _ensure_cudnn_on_ld_library_path()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--model-path", required=True,

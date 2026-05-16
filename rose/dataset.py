@@ -73,9 +73,7 @@ class RoSE(WaveformDataset):
             raise ValueError(
                 f"Trace {meta.get('trace_name')} has no instrument response."
             )
-        # The on-disk waveforms are ZNE-ordered. If a caller constructed
-        # RoSE() without overriding component_order, fall back to ZNE so
-        # we can still look up trace_sensitivity_{z,n,e} correctly.
+        # ZNE is the on-disk component order.
         order = self.component_order or "ZNE"
         sens = np.array(
             [meta.get(f"trace_sensitivity_{c.lower()}") for c in order],

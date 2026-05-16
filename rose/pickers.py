@@ -81,14 +81,11 @@ def load_redpan_tf60(weights: Path | str | None = None, batch_size: int = 32):
     pick / detection objects via ``scipy.signal.find_peaks`` and
     ``obspy.signal.trigger.trigger_onset``.
 
-    Security note: Keras HDF5 files can embed arbitrary Python objects
-    (Lambda layers, custom objects) that execute on load — there is no
-    `weights_only=True` equivalent for `tf.keras.models.load_model`.
-    The bundled `phase_picking/models/redpan_tf60/train.hdf5` is safe;
-    if you pass a path to a *third-party* `.hdf5` you don't trust, load
-    it manually with `compile=False` after auditing its `model_config`
-    JSON for unexpected custom layers, then construct the REDPAN
-    wrapper directly via `rose.redpan_inference.REDPAN(model=...)`.
+    Security: ``tf.keras.models.load_model`` has no ``weights_only=True``
+    equivalent — Keras HDF5 files can embed Python objects that execute
+    on load. The bundled checkpoint is safe; only point this at HDF5s
+    you trust (or construct ``rose.redpan_inference.REDPAN(model=...)``
+    yourself after auditing the file's ``model_config``).
     """
     os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
     import tensorflow as tf

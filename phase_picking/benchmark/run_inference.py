@@ -67,11 +67,8 @@ def main() -> None:
     pt_models = list(cfg.get("pytorch_model_ids") or _PT_MODELS_ALL)
     jobs = max(1, int(args.jobs))
     tpt = max(1, (os.cpu_count() or jobs) // jobs)   # threads per task
-    # threadcap_env both caps OMP/MKL/.../TF intra+inter threads AND prepends
-    # the pip-bundled cuDNN dir to LD_LIBRARY_PATH so TF finds a libcudnn
-    # matching its build version. Apply unconditionally — when jobs==1 the
-    # thread cap is a no-op (= 1 worker × cores threads) but the cuDNN path
-    # is still important.
+    # threadcap_env: cap OMP/MKL/.../TF threads + prepend bundled cuDNN
+    # dir to LD_LIBRARY_PATH so TF dlopens the right libcudnn.
     env = threadcap_env(tpt)
 
     need_rose = not args.skip_rose
@@ -97,10 +94,9 @@ def main() -> None:
     # long pole. The 8 PyTorch-STEAD runs and rose-pickers are comparatively cheap.
     redpan_tasks: list[tuple[str, list[str], dict | None]] = []
     cheap_tasks: list[tuple[str, list[str], dict | None]] = []
-    # The two long-pole TF scripts checkpoint their state to <out_dir>/<model>.partial.json
-    # every 500 traces and pick up where they left off on relaunch — pass --resume so a
-    # killed/crashed run loses minutes, not hours. The cheaper PyTorch passes (<30 min
-    # each on GPU) restart from scratch, so they don't bother.
+    # The two long-pole TF scripts get --resume so a killed run picks up
+    # from <out_dir>/<model>.partial.json instead of restarting. PyTorch
+    # passes are short enough to restart from scratch.
     if not args.skip_stead:
         redpan_tasks.append((
             "stead redpan (long pole)",

@@ -37,7 +37,6 @@ def create_gaussian_weights(pred_npts: int, sigma_factor: float = 6.0) -> np.nda
     
     # Clean up intermediate variables
     del positions
-    # gc.collect() removed: refcounting handles these locals
     
     logger.debug(f"Created Gaussian weights: center={center}, sigma={sigma:.1f}, "
                 f"range=[{weights.min():.3f}, {weights.max():.3f}]")
@@ -122,7 +121,6 @@ def create_triangular_weights(pred_npts: int) -> np.ndarray:
     
     # Clean up intermediate variables
     del positions
-    # gc.collect() removed: refcounting handles these locals
     
     return normalize_weights(weights).astype(np.float32)
 
@@ -142,7 +140,6 @@ def create_cosine_weights(pred_npts: int) -> np.ndarray:
     
     # Clean up intermediate variables
     del positions
-    # gc.collect() removed: refcounting handles these locals
     
     return normalize_weights(weights).astype(np.float32)
 
@@ -203,7 +200,6 @@ def sac_len_complement(wf, max_length=None, pad_mode='noise'):
             trace.data = trace.data[:max_length]
     
     # Clean up any temporary arrays
-    # gc.collect() removed: refcounting handles these locals
     return wf
 
 def align_wf_starttime(wf, target_starttime):
