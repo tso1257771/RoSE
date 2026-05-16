@@ -84,15 +84,13 @@ class SimpleDetection:
 
 
 def _ensure_cudnn_on_ld_library_path() -> None:
-    """Re-exec ourselves with LD_LIBRARY_PATH including the pip-bundled
-    cuDNN dir, if it's not already there. See bench_redpan_rose.py for
-    the full rationale (TF 2.16 wants cuDNN 8.9; this box's system
-    cuDNN is 8.8.1, which crashes every conv1d). No-op if the bundled
-    libcudnn dir is absent or already on the path. Only safe from a
-    __main__ entry point — importing the module shouldn't replace the
-    host process.
+    """Re-exec with ``LD_LIBRARY_PATH`` prepended with the pip-bundled
+    cuDNN dir if it's not already on the path. ld.so reads the var at
+    exec time, not from runtime ``os.environ`` mutations.
 
-    Path derivation matches `_pipeline._bundled_cudnn_lib_dir`.
+    No-op when the bundled lib dir is absent or already on the path.
+    Only safe to call from a ``__main__`` entry point — importing the
+    module shouldn't replace the host process.
     """
     py_lib = Path(sys.executable).resolve().parent.parent / "lib" \
         / f"python{sys.version_info.major}.{sys.version_info.minor}" \
@@ -547,8 +545,7 @@ def evaluate_model(name, model_kind, model, ev_df, noise_df, ev_wf_dir,
 # ---------- main -------------------------------------------------------------
 
 def main() -> None:
-    # Ensure cuDNN-matching LD_LIBRARY_PATH is set up before any TF import
-    # downstream (see bench_redpan_rose.py for the full rationale).
+    # Must run before any TF import downstream.
     _ensure_cudnn_on_ld_library_path()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--stead-dir", default=(str(STEAD_DEFAULT) if STEAD_DEFAULT else None))
@@ -674,18 +671,14 @@ def main() -> None:
                 m.to("cpu").eval()
                 kind = "seisbench"
             elif model_id == "redpan":
-                # cuDNN path is set up at main() entry via
-                # _ensure_cudnn_on_ld_library_path() so TF dlopens the right
-                # libcudnn here.
                 import tensorflow as tf
                 for g in tf.config.list_physical_devices("GPU"):
                     try:
                         tf.config.experimental.set_memory_growth(g, True)
                     except RuntimeError:
                         pass
-                # On CPU, cap TF threads to avoid over-subscription when
-                # multiple shards run in parallel on the same machine.
-                # On GPU, intra/inter-op threading is irrelevant.
+                # CPU only: cap TF threads to avoid oversubscription when
+                # several shards run in parallel.
                 if not tf.config.list_physical_devices("GPU"):
                     try:
                         n_threads = max(

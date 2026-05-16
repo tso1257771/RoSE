@@ -464,13 +464,9 @@ def evaluate_model_sweep(
     classify_kwargs = {
         "P_threshold": base_thresh,
         "S_threshold": base_thresh,
-        # Sweep detection alongside picks: use the lowest sweep threshold
-        # at classify time so the returned detection list is the superset.
-        # The per-threshold `[d for d in all_detections if peak_value >= thr]`
-        # filter below then yields a real sweep. (Previously this was
-        # cfg.detection_threshold = 0.3, making thr<0.3 rows degenerate;
-        # see e.g. EQT-RoSE's rose_detection.csv where tp/fn were
-        # identical at thresholds 0.05/0.1/0.2/0.3 prior to this fix.)
+        # Use base_thresh so the returned detection list is the superset
+        # over the threshold sweep; the per-thr filter below then yields
+        # a real sweep instead of a flat-at-low-thr table.
         "detection_threshold": base_thresh,
     }
 
@@ -582,10 +578,8 @@ def load_custom_phasenet(ckpt_path: str, device: torch.device,
                          inference_norm: str | None = None) -> torch.nn.Module:
     """Load a custom PhaseNet-on-RoSE checkpoint."""
     state = safe_torch_load(ckpt_path, map_location=device)
-    # NOTE: unlike EQT, the SeisBench PhaseNet constructor doesn't consult
-    # state['config'] — sampling rate and window length are fixed at 100 Hz /
-    # 3001 samples by the architecture. Pulling 'config' out is therefore
-    # unnecessary here; left as a comment so the asymmetry is documented.
+    # SeisBench PhaseNet has fixed 100 Hz / 3001-sample windows, so we
+    # don't need state["config"] (unlike load_custom_eqt below).
     model = sbm.PhaseNet(
         phases="PSN",
         norm=inference_norm if inference_norm in ("std", "peak") else "peak",

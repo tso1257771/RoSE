@@ -3,12 +3,9 @@
 Core REDPAN Implementation
 =========================
 
-This module contains the main REDPAN class that implements
-SeisBench-style direct array accumulation for high-performance
-continuous seismic phase picking.
-
-FIXED: Time shift issue resolved by using spectrum-matched noise padding
-instead of zero/median padding, and proper truncation of padded regions.
+REDPAN class for continuous seismic phase picking. SeisBench-style
+direct array accumulation over sliding windows, with spectrum-matched
+noise padding for time alignment at the trace boundaries.
 """
 
 import gc
@@ -59,10 +56,9 @@ class REDPAN:
             pred_interval_sec: Sliding window step (seconds)
             batch_size: Batch size for prediction
             seed: Optional integer seed for the spectrum-matched padding
-                noise generator. When None (default), a fresh
-                `np.random.default_rng()` is used per call, decoupled
-                from the global `np.random` state. Set this if you need
-                bitwise-reproducible predictions across runs.
+                noise generator. When None, a fresh `np.random.default_rng()`
+                is used per call, decoupled from the global `np.random`
+                state. Set this for bitwise-reproducible predictions.
         """
         self.model = model
         self.pred_npts = pred_npts
@@ -128,21 +124,12 @@ class REDPAN:
         wf_padded = wf.copy()
         
         for trace in wf_padded:
-            # Find reference signal for noise generation
             ref_signal = find_reference_signal(trace.data)
-
-            # Generate noise for front and back padding. Use a per-REDPAN
-            # rng when seeded; otherwise a fresh default_rng per call so
-            # we don't depend on global np.random state.
             front_noise = generate_matching_noise(
                 ref_signal, pad_npts, rng=self._noise_rng)
             back_noise = generate_matching_noise(
                 ref_signal, pad_npts, rng=self._noise_rng)
-
-            # Pad the trace data
             trace.data = np.concatenate([front_noise, trace.data, back_noise])
-            
-            # Adjust starttime to account for front padding
             trace.stats.starttime -= pad_npts * self.dt
         
         return wf_padded
@@ -190,13 +177,11 @@ class REDPAN:
             wf_channels.append(np.array(slices))
             
             del slices
-            # gc.collect() removed: profiling showed it was ~87% of per-trace wall time
         
         # Stack channels: (n_windows, pred_npts, 3)
         wf_slices = np.stack(wf_channels, axis=-1)
         
         del wf_channels
-        # gc.collect() removed: profiling showed it was ~87% of per-trace wall time
         
         return wf_slices
     
@@ -229,15 +214,11 @@ class REDPAN:
             all_masks.append(masks)
             
             del batch_data
-            # periodic gc.collect() removed: profiling showed it dominated
-            # per-trace wall time (~87%). Refcounting handles the numpy/TF
-            # cleanup just fine.
 
         final_predictions = np.concatenate(all_predictions, axis=0)
         final_masks = np.concatenate(all_masks, axis=0)
         
         del all_predictions, all_masks
-        # gc.collect() removed: profiling showed it was ~87% of per-trace wall time
         
         logger.debug(f"Batch prediction completed: {final_predictions.shape}")
         return final_predictions, final_masks
@@ -442,7 +423,6 @@ class REDPAN:
         M_pred = M_acc / W_acc
         
         del P_acc, S_acc, M_acc, W_acc
-        # gc.collect() removed: profiling showed it was ~87% of per-trace wall time
         
         return P_pred, S_pred, M_pred
     
@@ -687,7 +667,6 @@ class REDPAN:
                 array_M = np.concatenate([masks[0, :, 0], np.zeros(extra_samples, dtype=np.float32)])
             
             del batch_data, picks, masks, _wf
-            # gc.collect() removed: profiling showed it was ~87% of per-trace wall time
         
         # Case 2: Long waveform - sliding window with noise padding
         else:
@@ -704,7 +683,6 @@ class REDPAN:
             P_padded, S_padded, M_padded = self._predict_streaming_accumulate(wf_padded)
 
             del wf_padded
-            # gc.collect() removed: profiling showed it was ~87% of per-trace wall time
             
             # Truncate padding: keep only [pad_npts : pad_npts + original_npts]
             array_P = P_padded[pad_npts:pad_npts + original_npts]
@@ -712,11 +690,9 @@ class REDPAN:
             array_M = M_padded[pad_npts:pad_npts + original_npts]
             
             del P_padded, S_padded, M_padded
-            # gc.collect() removed: profiling showed it was ~87% of per-trace wall time
         
-        # Handle NaN/Inf values. Check P/S/M independently — a NaN in any
-        # channel zeros that sample across all three so downstream callers
-        # (find_peaks, trigger_onset) never see invalid floats.
+        # Zero any sample where P, S, or M is NaN/Inf so find_peaks /
+        # trigger_onset downstream never see invalid floats.
         invalid_mask = (
             np.isnan(array_P) | np.isinf(array_P)
             | np.isnan(array_S) | np.isinf(array_S)
@@ -802,7 +778,6 @@ class REDPAN:
         M_stream = M_stream.slice(wf[0].stats.starttime, wf[0].stats.endtime)
         
         del wf, array_P, array_S, array_M, W_data, W_sac
-        # gc.collect() removed: profiling showed it was ~87% of per-trace wall time
         
         logger.debug(f"Created annotated streams: P={len(P_stream[0].data)}, "
                     f"S={len(S_stream[0].data)}, M={len(M_stream[0].data)} samples")
@@ -1202,7 +1177,6 @@ class PhasePicker:
         self.pred_npts = pred_npts
         self.pred_interval_sec = pred_interval_sec
         self.STMF_max_sec = STMF_max_sec
-        # Avoid sharing a mutable default across instances.
         if postprocess_config is None:
             postprocess_config = {
                 "mask_trigger": [0.1, 0.1],
@@ -1310,7 +1284,6 @@ def pred_MedianFilter(preds, masks, wf_npts, dt, pred_npts, pred_interval_sec, p
         array_M_med[num_idx] = np.median(np.hstack(np.take(pred_array_mask, num_idx)), axis=0)
     
     del pred_array_P, pred_array_S, pred_array_mask
-    # gc.collect() removed: profiling showed it was ~87% of per-trace wall time
 
     array_P_med = array_P_med[pad_bef:-pad_aft]
     array_S_med = array_S_med[pad_bef:-pad_aft]

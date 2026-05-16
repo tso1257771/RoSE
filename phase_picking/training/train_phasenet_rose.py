@@ -315,8 +315,7 @@ def main() -> None:
         )
     model = model.to(device)
 
-    # Stash the resume payload so we can also restore optimizer state once
-    # the optimizer object exists (created below, after DDP wrapping).
+    # Held for the post-DDP optimizer-state restore further down.
     resume_state: dict | None = None
     if args.resume:
         if is_main:
@@ -370,9 +369,8 @@ def main() -> None:
 
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr)
 
-    # Restore Adam state (momentum buffers, step counts) if present in the
-    # resume payload. Without this, the optimizer restarts cold even though
-    # the model weights resume from epoch N — slows convergence after resume.
+    # Restore Adam momentum buffers + step counts on --resume so the
+    # optimizer doesn't restart cold relative to the model weights.
     start_epoch = 1
     if resume_state is not None and "optimizer" in resume_state:
         try:

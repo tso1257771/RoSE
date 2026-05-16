@@ -95,9 +95,8 @@ def picker_info(
                 tar_s[potential_S[S_peak_idx]],
             ]
         except (IndexError, ValueError):
-            # Skip trigger windows whose peak arrays are empty (no P/S
-            # peak within the window) — `argmax` raises on those. Other
-            # exceptions (KeyboardInterrupt, MemoryError) propagate.
+            # argmax on an empty potential_P / potential_S — no peak fell
+            # in this trigger window.
             continue
     return eq_collections
 
@@ -352,9 +351,6 @@ def pred_postprocess(
     }
 
     n_len = len(array_P_med)
-    # mask_min_len reserved for downstream filtering of short masks; not
-    # currently consulted in this scoring path. Keep `mask_len_thre`
-    # in pick_args so picker_info still uses it.
     err_win = int(mask_err_win / dt)
 
     matches = picker_info(array_M_med, array_P_med, array_S_med, pick_args)
