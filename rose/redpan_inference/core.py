@@ -973,18 +973,24 @@ class REDPANDualPass(REDPAN):
         self,
         wf: Stream,
         postprocess: bool = False,
-        use_trial_refined: bool = False,
+        use_single_entry_refined: bool = False,
         pre_trigger_sec: float = 5.0,
         trigger_on: float = 0.30,
         trigger_off: float = 0.30,
         smooth_sec: float = 0.10,
+        keep_if_refined_mask_lower: bool = True,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Return merged dual-pass predictions.
+
+        The signature matches REDPAN.predict (Liskov substitutable). The
+        legacy kwarg name `use_trial_refined` is no longer accepted —
+        update callers if you were using it (no external callers existed
+        at the time of the rename).
         """
         merged_p, merged_s, merged_m, *_ = self._run_dual_pass(wf)
 
-        if use_trial_refined:
+        if use_single_entry_refined:
             merged_p, merged_s, merged_m, _ = self._apply_trial_single_entry_refinement(
                 wf=wf,
                 base_p=merged_p,
@@ -994,6 +1000,7 @@ class REDPANDualPass(REDPAN):
                 trigger_on=trigger_on,
                 trigger_off=trigger_off,
                 smooth_sec=smooth_sec,
+                keep_if_refined_mask_lower=keep_if_refined_mask_lower,
             )
 
         if postprocess and hasattr(self, "postprocess_config") and self.postprocess_config:
@@ -1074,6 +1081,7 @@ class REDPANDualPass(REDPAN):
         trigger_on: float = 0.30,
         trigger_off: float = 0.30,
         smooth_sec: float = 0.10,
+        keep_if_refined_mask_lower: bool = True,
     ):
         """
         Trial refinement:
@@ -1091,6 +1099,7 @@ class REDPANDualPass(REDPAN):
             trigger_on=trigger_on,
             trigger_off=trigger_off,
             smooth_sec=smooth_sec,
+            keep_if_refined_mask_lower=keep_if_refined_mask_lower,
         )
 
     def predict_with_trial_details(
@@ -1127,14 +1136,17 @@ class REDPANDualPass(REDPAN):
         self,
         wf: Stream,
         postprocess: bool = False,
-        use_trial_refined: bool = False,
+        use_single_entry_refined: bool = False,
         pre_trigger_sec: float = 5.0,
         trigger_on: float = 0.30,
         trigger_off: float = 0.30,
         smooth_sec: float = 0.10,
+        keep_if_refined_mask_lower: bool = True,
     ) -> Tuple[Stream, Stream, Stream]:
         """
         Annotate stream with dual-pass predictions, matching REDPAN output style.
+
+        Signature matches REDPAN.annotate_stream (Liskov substitutable).
 
         Returns:
             Tuple of (P_stream, S_stream, M_stream), each as ObsPy Stream.
@@ -1142,11 +1154,12 @@ class REDPANDualPass(REDPAN):
         array_P, array_S, array_M = self.predict(
             wf=wf,
             postprocess=postprocess,
-            use_trial_refined=use_trial_refined,
+            use_single_entry_refined=use_single_entry_refined,
             pre_trigger_sec=pre_trigger_sec,
             trigger_on=trigger_on,
             trigger_off=trigger_off,
             smooth_sec=smooth_sec,
+            keep_if_refined_mask_lower=keep_if_refined_mask_lower,
         )
 
         P_stream, S_stream, M_stream = Stream(), Stream(), Stream()
