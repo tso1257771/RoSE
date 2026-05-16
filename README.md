@@ -69,6 +69,13 @@ Zenodo — **not** in this repo. Mount or symlink them at `./data/rose/` and
 `./data/rose_stationxml/` after cloning, or set the `ROSE_DATA_DIR` /
 `ROSE_STATIONXML_DIR` environment variables.
 
+The two compiled ROMPLUS source tables are versioned here:
+`data/Enhanced_ROMPLUS_catalog.csv` (2.9 MB, 19 231 events) is committed
+to the repo, and `data/Enhanced_ROMPLUS_picks.csv` (77 MB, 416 063 picks)
+ships as a GitHub Release asset on each tagged version. See
+[`docs/DATASET.md`](docs/DATASET.md) for the download recipe and the
+native HDF5 schema both files feed into.
+
 ---
 
 ## Quickstart
@@ -250,8 +257,10 @@ RoSE/                              # ── the RoSE dataset + its Python API  (
                                    #     + config.json + the bench_*/build_* stage scripts + data/ (test indices)
 ```
 
-(`data/`, `outputs/`, `checkpoints/`, `phase_picking/benchmark/eval/`,
-`rose_split_index.*` are gitignored — see `.env.example` / `phase_picking/benchmark/config.json`.)
+(Everything under `data/` is gitignored *except* the compiled ROMPLUS
+catalog CSV; `outputs/`, `checkpoints/`, `phase_picking/benchmark/eval/`,
+`rose_split_index.*` are gitignored — see `.env.example` /
+`phase_picking/benchmark/config.json`.)
 
 ---
 
@@ -273,12 +282,19 @@ RoSE/                              # ── the RoSE dataset + its Python API  (
 
 ## Citation
 
-The RoSE dataset paper is in preparation; the Zenodo DOI for the data bundle
-will be added here at release. In the meantime, please cite the **ROMPLUS**
-source bulletin (NIEP) and the model references the pickers extend:
-RED-PAN — Liao et al. 2022; SeisBench — Woollam et al. 2022; PhaseNet —
-Zhu & Beroza 2019; EQTransformer — Mousavi et al. 2020. Per-model cards
-with full citations: [`phase_picking/models/README.md`](phase_picking/models/README.md).
+The RoSE dataset paper is in preparation; the Zenodo DOIs for the data
+bundle and for tagged software releases will be added here once minted.
+In the meantime:
+
+- **For this toolkit** (the software in this repository): see
+  [`CITATION.cff`](CITATION.cff) — GitHub's "Cite this repository"
+  button renders it directly.
+- **For the dataset itself**: cite the **ROMPLUS** source bulletin (NIEP)
+  plus the RoSE dataset record (DOI to be added at release).
+- **For the model architectures** the bundled pickers extend: RED-PAN
+  — Liao et al. 2022; SeisBench — Woollam et al. 2022; PhaseNet —
+  Zhu & Beroza 2019; EQTransformer — Mousavi et al. 2020. Per-model
+  cards: [`phase_picking/models/README.md`](phase_picking/models/README.md).
 
 ---
 
