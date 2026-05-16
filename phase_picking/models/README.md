@@ -140,3 +140,15 @@ sha256sum -c SHA256SUMS
   `call()` implementations). This is intrinsic to the Keras serialization
   format and cannot be mitigated at load time — verify the SHA above and only
   load HDF5s from sources you trust.
+
+---
+
+## License
+
+The three `.pt` / `.hdf5` weight files in this directory are derivatives
+of the CC-BY-4.0 RoSE dataset and are distributed under **CC-BY-4.0** —
+see [`LICENSE-WEIGHTS`](LICENSE-WEIGHTS). The Python loaders in
+`rose.pickers`, this README, the model cards above, and `SHA256SUMS`
+remain under the repository-root **MIT** [`LICENSE`](../../LICENSE).
+Re-using the weights downstream therefore requires citation per
+CC-BY-4.0; re-using the code does not.

@@ -1,3 +1,8 @@
+"""Pick extraction + post-processing helpers used by `core.REDPAN`.
+
+Vendored (minimal subset) from https://github.com/tso1257771/RED-PAN
+under its MIT license; relicensed under the RoSE repo's MIT LICENSE.
+"""
 import logging
 
 import numpy as np
