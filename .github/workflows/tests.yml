@@ -1,0 +1,97 @@
+# Continuous Integration for RoSE.
+#
+# What this does, on every push and every pull-request:
+#   1. Fresh Ubuntu Linux runner (clean, no pre-existing env).
+#   2. Install Python 3.10 / 3.11 / 3.12 (matrix) plus the package via
+#      `uv pip install -e ".[dev,cpu,bench]"`.
+#   3. `ruff check` for lint regressions.
+#   4. `pytest` to run the 50-test suite.
+#
+# Why uv (not plain pip): pyproject.toml configures `[tool.uv.sources]`
+# to route the .[cpu] extra's `torch` through the official PyTorch CPU
+# index (https://download.pytorch.org/whl/cpu). Plain `pip` ignores
+# tool.uv tables and would pull the ~2.5 GB CUDA-bundled torch wheel
+# from PyPI instead — wastes runner minutes and disk space. uv honors
+# the source routing AND is ~10× faster at dependency resolution.
+#
+# Why a Python version matrix: pyproject.toml promises Python ≥ 3.10;
+# the matrix proves that's true on every supported version, not just
+# whatever's installed on a developer's laptop.
+#
+# Why .[dev,cpu,bench]: pytest + ruff (dev), torch (cpu — for
+# safe_torch_load tests), and scikit-learn (bench). We do NOT pull
+# the .[tf] extra because TensorFlow's install is slow (~3 min) and
+# the test suite doesn't currently exercise the TF path.
+#
+# What this does NOT do (yet, deliberately):
+#   - No coverage upload (codecov). Add later if useful.
+#   - No CD / PyPI publish step. Add only when we want PyPI releases.
+#   - No GPU runner. GitHub-hosted CI has no GPU; bench scripts that
+#     need a GPU are exercised manually by the maintainer.
+
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Allow manual runs from the Actions tab — useful for re-running
+  # after a transient install hiccup without making a no-op commit.
+  workflow_dispatch:
+
+# If a new push lands on a PR while a previous run is still going,
+# cancel the older run. Saves credits and stops PR pages from showing
+# stale ❌ from a since-fixed commit.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least-privilege token: read-only checkout, no write back to the repo.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      # Don't abort the other matrix entries if one fails — we want
+      # to see *which* Python versions break, not just the first.
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        # Official Astral action: pins the uv version and sets up its
+        # cache between runs (different cache dir than pip's).
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            pyproject.toml
+            requirements.txt
+
+      - name: Install RoSE + dev extras (CPU torch via uv sources)
+        run: |
+          uv pip install --system -e ".[dev,cpu,bench]"
+
+      - name: ruff check
+        # `--output-format=github` annotates each lint hit on the
+        # relevant source line in the PR's "Files changed" tab.
+        run: |
+          ruff check rose/ tests/ phase_picking/ --output-format=github
+
+      - name: pytest
+        # `-q` for quieter output, `--tb=short` for compact tracebacks.
+        # `--strict-markers` catches typos in @pytest.mark.* decorators.
+        run: |
+          pytest tests/ -q --tb=short --strict-markers

@@ -1,5 +1,9 @@
 # RoSE — Romanian SEismic Dataset
 
+[![tests](https://github.com/tso1257771/RoSE/actions/workflows/tests.yml/badge.svg)](https://github.com/tso1257771/RoSE/actions/workflows/tests.yml)
+[![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://github.com/tso1257771/RoSE/blob/main/pyproject.toml)
+[![license: MIT](https://img.shields.io/badge/code-MIT-green)](LICENSE) [![data: CC-BY-4.0](https://img.shields.io/badge/data-CC--BY--4.0-orange)](LICENSE-DATA)
+
 > A ROMPLUS-enhanced Romanian seismic dataset for machine learning and
 > seismological applications, plus three published phase pickers benchmarked
 > on it.
