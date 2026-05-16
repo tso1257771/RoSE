@@ -25,4 +25,4 @@ RED-PAN-60s).
 `data/`, `eval/`, `checkpoints/`, `outputs/`, `rose_split_index.*` — all gitignored.
 
 ## Verify
-`pytest tests/` (43 tests; pins the split partition, the SeisBench converter, `get_sample_physical`, the QC helpers, and `safe_torch_load`).
+`pytest tests/` (50 tests; pins the split partition, the SeisBench converter, `get_sample_physical`, the QC helpers, `safe_torch_load`, and the `redpan_inference` utilities). CI runs the same suite on Python 3.10/3.11/3.12 via `.github/workflows/tests.yml`.
