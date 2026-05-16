@@ -39,7 +39,7 @@ class REDPAN:
     in sliding window predictions.
     """
     
-    def __init__(self, 
+    def __init__(self,
                  model,
                  pred_npts: int = 6000,
                  dt: float = 0.01,
@@ -47,16 +47,22 @@ class REDPAN:
                  batch_size: int = 32,
                  use_compiled_infer: bool = True,
                  jit_compile: bool = False,
-                 accumulation_mode: str = "loop"):
+                 accumulation_mode: str = "loop",
+                 seed: int | None = None):
         """
         Initialize the RED-PAN picker
-        
+
         Args:
             model: TensorFlow model for prediction
             pred_npts: Model input length (samples)
             dt: Sample interval (seconds)
             pred_interval_sec: Sliding window step (seconds)
             batch_size: Batch size for prediction
+            seed: Optional integer seed for the spectrum-matched padding
+                noise generator. When None (default), a fresh
+                `np.random.default_rng()` is used per call, decoupled
+                from the global `np.random` state. Set this if you need
+                bitwise-reproducible predictions across runs.
         """
         self.model = model
         self.pred_npts = pred_npts
@@ -68,6 +74,9 @@ class REDPAN:
         self.accumulation_mode = str(accumulation_mode).lower()
         if self.accumulation_mode not in {"loop", "addat"}:
             raise ValueError("accumulation_mode must be one of: loop, addat")
+        self._noise_rng = (
+            np.random.default_rng(seed) if seed is not None else None
+        )
         
         # Calculate prediction interval in samples
         self.pred_interval_pt = int(round(pred_interval_sec / dt))
@@ -121,11 +130,15 @@ class REDPAN:
         for trace in wf_padded:
             # Find reference signal for noise generation
             ref_signal = find_reference_signal(trace.data)
-            
-            # Generate noise for front and back padding
-            front_noise = generate_matching_noise(ref_signal, pad_npts)
-            back_noise = generate_matching_noise(ref_signal, pad_npts)
-            
+
+            # Generate noise for front and back padding. Use a per-REDPAN
+            # rng when seeded; otherwise a fresh default_rng per call so
+            # we don't depend on global np.random state.
+            front_noise = generate_matching_noise(
+                ref_signal, pad_npts, rng=self._noise_rng)
+            back_noise = generate_matching_noise(
+                ref_signal, pad_npts, rng=self._noise_rng)
+
             # Pad the trace data
             trace.data = np.concatenate([front_noise, trace.data, back_noise])
             
@@ -701,8 +714,14 @@ class REDPAN:
             del P_padded, S_padded, M_padded
             # gc.collect() removed: profiling showed it was ~87% of per-trace wall time
         
-        # Handle NaN/Inf values
-        invalid_mask = np.isnan(array_M) | np.isinf(array_M)
+        # Handle NaN/Inf values. Check P/S/M independently — a NaN in any
+        # channel zeros that sample across all three so downstream callers
+        # (find_peaks, trigger_onset) never see invalid floats.
+        invalid_mask = (
+            np.isnan(array_P) | np.isinf(array_P)
+            | np.isnan(array_S) | np.isinf(array_S)
+            | np.isnan(array_M) | np.isinf(array_M)
+        )
         array_P[invalid_mask] = 0.0
         array_S[invalid_mask] = 0.0
         array_M[invalid_mask] = 0.0
@@ -1163,20 +1182,23 @@ class PhasePicker:
         pred_npts=3000,
         pred_interval_sec=10,
         STMF_max_sec=1200,
-        postprocess_config={
-            "mask_trigger": [0.1, 0.1],
-            "mask_len_thre": 0.5,
-            "mask_err_win": 0.5,
-            "detection_threshold": 0.3,
-            "P_threshold": 0.1,
-            "S_threshold": 0.1
-        },
+        postprocess_config=None,
     ):
         self.model = model
         self.dt = dt
         self.pred_npts = pred_npts
         self.pred_interval_sec = pred_interval_sec
         self.STMF_max_sec = STMF_max_sec
+        # Avoid sharing a mutable default across instances.
+        if postprocess_config is None:
+            postprocess_config = {
+                "mask_trigger": [0.1, 0.1],
+                "mask_len_thre": 0.5,
+                "mask_err_win": 0.5,
+                "detection_threshold": 0.3,
+                "P_threshold": 0.1,
+                "S_threshold": 0.1,
+            }
         self.postprocess_config = postprocess_config
 
         if model is None:
