@@ -15,7 +15,10 @@ Usage:
     rp = REDPAN(model=tf_model, pred_npts=6000, dt=0.01,
                 pred_interval_sec=10.0, batch_size=32,
                 use_compiled_infer=True)
-    picks, detections = rp.predict(stream)
+    # predict() returns three per-sample probability arrays — convert to
+    # discrete picks/detections downstream (e.g. scipy.signal.find_peaks
+    # on P_arr/S_arr, obspy.signal.trigger.trigger_onset on M_arr).
+    P_arr, S_arr, M_arr = rp.predict(stream)
 """
 from .core import REDPAN
 

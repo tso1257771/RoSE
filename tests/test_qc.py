@@ -11,7 +11,7 @@ def test_detect_clipping_clean_trace_is_unflagged():
     rng = np.random.default_rng(0)
     data = rng.standard_normal(2000)
     result = qc.detect_clipping(data)
-    assert result["clipped"] == False
+    assert not result["clipped"]
     assert result["n_clipped_samples"] == 0
     assert result["clip_fraction"] == 0.0
     assert result["clip_segments"] == []
@@ -22,7 +22,7 @@ def test_detect_clipping_flags_long_rail():
     # Rail at +1 for 200 samples
     data[300:500] = 1.0
     result = qc.detect_clipping(data, n_consecutive=5)
-    assert result["clipped"] == True
+    assert result["clipped"]
     assert result["n_clipped_samples"] >= 200
     # The detected segment must contain the injected rail
     starts = [s for s, _ in result["clip_segments"]]
@@ -32,26 +32,26 @@ def test_detect_clipping_flags_long_rail():
 
 def test_detect_clipping_empty_input():
     result = qc.detect_clipping(np.array([]))
-    assert result["clipped"] == False
+    assert not result["clipped"]
     assert result["n_clipped_samples"] == 0
 
 
 def test_detect_clipping_constant_trace_is_fully_clipped():
     result = qc.detect_clipping(np.zeros(100))
-    assert result["clipped"] == True
+    assert result["clipped"]
     assert result["clip_fraction"] == 1.0
 
 
 def test_detect_dead_channel_flags_zero_variance():
-    assert qc.detect_dead_channel(np.zeros(500))["dead"] == True
-    assert qc.detect_dead_channel(np.full(500, 3.14))["dead"] == True
+    assert qc.detect_dead_channel(np.zeros(500))["dead"]
+    assert qc.detect_dead_channel(np.full(500, 3.14))["dead"]
 
 
 def test_detect_dead_channel_passes_active_signal():
     rng = np.random.default_rng(1)
     data = rng.standard_normal(500)
     result = qc.detect_dead_channel(data)
-    assert result["dead"] == False
+    assert not result["dead"]
     assert result["std"] > 0.1
 
 
@@ -60,7 +60,7 @@ def test_detect_gaps_zero_run_in_interior():
     data = rng.standard_normal(2000) * 0.5
     data[600:900] = 0.0
     result = qc.detect_gaps(data, min_gap_samples=50)
-    assert result["has_gaps"] == True
+    assert result["has_gaps"]
     assert result["n_gap_samples"] >= 200
 
 
@@ -68,7 +68,7 @@ def test_detect_gaps_ignores_edge_zeros():
     # Trailing zeros within margin must NOT be flagged
     data = np.concatenate([np.ones(2000), np.zeros(20)])
     result = qc.detect_gaps(data, min_gap_samples=10)
-    assert result["has_gaps"] == False
+    assert not result["has_gaps"]
 
 
 def test_detect_spikes_isolated_transient():
@@ -77,7 +77,7 @@ def test_detect_spikes_isolated_transient():
     # Inject a single-sample spike well above MAD threshold
     data[1000] = 500.0
     result = qc.detect_spikes(data, mad_threshold=10.0, max_width_samples=3)
-    assert result["has_spikes"] == True
+    assert result["has_spikes"]
     assert 1000 in result["spike_indices"]
 
 
@@ -87,7 +87,7 @@ def test_detect_spikes_ignores_wide_earthquake_signal():
     # Wide coherent burst (earthquake-like): exceeds threshold but is wide
     data[800:1000] = 50.0
     result = qc.detect_spikes(data, mad_threshold=10.0, max_width_samples=3)
-    assert result["has_spikes"] == False
+    assert not result["has_spikes"]
 
 
 def test_compute_snr_known_ratio():
@@ -113,12 +113,12 @@ def test_quality_report_pass_on_clean_trace():
     sr = 100.0
     data = rng.standard_normal(int(60 * sr)) * 0.1
     report = qc.quality_report(data, sr=sr, phase_sample=int(30 * sr))
-    assert report["pass"] == True
+    assert report["pass"]
     assert report["n_issues"] == 0
     assert "snr" in report
 
 
 def test_quality_report_flags_dead_channel():
     report = qc.quality_report(np.zeros(1000), sr=100.0)
-    assert report["pass"] == False
-    assert report["dead"]["dead"] == True
+    assert not report["pass"]
+    assert report["dead"]["dead"]

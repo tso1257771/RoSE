@@ -352,7 +352,9 @@ def pred_postprocess(
     }
 
     n_len = len(array_P_med)
-    mask_min_len = int(mask_len_thre / dt)
+    # mask_min_len reserved for downstream filtering of short masks; not
+    # currently consulted in this scoring path. Keep `mask_len_thre`
+    # in pick_args so picker_info still uses it.
     err_win = int(mask_err_win / dt)
 
     matches = picker_info(array_M_med, array_P_med, array_S_med, pick_args)
@@ -360,12 +362,10 @@ def pred_postprocess(
     r_funM, r_funP, r_funS = np.zeros(n_len), np.zeros(n_len), np.zeros(n_len)
 
     for K in matches.items():
-        if np.any([N == None for N in [K[1][2], K[1][4]]]):
+        if K[1][2] is None or K[1][4] is None:
             continue
         detect_st_pt = K[0]
         detect_ed_pt = K[1][0]
-        P_pt = K[1][2]
-        S_pt = K[1][4]
 
         r_funM[detect_st_pt:detect_ed_pt] = \
             deepcopy(array_M_med[detect_st_pt:detect_ed_pt])

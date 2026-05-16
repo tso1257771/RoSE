@@ -313,16 +313,16 @@ def main() -> None:
         print(f"  trace {idx}: running PhaseNet-instance ...")
         results.append(("PhaseNet-instance",
                         run_seisbench(pn_inst, stream_band_zne)))
-        print(f"             EQT-instance ...")
+        print("             EQT-instance ...")
         results.append(("EQT-instance",
                         run_seisbench(eqt_inst, stream_band_zne)))
-        print(f"             PhaseNet-RoSE ...")
+        print("             PhaseNet-RoSE ...")
         results.append(("PhaseNet-RoSE",
                         run_seisbench(pn_rose, stream_band_zne)))
-        print(f"             EQT-RoSE ...")
+        print("             EQT-RoSE ...")
         results.append(("EQT-RoSE",
                         run_seisbench(eqt_rose, stream_band_zne)))
-        print(f"             RED-PAN-60s ...")
+        print("             RED-PAN-60s ...")
         results.append(("RED-PAN-60s",
                         run_redpan(redpan, stream_enz_raw)))
 
