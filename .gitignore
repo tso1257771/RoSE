@@ -2,8 +2,11 @@
 # Project data & generated artifacts
 # ---------------------------------------------------------------------------
 # Published SeisBench dataset (~35 GB) and StationXML response archive
-# (~80 MB) — distributed separately on Zenodo, not in git.
+# (~80 MB) — distributed separately on Zenodo, not in git. The two
+# compiled ROMPLUS source tables ARE versioned (catalog directly, picks
+# attached to each release as a GitHub Release asset due to size).
 data/
+!data/Enhanced_ROMPLUS_catalog.csv
 
 # Run outputs: figures, per-event tables, MiniSEED exports.
 outputs/

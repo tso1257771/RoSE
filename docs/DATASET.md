@@ -11,6 +11,29 @@
 > rebuilding the published bundle from a fresh ROMPLUS catalog can match the
 > input layout `convert_all` expects.
 
+## Source tables
+
+Two compiled CSV tables drive `convert_all`. Both are released under MIT
+along with the rest of the toolkit; the underlying ROMPLUS bulletin
+remains a registered NIEP product and should be cited separately
+(see the root `README.md`).
+
+| File | Size | Rows | Distribution |
+|---|---:|---:|---|
+| `data/Enhanced_ROMPLUS_catalog.csv` | 2.9 MB | 19 231 events | committed to the repo |
+| `data/Enhanced_ROMPLUS_picks.csv` | 77 MB | 416 063 picks | GitHub Release asset, attached to each tagged release |
+
+Fetch the picks file once per checkout (replace `vX.Y.Z` with the tag
+you cloned, or `latest` for the newest):
+
+```bash
+mkdir -p data
+curl -fL -o data/Enhanced_ROMPLUS_picks.csv \
+    https://github.com/tso1257771/RoSE/releases/download/vX.Y.Z/Enhanced_ROMPLUS_picks.csv
+```
+
+(The release page also lists a SHA256 to verify against.)
+
 ## Hierarchy
 
 ```
