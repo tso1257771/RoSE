@@ -1,0 +1,40 @@
+{
+  "title": "RoSE — Romanian SEismic Dataset Toolkit",
+  "description": "Python toolkit, three published phase pickers (EQT-RoSE, PhaseNet-RoSE, RED-PAN-60s), and the benchmark pipeline that scores them on the RoSE Romanian local-earthquake dataset.",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "TODO: replace with Family, Given",
+      "affiliation": "TODO",
+      "orcid": "TODO-0000-0000-0000"
+    }
+  ],
+  "license": "MIT",
+  "access_right": "open",
+  "keywords": [
+    "seismology",
+    "phase picking",
+    "earthquake detection",
+    "machine learning",
+    "SeisBench",
+    "EQTransformer",
+    "PhaseNet",
+    "RED-PAN",
+    "Romania",
+    "Vrancea"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/tso1257771/RoSE",
+      "relation": "isSupplementTo",
+      "scheme": "url",
+      "resource_type": "software"
+    }
+  ],
+  "references": [
+    "Mousavi et al. (2020), Earthquake Transformer, Nature Communications 11:3952.",
+    "Zhu & Beroza (2019), PhaseNet, Geophysical Journal International 216:261-273.",
+    "Liao et al. (2022), RED-PAN, GRL 49:e2022GL101142.",
+    "Woollam et al. (2022), SeisBench, SRL 93:1695-1709."
+  ]
+}

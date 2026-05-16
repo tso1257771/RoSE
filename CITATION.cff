@@ -1,0 +1,42 @@
+# Citation metadata for the RoSE toolkit.
+# GitHub renders this as the "Cite this repository" button in the sidebar.
+# When the paper / Zenodo records confirm, fill in the placeholders below
+# and update `version` + `date-released` + `doi` on each tagged release.
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "RoSE — Romanian SEismic Dataset (toolkit)"
+abstract: >
+  Python toolkit, three published deep-learning phase pickers
+  (EQT-RoSE, PhaseNet-RoSE, RED-PAN-60s), and the benchmark pipeline
+  that scores them on the RoSE Romanian seismic dataset.
+authors:
+  # TODO: replace with full name + ORCID before tagging v0.1.0.
+  - family-names: "tso1257771"
+    given-names: ""
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+repository-code: "https://github.com/tso1257771/RoSE"
+url: "https://github.com/tso1257771/RoSE"
+license: MIT
+version: 0.1.0
+# date-released: 2026-XX-XX   # set on the day you tag v0.1.0
+keywords:
+  - seismology
+  - phase picking
+  - earthquake detection
+  - machine learning
+  - SeisBench
+  - EQTransformer
+  - PhaseNet
+  - RED-PAN
+  - Romania
+  - Vrancea
+# When the dataset Zenodo record is published, uncomment and fill in
+# its DOI under `references` so this software citation includes a
+# pointer to the dataset it consumes.
+# references:
+#   - type: data
+#     title: "RoSE — Romanian SEismic Dataset"
+#     doi: "10.5281/zenodo.XXXXXXX"
+#     authors:
+#       - name: "<dataset authors per the Zenodo record>"
