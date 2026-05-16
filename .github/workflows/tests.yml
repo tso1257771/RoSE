@@ -63,19 +63,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        # v5+: Node.js 24 (silences the Node 20 deprecation warning).
+        uses: actions/checkout@v5
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install uv
         # Official Astral action: pins the uv version and sets up its
-        # cache between runs (different cache dir than pip's). v5+
-        # runs on Node.js 24 (v3 was Node.js 20, soft-deprecated and
-        # hits a cache-restore 400 on hosted runners).
-        uses: astral-sh/setup-uv@v5
+        # cache between runs (different cache dir than pip's). v6 runs
+        # on Node.js 24.
+        uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
           cache-dependency-glob: |
