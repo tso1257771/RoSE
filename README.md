@@ -2,7 +2,8 @@
 
 [![tests](https://github.com/tso1257771/RoSE/actions/workflows/tests.yml/badge.svg)](https://github.com/tso1257771/RoSE/actions/workflows/tests.yml)
 [![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://github.com/tso1257771/RoSE/blob/main/pyproject.toml)
-[![license: MIT](https://img.shields.io/badge/code-MIT-green)](LICENSE) [![data: CC-BY-4.0](https://img.shields.io/badge/data-CC--BY--4.0-orange)](LICENSE-DATA)
+[![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20250670.svg)](https://doi.org/10.5281/zenodo.20250670)
 
 > A ROMPLUS-enhanced Romanian seismic dataset for machine learning and
 > seismological applications, plus three published phase pickers benchmarked
@@ -282,19 +283,31 @@ catalog CSV; `outputs/`, `checkpoints/`, `phase_picking/benchmark/eval/`,
 
 ## Citation
 
-The RoSE dataset paper is in preparation; the Zenodo DOIs for the data
-bundle and for tagged software releases will be added here once minted.
-In the meantime:
+**Toolkit (this repository) — v0.1.0**, [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670):
 
-- **For this toolkit** (the software in this repository): see
-  [`CITATION.cff`](CITATION.cff) — GitHub's "Cite this repository"
-  button renders it directly.
-- **For the dataset itself**: cite the **ROMPLUS** source bulletin (NIEP)
-  plus the RoSE dataset record (DOI to be added at release).
-- **For the model architectures** the bundled pickers extend: RED-PAN
-  — Liao et al. 2022; SeisBench — Woollam et al. 2022; PhaseNet —
-  Zhu & Beroza 2019; EQTransformer — Mousavi et al. 2020. Per-model
-  cards: [`phase_picking/models/README.md`](phase_picking/models/README.md).
+```bibtex
+@software{liao_rose_2026,
+  author    = {Liao, Wu-Yu},
+  title     = {{RoSE — Romanian SEismic Dataset Toolkit}},
+  year      = 2026,
+  version   = {v0.1.0},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.20250670},
+  url       = {https://doi.org/10.5281/zenodo.20250670}
+}
+```
+
+GitHub's "Cite this repository" sidebar renders the same info from
+[`CITATION.cff`](CITATION.cff).
+
+**Dataset** — the RoSE dataset bundle has its own Zenodo record
+(DOI to be added once the data deposit is published). Cite the
+**ROMPLUS** source bulletin (NIEP) alongside it.
+
+**Model architectures** the bundled pickers extend: RED-PAN —
+Liao et al. 2022; SeisBench — Woollam et al. 2022; PhaseNet —
+Zhu & Beroza 2019; EQTransformer — Mousavi et al. 2020. Per-model
+cards: [`phase_picking/models/README.md`](phase_picking/models/README.md).
 
 ---
 

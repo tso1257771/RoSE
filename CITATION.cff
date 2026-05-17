@@ -1,7 +1,7 @@
 # Citation metadata for the RoSE toolkit.
 # GitHub renders this as the "Cite this repository" button in the sidebar.
-# When the paper / Zenodo records confirm, fill in the placeholders below
-# and update `version` + `date-released` + `doi` on each tagged release.
+# On each tagged release, bump `version`, `date-released`, and `doi`
+# (and `identifiers[].value`) to the new release's values.
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
@@ -17,8 +17,13 @@ authors:
 repository-code: "https://github.com/tso1257771/RoSE"
 url: "https://github.com/tso1257771/RoSE"
 license: MIT
-version: 0.1.0
-date-released: 2026-05-17   # set on the day you tag v0.1.0
+version: v0.1.0
+date-released: 2026-05-17
+doi: "10.5281/zenodo.20250670"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.20250670"
+    description: "Software DOI for v0.1.0 (Zenodo)"
 keywords:
   - seismology
   - phase picking
