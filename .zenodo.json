@@ -32,9 +32,9 @@
     }
   ],
   "references": [
-    "Mousavi et al. (2020), Earthquake Transformer, Nature Communications 11:3952.",
-    "Zhu & Beroza (2019), PhaseNet, Geophysical Journal International 216:261-273.",
-    "Liao et al. (2022), RED-PAN, GRL 49:e2022GL101142.",
-    "Woollam et al. (2022), SeisBench, SRL 93:1695-1709."
+    "Mousavi, S. M., Ellsworth, W. L., Zhu, W., Chuang, L. Y., & Beroza, G. C. (2020). Earthquake transformer—an attentive deep-learning model for simultaneous earthquake detection and phase picking. Nature Communications, 11(1). https://doi.org/10.1038/s41467-020-17591-w",
+    "Zhu, W., & Beroza, G. C. (2019). PhaseNet: A Deep-Neural-Network-Based Seismic Arrival Time Picking Method. Geophysical Journal International, 216(1), 261-273. https://doi.org/10.1093/gji/ggy423",
+    "Liao, W.-Y., Lee, E.-J., Chen, D.-Y., Chen, P., Mu, D., & Wu, Y.-M. (2022). RED-PAN: Real-Time Earthquake Detection and Phase-Picking With Multitask Attention Network. IEEE Transactions on Geoscience and Remote Sensing, 60, 1-11. https://doi.org/10.1109/TGRS.2022.3205558",
+    "Woollam, J., Münchmeyer, J., Tilmann, F., Rietbrock, A., Lange, D., Bornstein, T., Diehl, T., Giunchi, C., Haslinger, F., Jozinović, D., Michelini, A., Saul, J., & Soto, H. (2022). SeisBench—A Toolbox for Machine Learning in Seismology. Seismological Research Letters, 93(3), 1695-1709. https://doi.org/10.1785/0220210324"
   ]
 }
