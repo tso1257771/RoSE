@@ -11,10 +11,9 @@ abstract: >
   (EQT-RoSE, PhaseNet-RoSE, RED-PAN-60s), and the benchmark pipeline
   that scores them on the RoSE Romanian seismic dataset.
 authors:
-  # TODO: replace with full name + ORCID before tagging v0.1.0.
-  - family-names: "tso1257771"
-    given-names: ""
-    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: "Liao"
+    given-names: "Wu-Yu"
+    orcid: "https://orcid.org/0000-0003-2353-7006"
 repository-code: "https://github.com/tso1257771/RoSE"
 url: "https://github.com/tso1257771/RoSE"
 license: MIT

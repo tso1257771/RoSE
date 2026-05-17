@@ -4,9 +4,9 @@
   "upload_type": "software",
   "creators": [
     {
-      "name": "TODO: replace with Family, Given",
-      "affiliation": "TODO",
-      "orcid": "TODO-0000-0000-0000"
+      "name": "Liao, Wu-Yu",
+      "affiliation": "Department of Earth Sciences, National Cheng-Kung University, Taiwan",
+      "orcid": "https://orcid.org/0000-0003-2353-7006"
     }
   ],
   "license": "MIT",
