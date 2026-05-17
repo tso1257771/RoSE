@@ -18,7 +18,7 @@ repository-code: "https://github.com/tso1257771/RoSE"
 url: "https://github.com/tso1257771/RoSE"
 license: MIT
 version: 0.1.0
-# date-released: 2026-XX-XX   # set on the day you tag v0.1.0
+date-released: 2026-05-17   # set on the day you tag v0.1.0
 keywords:
   - seismology
   - phase picking
