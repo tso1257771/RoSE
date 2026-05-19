@@ -36,6 +36,7 @@ produces them (`phase_picking/benchmark/`).
 | **Fine-tune EQT / PhaseNet on RoSE**              | [Training & benchmarking](#training--benchmarking) below + `phase_picking/training/` |
 | Run a single picker on RoSE / STEAD                | `phase_picking/benchmark/bench_pickers_rose.py`, `bench_stead_test.py` |
 | Build the SeisBench bundle from the native HDF5    | [`docs/DATASET.md`](docs/DATASET.md) + `rose.convert.convert_all` |
+| Load RoSE weights via `seisbench.models.X.from_pretrained("rose")` | [`seisbench_compat/README.md`](seisbench_compat/README.md) — converter + smoke test + the upstream-submission procedure |
 
 ---
 
@@ -157,6 +158,16 @@ traces; [`phase_picking/models/README.md`](phase_picking/models/README.md) has t
 (architecture, training recipe, dev loss) and `SHA256SUMS` to verify the
 checkpoints.
 
+If you'd rather load the SeisBench checkpoints via the upstream
+`from_pretrained` API instead of the bundled `rose.load_*` helpers,
+[`seisbench_compat/`](seisbench_compat/README.md) converts the same `.pt`
+files into the SeisBench weight format
+(`<model>/rose.pt.v1` + `<model>/rose.json.v1`) and round-trips
+bit-identically against the helpers above. The same README documents the
+upstream-submission procedure if you want to ship the weights to the
+SeisBench mirror so `EQTransformer.from_pretrained("rose")` works for
+everyone.
+
 ---
 
 ## Benchmark headlines
@@ -249,19 +260,22 @@ RoSE/                              # ── the RoSE dataset + its Python API  (
 ├── examples/                      # 01, 02, 03, 04 — runnable tutorials
 ├── tests/                         # pytest unit tests
 ├── stationxml_sources/sc3ml_niep/ # SeisComP SC3ML → FDSN StationXML helper
-└── phase_picking/                 # ── the phase-picking extension (built on the `rose` API + SeisBench)
-    ├── README.md
-    ├── models/                    #   the 3 published checkpoints + SHA256SUMS + model cards
-    ├── results/                   #   the pre-computed benchmark CSVs (the published numbers)
-    ├── training/                  #   SeisBench EQT / PhaseNet RoSE fine-tuning + cloud/ launchers
-    └── benchmark/                 #   the pipeline: run_inference.py (a) + build_leaderboard.py (b)
-                                   #     + config.json + the bench_*/build_* stage scripts + data/ (test indices)
+├── phase_picking/                 # ── the phase-picking extension (built on the `rose` API + SeisBench)
+│   ├── README.md
+│   ├── models/                    #   the 3 published checkpoints + SHA256SUMS + model cards
+│   ├── results/                   #   the pre-computed benchmark CSVs (the published numbers)
+│   ├── training/                  #   SeisBench EQT / PhaseNet RoSE fine-tuning + cloud/ launchers
+│   └── benchmark/                 #   the pipeline: run_inference.py (a) + build_leaderboard.py (b)
+│                                  #     + config.json + the bench_*/build_* stage scripts + data/ (test indices)
+└── seisbench_compat/              # ── bridge to seisbench.models.X.from_pretrained("rose")
+    │                              #   convert.py + smoke_test.py + README.md (upstream-submission procedure)
+    └── weights/                   #   regenerated artifacts (gitignored): <model>/rose.{pt,json}.v1
 ```
 
 (Everything under `data/` is gitignored *except* the compiled ROMPLUS
 catalog CSV; `outputs/`, `checkpoints/`, `phase_picking/benchmark/eval/`,
-`rose_split_index.*` are gitignored — see `.env.example` /
-`phase_picking/benchmark/config.json`.)
+`rose_split_index.*`, `seisbench_compat/weights/` are gitignored — see
+`.env.example` / `phase_picking/benchmark/config.json`.)
 
 ---
 
