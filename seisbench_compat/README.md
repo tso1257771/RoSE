@@ -48,7 +48,7 @@ maintainers host that server, so the flow is:
 2. Attach the four files (both `.pt.v1` and `.json.v1` are <2 MB; well
    under GitHub's 25 MB cap).
 3. Maintainers upload to the HIFIS WebDAV server. Once visible, anyone on
-   SeisBench ≥0.7 can call
+   SeisBench ≥0.11 (the floor declared in `rose.json.v1`) can call
    `seisbench.models.PhaseNet.from_pretrained("rose")` and
    `seisbench.models.EQTransformer.from_pretrained("rose")` without
    waiting for a SeisBench release.
