@@ -10,6 +10,7 @@ RED-PAN-60s).
 - **`phase_picking/results/`** — the pre-computed benchmark CSVs (`{rose,stead}_{picking,detection}.csv`, `rose_residual_stats.csv`) + `README.md`
 - **`phase_picking/benchmark/`** — the benchmark *pipeline* (all 9 pickers), two stages + a config: `run_inference.py` (a — per-model inference → `eval/`), `build_leaderboard.py` (b — aggregate → `phase_picking/results/*.csv`), `config.json`. `regenerate_results.sh` runs both. The `bench_*.py` / `build_*.py` are the stage implementations those two scripts call; `phase_picking/benchmark/data/` has the pinned test-set index CSVs. See `phase_picking/benchmark/README.md`.
 - **`phase_picking/training/`** — fine-tune SeisBench EQT / PhaseNet on RoSE (DDP, INSTANCE-init)
+- **`seisbench_compat/`** — converter + smoke test that turn `phase_picking/models/{eqt_rose,phasenet_rose}/*.pt` into the SeisBench `from_pretrained` layout (`<model>/rose.{pt,json}.v1`), plus the upstream-submission procedure in its README. Output dir `weights/` is gitignored. Run from repo root with `PYTHONPATH=. python seisbench_compat/{convert,smoke_test}.py`.
 - **`examples/`** — four numbered tutorials (01 load → 02 INSTANCE demo → 03 ground motion → 04 all-three-pickers inference)
 - **`docs/`** — `DATASET.md` (native HDF5) + `SEISBENCH_FORMAT.md` (column reference)
 

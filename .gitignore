@@ -68,6 +68,11 @@ docs/gmdb/
 # Internal review artifact
 docs/PYTHON_REVIEW.md
 
+# Generated SeisBench-format weights: regenerable from
+# phase_picking/models/{eqt_rose,phasenet_rose}/*.pt via
+# seisbench_compat/convert.py.
+seisbench_compat/weights/
+
 # Raw station-inventory dumps. Only the sc3ml_to_stationxml.py script is
 # versioned; the source XML archives are derived / re-downloadable.
 stationxml_sources/fdsn/
