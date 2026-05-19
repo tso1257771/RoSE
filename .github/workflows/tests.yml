@@ -73,9 +73,12 @@ jobs:
 
       - name: Install uv
         # Official Astral action: pins the uv version and sets up its
-        # cache between runs (different cache dir than pip's). v6 runs
-        # on Node.js 24.
-        uses: astral-sh/setup-uv@v6
+        # cache between runs (different cache dir than pip's). v8+ is
+        # required for Node.js 24 (v6 ships Node 20, which GitHub
+        # deprecates September 2026). v8 dropped floating major/minor
+        # tags for supply-chain reasons — must pin to an immutable
+        # release (use a commit SHA if you want even stricter pinning).
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           enable-cache: true
           cache-dependency-glob: |
