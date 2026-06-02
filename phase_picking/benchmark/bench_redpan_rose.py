@@ -251,6 +251,7 @@ def evaluate_redpan_sweep(
     redpan, test_dataset: sbd.WaveformDataset,
     indices: np.ndarray, cfg: BenchConfig, thresholds: list[float],
     *, partial_path: Path | None = None, save_every: int = 500,
+    dump_sink: list | None = None, model_name: str = "",
 ) -> dict:
     """Sweep RED-PAN over `indices`, optionally checkpointing to
     ``partial_path`` every ``save_every`` evaluated traces so the run can
@@ -321,6 +322,26 @@ def evaluate_redpan_sweep(
             p_thresh=base_thresh, s_thresh=base_thresh,
             distance=int(cfg.sampling_rate),  # 1 s spacing
         )
+
+        if dump_sink is not None:
+            for phase in ("P", "S"):
+                if phase not in true_picks:
+                    continue
+                tt = true_picks[phase]
+                preds = [
+                    [round(float(p.peak_time - tt), 4),
+                     round(float(getattr(p, "peak_value", float("nan"))), 4)]
+                    for p in all_picks
+                    if str(getattr(p, "phase", "")).upper() == phase
+                ]
+                dump_sink.append({
+                    "model": model_name,
+                    "source_id": str(meta.get("source_id", "")),
+                    "depth_km": float(meta.get("source_depth_km", float("nan"))),
+                    "phase": phase,
+                    "status": str(meta.get(f"trace_{phase.lower()}_status", "")),
+                    "preds": json.dumps(preds),
+                })
 
         for thr in thresholds:
             picks_t = [p for p in all_picks if p.peak_value >= thr]
@@ -427,6 +448,10 @@ def main() -> None:
     ap.add_argument("--save-every", type=int, default=500,
                     help="Dump partial state every N successful evaluations "
                          "(0 = never). Only meaningful with --resume.")
+    ap.add_argument("--dump-predictions", action="store_true",
+                    help="Also write <out_dir>/<model>.preds.csv with per-(trace,phase) "
+                         "nearest-prediction records for offline manual-only / "
+                         "depth-stratified re-aggregation. Off by default.")
     args = ap.parse_args()
     if args.rose_dir is None:
         ap.error("--rose-dir is required (or set the ROSE_DATA_DIR environment variable)")
@@ -489,9 +514,15 @@ def main() -> None:
     )
 
     partial_path = _partial_path(out_dir, args.model_name) if args.resume else None
+    dump_sink = [] if args.dump_predictions else None
+    if dump_sink is not None and partial_path is not None and partial_path.is_file():
+        logger.warning("--dump-predictions with --resume and an existing partial dump: the "
+                       "preds.csv will OMIT already-completed traces. Re-run without --resume "
+                       "for a complete dump.")
     sweep = evaluate_redpan_sweep(
         redpan, test, indices, cfg, thresholds,
         partial_path=partial_path, save_every=int(args.save_every),
+        dump_sink=dump_sink, model_name=args.model_name,
     )
 
     out_json = out_dir / f"{args.model_name}.json"
@@ -499,6 +530,14 @@ def main() -> None:
         json.dump({str(t): s for t, s in sweep.items()}, fh, indent=2,
                   default=str)
     logger.info("wrote %s", out_json)
+    if dump_sink is not None:
+        import csv as _csv
+        with (out_dir / f"{args.model_name}.preds.csv").open("w", newline="") as fh:
+            w = _csv.DictWriter(
+                fh, fieldnames=["model", "source_id", "depth_km",
+                                "phase", "status", "preds"])
+            w.writeheader()
+            w.writerows(dump_sink)
 
     rows = []
     for thr in thresholds:
