@@ -20,6 +20,7 @@ checkpoints/
 # Local benchmark outputs (per-run JSON / CSV / log / viz PNGs under eval/<run>/).
 # The *published* benchmark numbers live in results/.
 eval/
+eval_rerun/
 
 # Output of benchmark/run_inference.py (per-model JSONs + aggregated CSVs) lands
 # under <eval_dir>/, default eval/ — already ignored above. The committed
