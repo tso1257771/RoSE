@@ -181,6 +181,15 @@ def build_picking_table(eval_dir: Path, sweep_index: dict) -> Path:
     return out
 
 
+def _load_model_sweep_json(eval_dir: Path, model: str) -> dict:
+    """Per-model sweep JSON (holds detection.det_n_traces, the both-P&S count)."""
+    for sub in ("bench_rose_full_sweep", "bench_redpan_rose_full"):
+        p = eval_dir / sub / f"{model}.json"
+        if p.is_file():
+            return json.loads(p.read_text())
+    return {}
+
+
 def build_detection_table(eval_dir: Path, sweep_index: dict) -> Path:
     out = eval_dir / "bench_rose_detection_clean.csv"
     cols = [
@@ -199,13 +208,19 @@ def build_detection_table(eval_dir: Path, sweep_index: dict) -> Path:
             has_det = MODEL_HAS_DETECTION_HEAD[model]
             noise_path = eval_dir / "bench_noise_fp" / f"{noise_key}.json"
             noise = json.loads(noise_path.read_text())
+            model_sweep = _load_model_sweep_json(eval_dir, model)
             for thr in THRESHOLDS:
                 phases = sweep_index.get((model, thr))
                 if phases is None:
                     continue
                 p_row = phases["P"]
                 noise_thr = noise[thr]
-                n_event = int(float(p_row["n_evaluated"]))
+                # Detection truth is defined only on traces with BOTH P and S
+                # (evaluate_trace_detections returns None otherwise), so TP/FN
+                # must use that subset count (det_n_traces), not the full
+                # picking population (n_evaluated). See bench_pickers_rose.py.
+                det_block = model_sweep.get(thr, {}).get("detection", {})
+                n_event = int(det_block.get("det_n_traces", float(p_row["n_evaluated"])))
                 n_noise = int(noise_thr["n_traces_evaluated"])
                 fp = int(noise_thr["n_traces_with_any_pick"])
                 tn = n_noise - fp
