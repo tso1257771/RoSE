@@ -451,6 +451,7 @@ def evaluate_model_sweep(
     model, test_dataset: sbd.WaveformDataset,
     indices: np.ndarray, cfg: BenchConfig,
     thresholds: list[float],
+    dump_sink: list | None = None, model_name: str = "",
 ) -> dict:
     """One classify() call per trace at the LOWEST sweep threshold; the
     higher threshold values are evaluated by post-hoc filtering on
@@ -512,6 +513,26 @@ def evaluate_model_sweep(
 
         all_picks = list(getattr(output, "picks", []) or [])
         all_detections = list(getattr(output, "detections", []) or [])
+
+        if dump_sink is not None:
+            for phase in ("P", "S"):
+                if phase not in true_picks:
+                    continue
+                tt = true_picks[phase]
+                preds = [
+                    [round(float(p.peak_time - tt), 4),
+                     round(float(getattr(p, "peak_value", float("nan"))), 4)]
+                    for p in all_picks
+                    if str(getattr(p, "phase", "")).upper() == phase
+                ]
+                dump_sink.append({
+                    "model": model_name,
+                    "source_id": str(meta.get("source_id", "")),
+                    "depth_km": float(meta.get("source_depth_km", float("nan"))),
+                    "phase": phase,
+                    "status": str(meta.get(f"trace_{phase.lower()}_status", "")),
+                    "preds": json.dumps(preds),
+                })
 
         for thr in thresholds:
             picks_t = [
@@ -688,6 +709,11 @@ def main() -> None:
                          "(e.g. '0.05,0.1,0.2,0.3,0.5,0.7'). When set, the "
                          "fixed --p-threshold/--s-threshold are ignored and a "
                          "per-threshold PR table is produced instead.")
+    ap.add_argument("--dump-predictions", action="store_true",
+                    help="Also write <out_dir>/<model>.preds.csv with per-(trace,phase) "
+                         "nearest-prediction records (residual, peak_value) tagged with "
+                         "pick provenance and source depth, for offline manual-only / "
+                         "depth-stratified re-aggregation. Off by default (no behavior change).")
     args = ap.parse_args()
     if args.rose_dir is None:
         ap.error("--rose-dir is required (or set the ROSE_DATA_DIR environment variable)")
@@ -792,12 +818,22 @@ def main() -> None:
             continue
 
         if sweep_thresholds is not None:
+            dump_sink = [] if args.dump_predictions else None
             sweep = evaluate_model_sweep(
                 model, test, indices, cfg, sweep_thresholds,
+                dump_sink=dump_sink, model_name=name,
             )
             all_results[name] = {str(t): s for t, s in sweep.items()}
             with (out_dir / f"{name}.json").open("w") as fh:
                 json.dump(all_results[name], fh, indent=2, default=str)
+            if dump_sink is not None:
+                import csv as _csv
+                with (out_dir / f"{name}.preds.csv").open("w", newline="") as fh:
+                    w = _csv.DictWriter(
+                        fh, fieldnames=["model", "source_id", "depth_km",
+                                        "phase", "status", "preds"])
+                    w.writeheader()
+                    w.writerows(dump_sink)
         else:
             summary = evaluate_model(model, test, indices, cfg)
             all_results[name] = summary
