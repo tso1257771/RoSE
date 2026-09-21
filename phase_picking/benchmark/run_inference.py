@@ -113,6 +113,8 @@ def main() -> None:
                 "--model-path", ck["redpan_tf60"], "--rose-dir", cfg["rose_dir"],
                 "--out-dir", str(eval_dir / "bench_redpan_rose_full"),
                 "--num-test", n, "--sweep-thresholds", thr, *bp, "--tf-threads", str(tpt),
+                # Asymmetric pick tolerance (P=0.5 s, S=1.0 s), matching Tables 2-3.
+                "--pick-tol-p", "0.5", "--pick-tol-s-phase", "1.0",
                 "--resume",
             ], env))
         redpan_tasks.append((
@@ -128,6 +130,9 @@ def main() -> None:
             py("bench_pickers_rose.py") + [
                 "--rose-dir", cfg["rose_dir"], "--out-dir", str(eval_dir / "bench_rose_full_sweep"),
                 "--num-test", n, "--sweep-thresholds", thr, *bp,
+                # Asymmetric pick tolerance (pick-benchmark convention): P=0.5 s, S=1.0 s.
+                # This is what the published Tables 2-3 use; the default is 0.5 s uniform.
+                "--pick-tol-p", "0.5", "--pick-tol-s-phase", "1.0",
                 "--custom-eqt", ck["eqt_rose"], "--custom-phasenet", ck["phasenet_rose"],
             ], env))
     if not args.skip_stead:
