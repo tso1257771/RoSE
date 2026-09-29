@@ -6,7 +6,11 @@ RED-PAN-60s inference on a single trace via the `REDPAN` class. The
 training, data-loading, and TF-Keras model-construction modules are not
 vendored because the published `phase_picking/models/redpan_tf60/train.hdf5`
 is the inference target. Used by `rose.pickers.load_redpan_tf60` and the
-`phase_picking/benchmark/` scripts. Relicensed under this repo's MIT LICENSE.
+`phase_picking/benchmark/` scripts. Relicensed under this repo's MIT LICENSE. A pure-PyTorch
+implementation of the same architecture (no TensorFlow) is maintained at
+https://github.com/tso1257771/RED-PAN-Motion. Its
+``scripts/convert_redpan_60s.py`` ports the checkpoint this module targets to
+PyTorch and reproduces it to 1.2e-7.
 
 Usage:
     import tensorflow as tf

@@ -72,7 +72,7 @@ Zenodo — **not** in this repo. Mount or symlink them at `./data/rose/` and
 `ROSE_STATIONXML_DIR` environment variables.
 
 The two compiled ROMPLUS source tables are versioned here:
-`data/Enhanced_ROMPLUS_catalog.csv` (2.9 MB, 19 231 events) is committed
+`data/Enhanced_ROMPLUS_catalog.csv` (3.5 MB, 19 230 events) is committed
 to the repo, and `data/Enhanced_ROMPLUS_picks.csv` (77 MB, 416 063 picks)
 ships as a GitHub Release asset on each tagged version. See
 [`docs/DATASET.md`](docs/DATASET.md) for the download recipe and the
@@ -106,7 +106,7 @@ Four runnable examples, each end-to-end against the published dataset:
 
 1. **`01_load_and_browse.py`** — open the bundle, filter on
    `trace_p_snr_db` / `source_magnitude`, plot a random pick.
-2. **`02_eqt_instance_vrancea.py`** — full demo on the *M*<sub>w</sub> 5.8
+2. **`02_eqt_instance_vrancea.py`** — full demo on the *M*<sub>w</sub> 5.56
    Vrancea slab event (2018-10-28, 153 km depth, 68 stations): rebuild an
    ObsPy `Stream` from SeisBench, run `EQTransformer.from_pretrained("instance")`
    for an off-the-shelf-picker comparison, plot a record section with catalog
@@ -153,7 +153,10 @@ print(out.picks, out.detections)
 ```
 
 `load_redpan_tf60()` needs TensorFlow (the `.[tf]` extra); it reorders ZNE → ENZ
-internally. `examples/04_picker_inference.py` runs all three on held-out test
+internally. To avoid TensorFlow, the bundled checkpoint can be ported to
+PyTorch with `scripts/convert_redpan_60s.py` from
+[RED-PAN-Motion](https://github.com/tso1257771/RED-PAN-Motion), which
+reproduces it to 1.2e-7 (max abs difference, picker and detector). `examples/04_picker_inference.py` runs all three on held-out test
 traces; [`phase_picking/models/README.md`](phase_picking/models/README.md) has the per-model cards
 (architecture, training recipe, dev loss) and `SHA256SUMS` to verify the
 checkpoints.
@@ -284,7 +287,8 @@ catalog CSV; `outputs/`, `checkpoints/`, `phase_picking/benchmark/eval/`,
 | Concern | Provenance |
 |---|---|
 | Event hypocenters | hypoDD3D relocations of the NIEP ROMPLUS catalog |
-| Origin time, magnitude | inherited from ROMPLUS (`source_*_raw`) |
+| Origin time | inherited from ROMPLUS (`source_*_raw`) |
+| Magnitude | measured for this release (Mw, ML); see [`docs/DATASET.md`](docs/DATASET.md) |
 | Manual picks | NIEP ROMPLUS bulletins |
 | ML-assisted repicks | RED-PAN 60 s, 3 s / 5 s P / S consistency window vs. NLLoc theoretical |
 | Pick selection | higher-SNR among manual / RED-PAN; theoretical-only never used |
@@ -322,6 +326,16 @@ GitHub's "Cite this repository" sidebar renders the same info from
 Liao et al. 2022; SeisBench — Woollam et al. 2022; PhaseNet —
 Zhu & Beroza 2019; EQTransformer — Mousavi et al. 2020. Per-model
 cards: [`phase_picking/models/README.md`](phase_picking/models/README.md).
+
+**Software** — the RED-PAN 60 s model bundled here as
+`redpan_tf60/train.hdf5` is the published `REDPAN_60s_240107` checkpoint.
+[RED-PAN-Motion](https://github.com/tso1257771/RED-PAN-Motion) (MIT)
+maintains a pure-PyTorch implementation of the same architecture, and its
+`scripts/convert_redpan_60s.py` ports a TensorFlow checkpoint to PyTorch and
+verifies the result. Converting the bundled checkpoint with that script
+reproduces it to 1.2e-7, so a TensorFlow-free path is available. The
+amplitude window used for the released magnitudes comes from the same
+package.
 
 ---
 

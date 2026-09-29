@@ -48,7 +48,7 @@ Displacement — the largest absolute value of each kinematic field
 inside the chosen window. Used directly in seismic hazard maps,
 ShakeMaps, and structural-response calculations.
 
-Defaults pick the well-recorded *M*ₙ 5.8 Vrancea slab event of
+Defaults pick the well-recorded *M*<sub>w</sub> 5.56 Vrancea slab event of
 2018-10-28 (event id ``2018_0000140``, ~153 km depth, ~68 stations).
 Pass ``--event YYYY_NNNNNNN`` to use a different one;
 ``data/rose/metadata*.csv`` lists every available ``source_id``.
@@ -648,7 +648,7 @@ def main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--event", default="2018_0000140",
-                        help="RoSE source_id (default: the M5.8 Vrancea slab event of 2018-10-28).")
+                        help="RoSE source_id (default: the Mw 5.56 Vrancea slab event of 2018-10-28).")
     parser.add_argument("--n-show", type=int, default=20,
                         help="How many of the closest stations to draw on the record section.")
     parser.add_argument("--coda-method", default="arias", choices=["arias", "envelope"],

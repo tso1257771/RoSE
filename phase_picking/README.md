@@ -26,6 +26,7 @@ phase_picking/
 
 The three pickers: **EQT-RoSE** / **PhaseNet-RoSE** (SeisBench EQTransformer /
 PhaseNet fine-tuned on the RoSE training split from INSTANCE init) and
-**RED-PAN-60s** (RED-PAN MTAN R2U-Net retrained on Taiwan + STEAD + INSTANCE +
-RoSE, warm-started from the published RED-PAN(60 s) weights). Cards + references:
+**RED-PAN-60s** (the published RED-PAN MTAN R2U-Net 60 s checkpoint, trained on
+Taiwan + STEAD + INSTANCE and used as released, with no RoSE data in its
+training set). Cards + references:
 `models/README.md`; the leaderboard tables: `results/README.md`.
