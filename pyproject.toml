@@ -51,6 +51,11 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["rose"]
 
+# The event catalog supplies the released magnitudes, so it must travel with
+# the package: without it a converted dataset would carry no magnitudes.
+[tool.hatch.build.targets.wheel.force-include]
+"data/Enhanced_ROMPLUS_catalog.csv" = "rose/data/Enhanced_ROMPLUS_catalog.csv"
+
 # Ruff configuration -------------------------------------------------------
 [tool.ruff]
 # Pin a stable target Python so ruff stops flagging f-strings / type unions
