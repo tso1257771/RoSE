@@ -104,25 +104,50 @@ def _write_physical_h5(path: Path, npts: int = 6000):
                     ds.attrs["units"] = "M/S"
 
 
+def _write_catalog_csv(path: Path):
+    """Minimal released-catalog stub: event 1 has Mw, event 2 has ML only."""
+    pd.DataFrame(
+        [
+            {"event_index": "2099_0000001", "Mw": 4.37, "Mw_sigma": 0.12,
+             "Mw_quality": "A", "Mw_nstations": 7, "Mw_fc_Hz": 4.2,
+             "ML": 2.4, "ML_nstations": 5, "ML_warning": 0,
+             "ML_ROMPLUS": 2.5, "Mw_ROMPLUS": 2.7},
+            {"event_index": "2099_0000002", "Mw": None, "Mw_sigma": None,
+             "Mw_quality": None, "Mw_nstations": None, "Mw_fc_Hz": None,
+             "ML": 1.8, "ML_nstations": 4, "ML_warning": 1,
+             "ML_ROMPLUS": 1.9, "Mw_ROMPLUS": 2.0},
+            # Neither scale measured: the 14 real events like this must come
+            # out with an empty type rather than a magnitude on a guessed scale.
+            {"event_index": "2099_0000003", "Mw": None, "Mw_sigma": None,
+             "Mw_quality": None, "Mw_nstations": None, "Mw_fc_Hz": None,
+             "ML": None, "ML_nstations": None, "ML_warning": None,
+             "ML_ROMPLUS": None, "Mw_ROMPLUS": None},
+        ]
+    ).to_csv(path, index=False)
+
+
 @pytest.fixture
 def synthetic_year(tmp_path: Path):
     counts = tmp_path / "2099_TEST_counts.h5"
     physical = tmp_path / "2099_TEST_physical.h5"
+    catalog = tmp_path / "catalog.csv"
     _write_native_counts_h5(counts)
     _write_physical_h5(physical)
+    _write_catalog_csv(catalog)
     out_dir = tmp_path / "rose_out"
-    return counts, physical, out_dir
+    return counts, physical, out_dir, catalog
 
 
 def test_convert_year_writes_expected_columns_and_values(synthetic_year):
     from rose import convert_year
 
-    counts, physical, out_dir = synthetic_year
+    counts, physical, out_dir, catalog = synthetic_year
     n = convert_year(
         src_h5=str(counts),
         out_dir=str(out_dir),
         chunk_label="2099",
         physical_h5=str(physical),
+        catalog_csv=str(catalog),
         bucket_size=1024,
         overwrite=True,
     )
@@ -161,7 +186,13 @@ def test_convert_year_writes_expected_columns_and_values(synthetic_year):
         # source
         "source_id", "source_origin_time",
         "source_latitude_deg", "source_longitude_deg", "source_depth_km",
-        "source_magnitude", "source_magnitude_type", "source_catalog",
+        "source_magnitude", "source_magnitude_type",
+        "source_magnitude_uncertainty",
+        "source_mw", "source_mw_sigma", "source_mw_quality",
+        "source_mw_nstations", "source_mw_fc_hz",
+        "source_ml", "source_ml_nstations", "source_ml_warning",
+        "source_ml_romplus", "source_mw_romplus",
+        "source_catalog",
         "source_gap_deg", "source_tres_mae_s", "source_tres_mad_s",
         "source_nsta", "source_npha",
         "source_origin_time_raw", "source_latitude_raw_deg",
@@ -182,7 +213,19 @@ def test_convert_year_writes_expected_columns_and_values(synthetic_year):
     assert first["trace_units"] == "counts"
     assert first["station_network_code"] == "RO"
     assert first["source_catalog"] == "hypoDD_3D"
-    assert first["source_magnitude"] == pytest.approx(3.1)
+    # Mw is the preferred scale where it was measured, and the type field
+    # names the scale actually stored.
+    assert first["source_magnitude"] == pytest.approx(4.37)
+    assert first["source_magnitude_type"] == "mw"
+    assert first["source_magnitude_uncertainty"] == pytest.approx(0.12)
+    assert first["source_mw_quality"] == "A"
+    assert first["source_ml"] == pytest.approx(2.4)
+    assert first["source_ml_romplus"] == pytest.approx(2.5)
+    # Event 2 has no Mw, so it falls back to ML and the type says so.
+    second = df[df["source_id"] == "2099_0000002"].iloc[0]
+    assert second["source_magnitude"] == pytest.approx(1.8)
+    assert second["source_magnitude_type"] == "ml"
+    assert second["source_ml_warning"] == 1
     assert first["trace_p_status"] == "manual"
     assert first["trace_s_status"] == "repick"
     assert first["trace_unit_physical"] == "M/S"
@@ -190,16 +233,95 @@ def test_convert_year_writes_expected_columns_and_values(synthetic_year):
     assert first["trace_sensitivity_z"] == pytest.approx(1.5e8)
 
 
-def test_convert_year_zne_component_stacking(synthetic_year):
-    """Bucket arrays must be stacked Z, N, E in that row order."""
+def test_convert_year_empty_magnitude_type_when_neither_scale(synthetic_year, tmp_path):
+    """Events with no Mw and no ML get an empty type, never a guessed scale."""
     from rose import convert_year
 
-    counts, physical, out_dir = synthetic_year
+    counts, physical, out_dir, _catalog = synthetic_year
+    bare = tmp_path / "bare_catalog.csv"
+    pd.DataFrame([{"event_index": f"2099_000000{i}", "Mw": None, "Mw_sigma": None,
+                   "Mw_quality": None, "Mw_nstations": None, "Mw_fc_Hz": None,
+                   "ML": None, "ML_nstations": None, "ML_warning": None,
+                   "ML_ROMPLUS": None, "Mw_ROMPLUS": None} for i in (1, 2)]
+                 ).to_csv(bare, index=False)
+
     convert_year(
         src_h5=str(counts),
         out_dir=str(out_dir),
         chunk_label="2099",
         physical_h5=str(physical),
+        catalog_csv=str(bare),
+        bucket_size=1024,
+        overwrite=True,
+    )
+    df = pd.read_csv(out_dir / "metadata2099.csv")
+    assert df["source_magnitude"].isna().all()
+    assert (df["source_magnitude_type"].fillna("") == "").all()
+    assert (df["source_mw_nstations"] == -1).all()
+    assert (df["source_ml_warning"] == -1).all()
+
+
+def test_convert_year_rejects_missing_catalog(synthetic_year, tmp_path):
+    """A dataset without magnitudes is not a valid release, so refuse to build one."""
+    from rose import convert_year
+
+    counts, physical, out_dir, _catalog = synthetic_year
+    with pytest.raises(FileNotFoundError, match="Event catalog not found"):
+        convert_year(
+            src_h5=str(counts),
+            out_dir=str(out_dir),
+            chunk_label="2099",
+            physical_h5=str(physical),
+            catalog_csv=str(tmp_path / "does_not_exist.csv"),
+            bucket_size=1024,
+            overwrite=True,
+        )
+
+
+def test_convert_year_rejects_catalog_that_covers_nothing(synthetic_year, tmp_path):
+    """A catalog matching no event must fail loudly, not silently drop magnitudes."""
+    from rose import convert_year
+
+    counts, physical, out_dir, _catalog = synthetic_year
+    wrong = tmp_path / "wrong_catalog.csv"
+    pd.DataFrame([{"event_index": "1999_0000001", "Mw": 3.0, "Mw_sigma": 0.1,
+                   "Mw_quality": "A", "Mw_nstations": 5, "Mw_fc_Hz": 2.0,
+                   "ML": 2.5, "ML_nstations": 4, "ML_warning": 0,
+                   "ML_ROMPLUS": 2.6, "Mw_ROMPLUS": 2.9}]).to_csv(wrong, index=False)
+    with pytest.raises(ValueError, match="absent from the event catalog"):
+        convert_year(
+            src_h5=str(counts),
+            out_dir=str(out_dir),
+            chunk_label="2099",
+            physical_h5=str(physical),
+            catalog_csv=str(wrong),
+            bucket_size=1024,
+            overwrite=True,
+        )
+
+
+def test_load_catalog_df_rejects_duplicate_event_index(tmp_path):
+    """Duplicate keys would make the magnitude lookup ambiguous."""
+    from rose.convert import _load_catalog_df
+
+    dup = tmp_path / "dup.csv"
+    pd.DataFrame([{"event_index": "2099_0000001", "Mw": 3.0},
+                  {"event_index": "2099_0000001", "Mw": 4.0}]).to_csv(dup, index=False)
+    with pytest.raises(ValueError, match="Duplicate event_index"):
+        _load_catalog_df(str(dup))
+
+
+def test_convert_year_zne_component_stacking(synthetic_year):
+    """Bucket arrays must be stacked Z, N, E in that row order."""
+    from rose import convert_year
+
+    counts, physical, out_dir, _catalog = synthetic_year
+    convert_year(
+        src_h5=str(counts),
+        out_dir=str(out_dir),
+        chunk_label="2099",
+        physical_h5=str(physical),
+        catalog_csv=str(_catalog),
         bucket_size=1024,
         overwrite=True,
     )
@@ -239,12 +361,15 @@ def test_convert_year_emits_chunks_manifest_via_convert_all(tmp_path: Path):
     physical = src / "2099_TEST_physical.h5"
     _write_native_counts_h5(counts)
     _write_physical_h5(physical)
+    catalog = tmp_path / "catalog.csv"
+    _write_catalog_csv(catalog)
 
     out_dir = tmp_path / "out"
     n = convert_all(
         src_dir=str(src),
         out_dir=str(out_dir),
         tag="TEST",
+        catalog_csv=str(catalog),
         include_physical=True,
         bucket_size=1024,
         overwrite=True,
@@ -258,12 +383,13 @@ def test_convert_year_overwrite_guard(synthetic_year):
     """Without overwrite=True the second call must fail loudly."""
     from rose import convert_year
 
-    counts, physical, out_dir = synthetic_year
+    counts, physical, out_dir, _catalog = synthetic_year
     convert_year(
         src_h5=str(counts),
         out_dir=str(out_dir),
         chunk_label="2099",
         physical_h5=str(physical),
+        catalog_csv=str(_catalog),
         bucket_size=1024,
         overwrite=True,
     )
