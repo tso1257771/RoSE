@@ -17,13 +17,18 @@ authors:
 repository-code: "https://github.com/tso1257771/RoSE"
 url: "https://github.com/tso1257771/RoSE"
 license: MIT
-version: v0.1.0
-date-released: 2026-05-17
-doi: "10.5281/zenodo.20250670"
+version: v0.2.0
+date-released: 2026-09-30
+# Concept DOI: always resolves to the newest version. Prefer it in prose.
+doi: "10.5281/zenodo.20250669"
 identifiers:
   - type: doi
+    value: "10.5281/zenodo.20250669"
+    description: "Concept DOI (all versions)"
+  - type: doi
     value: "10.5281/zenodo.20250670"
-    description: "Software DOI for v0.1.0 (Zenodo)"
+    description: "Version DOI for v0.1.0"
+  # After publishing the v0.2.0 Zenodo record, add its version DOI here.
 keywords:
   - seismology
   - phase picking

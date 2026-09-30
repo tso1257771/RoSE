@@ -301,17 +301,20 @@ catalog CSV; `outputs/`, `checkpoints/`, `phase_picking/benchmark/eval/`,
 
 ## Citation
 
-**Toolkit (this repository) — v0.1.0**, [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670):
+**Toolkit (this repository) — v0.2.0.** Cite the concept DOI
+[`10.5281/zenodo.20250669`](https://doi.org/10.5281/zenodo.20250669), which always
+resolves to the newest version, and name the version you used. The v0.1.0 record
+is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
 
 ```bibtex
 @software{liao_rose_2026,
   author    = {Liao, Wu-Yu},
   title     = {{RoSE — Romanian SEismic Dataset Toolkit}},
   year      = 2026,
-  version   = {v0.1.0},
+  version   = {v0.2.0},
   publisher = {Zenodo},
-  doi       = {10.5281/zenodo.20250670},
-  url       = {https://doi.org/10.5281/zenodo.20250670}
+  doi       = {10.5281/zenodo.20250669},
+  url       = {https://doi.org/10.5281/zenodo.20250669}
 }
 ```
 
