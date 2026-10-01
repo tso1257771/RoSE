@@ -21,6 +21,13 @@ unanchored curve, which is about 0.4 magnitude units too high.**
 Coefficient values live in ``magnitudes/calibration/parameter_table.csv`` and
 are read with :func:`rose.magnitudes.calibration.load_calibration`.
 
+The crustal coefficients were fitted over hypocentral distances up to
+:data:`CRUSTAL_RMAX`, 400 km, the ``crustal_distance_cap_km`` row of the
+parameter table. The intermediate depth coefficients were fitted over every
+distance in the data, which reaches about 600 km. :func:`neg_log_a0` does
+not check distance. Past 400 km a crustal value continues the ``R > 190`` km
+segment and is an extrapolation, returned without a warning.
+
 Reference: Liao et al., the RoSE data descriptor (see the repository README).
 """
 
@@ -43,7 +50,8 @@ DEPTH_SPLIT = 60.0      # km, crustal / intermediate depth split
 R1 = 70.0               # km, first crustal hinge
 R2 = 190.0              # km, second crustal hinge
 FIXED = 3.0             # -log A0 at R = 100 km (Richter's fixed point)
-CRUSTAL_RMAX = 400.0    # km, largest crustal distance the coefficients were fitted over
+CRUSTAL_RMAX = 400.0    # km, largest crustal distance the coefficients were fitted over;
+                        # neg_log_a0 extrapolates past it without a warning
 
 #: Coefficient names, in the column order :func:`columns` returns.
 NAMES = ["n1_crustal", "n3_crustal", "K_crustal", "n_intermediate", "K_intermediate"]
@@ -93,6 +101,11 @@ def neg_log_a0(R, h, co, anchor=None):
         the correction the released magnitudes were computed with. Without it
         the curve is the unanchored one the shape was fitted in, worth 3.0 at
         100 km, which is not the published scale.
+
+    Notes
+    -----
+    No distance range is enforced. Crustal values beyond :data:`CRUSTAL_RMAX`
+    (400 km) extrapolate the last fitted segment.
 
     Examples
     --------

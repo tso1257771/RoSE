@@ -13,7 +13,7 @@ SourceSpec 1.8 S-wave spectral inversion (Brune omega-square, t* per station, 1/
 |---|---|
 | `Mw` | moment magnitude, SourceSpec spectral inversion |
 | `Mw_sigma` | uncertainty, station term and systematic combined (1 sigma) |
-| `Mw_quality` | `A`, `B` or `C`. A: at least 5 distinct sites, few t* at the bound, corner frequency inside the search range, standard error < 0.15. B: at least 3 sites. C: 1 or 2 sites |
+| `Mw_quality` | `A`, `B` or `C`. A: at least 5 distinct sites, few t* at the lower t* bound, corner frequency inside the search range, standard error < 0.15. B: at least 3 sites. C: 1 or 2 sites |
 | `Mw_nstations` | distinct recording sites used. The two instruments of one site, BH and HH for example, are fitted separately but count once |
 | `Mw_fc_Hz` | corner frequency, in Hz. Reported for Mw >= 3.5 only (192 events). Below that the spectrum is band-limited and fc is not interpreted, so empty means not reported, not unmeasurable |
 

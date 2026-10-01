@@ -67,6 +67,11 @@ class Calibration:
     def station_term(self, station_key: str, default: float | None = None) -> float:
         """Correction of one station and response epoch.
 
+        ``station_key`` is ``NET.STA.LOC.CH@YYYY-MM-DD``, the channel prefix
+        (``HH``, ``BH``, ``EH`` or ``HN``) and the start date of the response
+        epoch, ``BS.BLKB..HH@2012-11-20`` for example. Use
+        :meth:`station_term_at` when the epoch is not known.
+
         A station with no fitted term has no correction to apply, which is not
         the same as a correction of zero: its amplitudes were never used in the
         fit. Pass ``default=0.0`` to treat it as uncorrected on purpose.
@@ -80,6 +85,82 @@ class Calibration:
                     f"{len(self.station_terms)} station epochs are calibrated"
                 ) from None
             return float(default)
+
+    def station_key_at(self, network: str, station: str, location: str,
+                       channel_prefix: str, time) -> str:
+        """Station key of the calibrated epoch in force at ``time``.
+
+        The epoch of a key is the start date of the response epoch, taken
+        from the StationXML channel start date when the amplitudes were
+        measured. Among the calibrated epochs of ``NET.STA.LOC.CH`` this
+        returns the latest one that starts on or before ``time``, so the
+        caller needs the channel and the time of the earthquake, not the
+        epoch date. ``time`` is anything :class:`pandas.Timestamp` accepts, or
+        an object whose ``str()`` is an ISO date, such as ``UTCDateTime``.
+
+        The table lists only the epochs that were calibrated. A response
+        change after the last calibrated epoch is invisible here, and the term
+        of the previous epoch is returned. In the released tables that is
+        the case for one channel, ``RO.GRISU..HN``, whose response changed
+        on 2025-02-03, after the catalog ends. With the StationXML at hand,
+        build the key from the epoch start date and call
+        :meth:`station_term` instead.
+
+        Raises ``KeyError`` when the channel has no calibrated epoch at all,
+        or none that starts on or before ``time``.
+
+        >>> from rose.magnitudes import load_calibration
+        >>> load_calibration().station_key_at("RO", "DRGR", "", "BH", "2016-03-01")
+        'RO.DRGR..BH@2014-11-29'
+        """
+        st = self.station_terms
+        rows = st[(st.network == network) & (st.station == station)
+                  & (st.location.fillna("") == (location or ""))
+                  & (st.channel_prefix == channel_prefix)]
+        label = f"{network}.{station}.{location or ''}.{channel_prefix}"
+        if rows.empty:
+            raise KeyError(f"no station term for {label!r} in any epoch; "
+                           f"{len(st)} station epochs are calibrated")
+        t = _as_timestamp(time)
+        starts = pd.to_datetime(rows.response_epoch)
+        before = rows[starts <= t]
+        if before.empty:
+            raise KeyError(f"no calibrated epoch of {label!r} starts on or before "
+                           f"{t.date()}; the first is {starts.min().date()}")
+        return str(before.index[starts[starts <= t].argmax()])
+
+    def station_term_at(self, network: str, station: str, location: str,
+                        channel_prefix: str, time, default: float | None = None) -> float:
+        """Correction of one channel at ``time``, by :meth:`station_key_at`.
+
+        ``default`` is returned, instead of raising, when the channel has no
+        calibrated epoch in force at ``time``. See :meth:`station_term` for
+        why that is not the same as a correction of zero.
+
+        >>> from rose.magnitudes import load_calibration
+        >>> cal = load_calibration()
+        >>> cal.station_term_at("RO", "DRGR", "", "BH", "2016-03-01") == \
+        ...     cal.station_term("RO.DRGR..BH@2014-11-29")
+        True
+        """
+        try:
+            key = self.station_key_at(network, station, location, channel_prefix, time)
+        except KeyError:
+            if default is None:
+                raise
+            return float(default)
+        return self.station_term(key)
+
+
+def _as_timestamp(time) -> pd.Timestamp:
+    """``time`` as a naive UTC Timestamp, accepting ISO strings and UTCDateTime."""
+    try:
+        t = pd.Timestamp(time)
+    except (TypeError, ValueError):
+        t = pd.Timestamp(str(time))
+    if t.tzinfo is not None:
+        t = t.tz_convert("UTC").tz_localize(None)
+    return t
 
 
 def load_calibration(directory: str | Path | None = None) -> Calibration:
