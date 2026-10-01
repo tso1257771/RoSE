@@ -1,4 +1,4 @@
-# Vendored unchanged from taiwan-local-magnitude v3.1.0, src/taiwan_ml/invert.py
+# Vendored unchanged from taiwan-local-magnitude commit 9d645e4, src/taiwan_ml/invert.py
 # (MIT, Copyright (c) 2026 Wu-Yu Liao). Provenance: rose/magnitudes/taiwan_ml/__init__.py
 """Huber-IRLS solver for the joint ML inversion.
 

@@ -1,4 +1,4 @@
-# Vendored unchanged from taiwan-local-magnitude v3.1.0, src/taiwan_ml/aggregation.py
+# Vendored unchanged from taiwan-local-magnitude commit 9d645e4, src/taiwan_ml/aggregation.py
 # (MIT, Copyright (c) 2026 Wu-Yu Liao). Provenance: rose/magnitudes/taiwan_ml/__init__.py
 """Event aggregation shared by the released magnitude computations."""
 
