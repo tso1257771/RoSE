@@ -11,8 +11,7 @@ description in [README.md](README.md).
 
 ## 1. Composite catalogue with a depth correction
 
-The first catalogue combined several methods per event (`archive/outputs/Mw_final_catalog.csv`,
-built by `archive/scripts/build_final_mw_catalog.py`):
+The first catalogue combined several methods per event:
 
 * SourceSpec spectral Mw with an empirical depth correction,
   Δ(z) = −0.016 + 0.557/(1 + exp(−(z − 58.2)/4.4)), presented as a slab waveguide effect;
@@ -42,9 +41,7 @@ with USGS in the mean but the mechanisms did not: against Craiu et al. (2023) th
 Kagan rotation was 79° and fault-type agreement 28 %, and the disagreement did not improve
 with event size. The magnitude search range also started at 3.5, so 63 smaller events were
 forced up to that bound and the values near it are unreliable. Not used in the published
-Mw. The focal-mechanism results (magnitudes, mechanisms, the Craiu and GCMT comparisons)
-are in `archive/outputs/`; the 17 GB of per-event inversion runs were deleted, and the
-Green's function store and the run scripts are in `archive/trial_material/grond/`.
+Mw.
 
 ## 3. Coda-envelope and spectral-ratio magnitudes
 
@@ -58,8 +55,8 @@ not used now.
 The first full run used short 5 s S windows with the SourceSpec default lower band edge of
 0.5 Hz, which cannot resolve the plateau of M ≥ 4.5 events: the fitted corner frequencies of
 the largest events were 2–3 Hz, implying stress drops of 240–890 MPa, and Mw was about 0.5
-too low at the top of the range. Configurations labelled v2–v4 were only ever run on 17 test
-events, although one log described v3 as released. The present configuration lowers the
+too low at the top of the range. Configurations labelled v2–v4 were run on 17 test events
+only. The present configuration lowers the
 band, bounds t* to 0.005–0.15 s and fc to 0.05–40 Hz, and takes windows from the
 RED-PAN-Motion rule.
 
@@ -73,12 +70,11 @@ magnitude–frequency distribution very little and were not adopted; dropping th
 An intermediate version tied the catalogue to the 17 USGS events by a single offset
 (Mw = Mw_SourceSpec + 0.12, slope fixed to 1 after the free slope came out 0.98 ± 0.05,
 residual std 0.14). It was dropped when the decision was taken that no external magnitude
-should enter the fit; the offset now appears only as a validation number. The archived
-variant is in `archive/outputs/archive_v5_usgs_calibrated/`.
+should enter the fit. The offset now appears only as a validation number.
 
 ## 6. ML-based products
 
 `Mw_calibrated_from_ML.csv` and the ML → Mw regressions of that period were diagnostics
 only. The published relation between the two scales is the ML → Mw conversion in
-`../romania_ml/outputs/conversion/`, fitted the other way round and valid over a stated
-range.
+[`../calibration/conversion_coefficients.csv`](../calibration/conversion_coefficients.csv),
+fitted the other way round and valid over a stated range.
