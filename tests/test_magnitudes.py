@@ -14,15 +14,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import rose.magnitudes
 from rose.magnitudes import (
     DEPTH_SPLIT,
     FIXED,
     NAMES,
     REGIMES,
     event_magnitude,
-    huber_line,
     load_calibration,
-    mc_bvalue,
     mw_from_ml,
     mw_quality,
     mw_sigma,
@@ -30,6 +29,7 @@ from rose.magnitudes import (
     regime_from_depth,
     station_magnitude,
 )
+from rose.magnitudes.anchor import huber_line, mc_bvalue
 from rose.magnitudes.calibration import Calibration
 
 
@@ -88,6 +88,20 @@ def test_station_term_at_before_the_first_epoch_is_not_a_term(cal):
     assert cal.station_term_at("RO", "DRGR", "", "BH", "2009-01-01", default=0.0) == 0.0
     with pytest.raises(KeyError, match="no station term"):
         cal.station_term_at("XX", "NOSUCH", "", "HH", "2015-01-01")
+
+
+def test_public_api_is_the_user_surface():
+    """The fitting internals stay importable from their modules, not from here."""
+    assert set(rose.magnitudes.__all__) == {
+        "Calibration", "load_calibration",
+        "CRUSTAL_RMAX", "DEPTH_SPLIT", "FIXED", "NAMES", "R1", "R2", "neg_log_a0",
+        "MIN_STATIONS", "event_magnitude", "site_ids", "station_magnitude",
+        "ML_REF", "REGIMES", "mw_from_ml", "regime_from_depth",
+        "mw_quality", "mw_sigma",
+    }
+    for name in ("huber_line", "run_odr", "columns", "fit_C", "anchor_set", "binned",
+                 "mc_bvalue", "lin"):
+        assert not hasattr(rose.magnitudes, name), name
 
 
 # --------------------------------------------------------------------------
