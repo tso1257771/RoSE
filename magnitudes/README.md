@@ -66,6 +66,9 @@ the file.
 
 ```
 $ROMANIA_ROOT/
+    outputs/reloc_results_hypoDD3D/
+        Enhanced_ROMPLUS_catalog.csv   hypoDD3D origins              (read by extract_all_events.py)
+        Enhanced_ROMPLUS_picks.csv     P and S picks                 (read by extract_all_events.py)
     romania_ml/outputs/
         amplitudes/              Wood--Anderson amplitudes      (extract_wa_amplitudes.py)
         observations.csv         amplitudes with geometry and QC (build_observations.py)
@@ -73,7 +76,7 @@ $ROMANIA_ROOT/
         fit/                     the released ML                 (anchor_ml_to_mw.py)
         conversion/              the ML to Mw relation           (fit_ml_to_mw_conversion.py)
     romania_mw/
-        data/all_events/         per event SourceSpec bundles    (extract_all_events.py)
+        data/all_events/         origin and picks per event      (extract_all_events.py)
         sourcespec/outputs/      one inversion per event         (run_sourcespec.py)
         outputs/
             sourcespec_mw.csv    collected spectral fits
@@ -99,3 +102,11 @@ iterate to a tolerance, and their last digits move with the SciPy and NumPy
 build. The published tables were written with the versions recorded in
 `calibration/fit_report.json` and `calibration/conversion_report.json`. Nothing
 at that level reaches a reported magnitude, which is given to two decimals.
+
+The `release` stage does not reproduce
+[`data/Enhanced_ROMPLUS_catalog.csv`](../data/Enhanced_ROMPLUS_catalog.csv)
+byte for byte. It reads the working tree copy of the release catalog, whose
+latitude, longitude and depth are given to 4 decimals. The committed file keeps
+those columns from the earlier release, with latitude and longitude to 6
+decimals, and takes only the eight magnitude columns from the driver output.
+Those columns are identical in the two files.

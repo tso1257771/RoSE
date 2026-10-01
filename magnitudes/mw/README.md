@@ -21,19 +21,36 @@ not these inputs.
 |---|---|
 | `sac/<year>/<num>/` | raw SAC waveforms per event |
 | `seisbench_integration/data/rose_stationxml/_merged_for_sourcespec.xml` | merged StationXML for the spectral inversion |
-| `romania_mw/outputs/reloc_results_hypoDD3D/Enhanced_ROMPLUS_picks.csv` | P and S picks for the event bundles |
-| `../metadata/station/RO_station.csv` | station list for the event bundles |
-| `romania_mw/outputs/reloc_results_hypoDD3D/Enhanced_ROMPLUS_catalog.csv` | hypoDD3D relocations and the catalogue magnitude used only for window design |
-| `data/all_events/` | per-event waveform and pick bundles, built by [`sourcespec/extract_all_events.py`](sourcespec/extract_all_events.py) from the paths above |
+| `outputs/reloc_results_hypoDD3D/Enhanced_ROMPLUS_picks.csv` | P and S picks for the event bundles |
+| `outputs/reloc_results_hypoDD3D/Enhanced_ROMPLUS_catalog.csv` | hypoDD3D relocations and the catalogue magnitude used only for window design |
+| `romania_mw/data/all_events/` | origin and picks per event, built by [`sourcespec/extract_all_events.py`](sourcespec/extract_all_events.py) from the two files above |
 | `romania_mw/outputs/usgs_cross_validation.csv` | USGS moment magnitudes, validation only |
 
 ## Pipeline
 
 | Step | Driver | Output |
 |---|---|---|
-| Spectral inversion per event | [`sourcespec/run_sourcespec.py`](sourcespec/run_sourcespec.py) (config [`sourcespec/vrancea.conf`](sourcespec/vrancea.conf), window wrapper [`sourcespec/source_spec_redpan_windows.py`](sourcespec/source_spec_redpan_windows.py)) | `sourcespec/outputs/<event>/`, `romania_mw/outputs/sourcespec_mw.csv` |
+| Origin and picks per event | [`sourcespec/extract_all_events.py`](sourcespec/extract_all_events.py) | `romania_mw/data/all_events/<event>/{event.yaml,picks.csv}` |
+| Spectral inversion per event | [`sourcespec/run_sourcespec.py`](sourcespec/run_sourcespec.py) (config [`sourcespec/vrancea.conf`](sourcespec/vrancea.conf), window wrapper [`sourcespec/source_spec_redpan_windows.py`](sourcespec/source_spec_redpan_windows.py)) | `romania_mw/sourcespec/outputs/<event>/`, `romania_mw/outputs/sourcespec_mw.csv` |
+| Per station spectral fits | [`build_station_table.py`](build_station_table.py) | `romania_mw/outputs/station_fits.csv.gz` |
 | Event catalogue, uncertainties, flags, USGS validation | [`build_mw_catalog.py`](build_mw_catalog.py) | `romania_mw/outputs/Mw_catalog.csv`, `Mw_validation.yaml`, `Mw_validation.png` |
-| Release catalogue with Mw and ML columns | [`build_release_catalog.py`](build_release_catalog.py) | `romania_mw/outputs/Enhanced_ROMPLUS_catalog_with_magnitudes.csv`, [`docs/MAGNITUDES.md`](../../docs/MAGNITUDES.md) |
+| Release catalogue with Mw and ML columns | [`build_release_catalog.py`](build_release_catalog.py) | `romania_mw/outputs/Enhanced_ROMPLUS_catalog_with_magnitudes.csv`, `romania_mw/outputs/MAGNITUDE_COLUMNS.md` |
+
+The published run read `vrancea.conf` and the window wrapper from
+`romania_mw/sourcespec/` in the working tree. The shipped `vrancea.conf` is
+identical to that copy and the shipped wrapper differs from it in two docstring
+lines, so `run_sourcespec.py` now reads the shipped copies. `SS_CONFIG` and
+`SS_WRAPPER` name other copies.
+
+[`docs/MAGNITUDES.md`](../../docs/MAGNITUDES.md) is a copy of
+`MAGNITUDE_COLUMNS.md` edited by hand, not a driver output. No step reproduces
+the repository's [`data/Enhanced_ROMPLUS_catalog.csv`](../../data/Enhanced_ROMPLUS_catalog.csv)
+byte for byte either: the release driver reads the working tree copy of the
+release catalogue, whose latitude, longitude and depth are given to 4 decimals,
+and the committed file keeps those columns from the earlier release, with
+latitude and longitude to 6 decimals, and takes only the eight magnitude
+columns from the driver output. Those eight columns are identical in the two
+files.
 
 ## Method
 
