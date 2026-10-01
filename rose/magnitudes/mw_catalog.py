@@ -57,7 +57,10 @@ def mw_sigma(mw, station_std, nsta):
     mw : array_like
         Moment magnitude. Only the systematic term depends on it.
     station_std : array_like
-        Standard deviation of the per station channel Mw of that earthquake.
+        Scatter of the station channel Mw of that earthquake: the uncertainty
+        SourceSpec reports beside the weighted mean, ``Mw_wmean_err`` in
+        ``sourcespec_mw.csv``, released as ``Mw_station_std`` in
+        ``Mw_catalog.csv``. It is a scatter over fits, not a standard error.
     nsta : array_like
         Number of distinct sites, which is not the number of fits: the two
         instruments of one site do not sample independent ground motion.
@@ -88,17 +91,27 @@ def mw_sigma(mw, station_std, nsta):
 def mw_quality(mw, station_std, nsta, fc_wmean_hz, frac_tstar_lo):
     """Quality class of Mw: ``A``, ``B``, ``C``, or empty where Mw is missing.
 
-    ``fc_wmean_hz`` is the weighted mean corner frequency over the fits of
-    that earthquake, the ``fc_wmean`` column of ``sourcespec_mw.csv``. It is
-    not the ``fc_Hz`` column of the released catalog, which is reported only
-    above Mw 3.5 and would put every smaller earthquake in class B.
+    Parameters
+    ----------
+    mw, station_std, nsta
+        As for :func:`mw_sigma`.
+    fc_wmean_hz : array_like
+        Weighted mean corner frequency over the fits of that earthquake, the
+        ``fc_wmean`` column of ``sourcespec_mw.csv``. It is not the ``fc_Hz``
+        column of the released catalog, which is reported only above Mw 3.5
+        and would put every smaller earthquake in class B.
+    frac_tstar_lo : array_like
+        Share of the fits of that earthquake whose t* lies at the lower bound
+        of its search range, the ``frac_tstar_lo`` column of
+        ``Mw_catalog.csv``. Only the lower bound enters the class.
+        ``frac_tstar_hi`` is released in the same file and is not checked.
 
     Class A needs at least :data:`QUALITY_A_MIN_NSTA` sites, a standard error
     of the mean below :data:`QUALITY_A_MAX_SE`, a corner frequency inside the
     fitted band rather than against its edge, and fewer than
-    :data:`QUALITY_A_MAX_FRAC_TSTAR_LO` of its fits at the lower bound of the
-    attenuation parameter. Class B relaxes those to
-    :data:`MIN_NSTA_B` sites. Class C is one or two sites.
+    :data:`QUALITY_A_MAX_FRAC_TSTAR_LO` of its fits at the lower t* bound.
+    Class B relaxes those to :data:`MIN_NSTA_B` sites. Class C is one or two
+    sites.
 
     The class is close to a count of sites in practice, so it ranks how well
     an earthquake was recorded rather than how large it was. Reading it as a

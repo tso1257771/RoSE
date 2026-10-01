@@ -60,7 +60,7 @@ window matches the signal length and is scaled rather than truncating the signal
 `ML_catalog_window_design` is the hypoDD3D catalogue magnitude, carried only because the
 spectral windows were designed from it (its `ML_type` is `mw` for 118 events); it is not a
 magnitude of this product and no downstream script reads it. Quality A 11,656, B 6,281, C 1,251
-(A: ≥ 5 distinct recording sites, few t* at the bound, fc inside the search range, standard
+(A: ≥ 5 distinct recording sites, few t* at the lower t* bound, fc inside the search range, standard
 error < 0.15; B: ≥ 3 sites). A site is counted once even when two of its instruments are
 fitted separately, which `Mw_nfits` records.
 

@@ -65,6 +65,31 @@ def test_station_terms_are_centred(cal):
     assert abs(float(cal.station_terms.S_station_term.mean())) < 0.25
 
 
+def test_station_term_at_picks_the_epoch_in_force(cal):
+    """RO.DRGR..BH has three calibrated epochs; the latest one started is used."""
+    epochs = sorted(cal.station_terms.query(
+        "network == 'RO' and station == 'DRGR' and channel_prefix == 'BH'").response_epoch)
+    assert epochs == ["2010-06-18", "2014-11-24", "2014-11-29"]
+    for when, epoch in (("2014-11-25T12:00:00", "2014-11-24"),
+                        ("2014-11-29", "2014-11-29"),           # the start day counts
+                        ("2020-01-01", "2014-11-29"),
+                        ("2010-06-18T00:00:00", "2010-06-18")):
+        key = cal.station_key_at("RO", "DRGR", "", "BH", when)
+        assert key == f"RO.DRGR..BH@{epoch}", when
+        assert cal.station_term_at("RO", "DRGR", "", "BH", when) == cal.station_term(key)
+    # accepts a Timestamp as well as a string
+    assert cal.station_key_at("RO", "DRGR", "", "BH", pd.Timestamp("2020-01-01")) \
+        == "RO.DRGR..BH@2014-11-29"
+
+
+def test_station_term_at_before_the_first_epoch_is_not_a_term(cal):
+    with pytest.raises(KeyError, match="no calibrated epoch"):
+        cal.station_term_at("RO", "DRGR", "", "BH", "2009-01-01")
+    assert cal.station_term_at("RO", "DRGR", "", "BH", "2009-01-01", default=0.0) == 0.0
+    with pytest.raises(KeyError, match="no station term"):
+        cal.station_term_at("XX", "NOSUCH", "", "HH", "2015-01-01")
+
+
 # --------------------------------------------------------------------------
 # distance correction
 
