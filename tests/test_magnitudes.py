@@ -7,6 +7,9 @@ that the data descriptor states.
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -373,12 +376,22 @@ def catalog() -> pd.DataFrame:
     pytest.skip("released catalog CSV not present")
 
 
-def test_released_mw_sigma_is_reproducible(catalog):
-    df = catalog.dropna(subset=["Mw", "Mw_sigma"])
-    if "Mw_station_std" not in df or not len(df):
-        pytest.skip("Mw_station_std is in the Zenodo Mw_catalog.csv, not the released catalog")
-    sigma, _ = mw_sigma(df.Mw, df.Mw_station_std, df.Mw_nstations)
+def test_released_mw_sigma_is_reproducible():
+    """Mw_sigma and Mw_sigma_sys of the released Mw catalog follow from mw_sigma.
+
+    The inputs, Mw_station_std and Mw_nsta, are columns of Mw_catalog.csv in
+    the data archive, not of the catalog in this repository, so the check
+    runs where the working tree is present.
+    """
+    root = os.environ.get("ROMANIA_ROOT")
+    path = Path(root) / "romania_mw" / "outputs" / "Mw_catalog.csv" if root else None
+    if path is None or not path.is_file():
+        pytest.skip("Mw_catalog.csv is in the data archive: set ROMANIA_ROOT to check it")
+    df = pd.read_csv(path).dropna(subset=["Mw"])
+    assert len(df) == 19_188
+    sigma, sig_sys = mw_sigma(df.Mw, df.Mw_station_std, df.Mw_nsta)
     assert np.nanmax(np.abs(sigma - df.Mw_sigma)) < 1e-9
+    assert np.nanmax(np.abs(sig_sys - df.Mw_sigma_sys)) < 1e-9
 
 
 def test_released_magnitudes_are_in_range(catalog):
