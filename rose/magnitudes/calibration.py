@@ -11,6 +11,14 @@ reproduce a magnitude, because no coefficient is hard coded in this package:
     one correction per station and response epoch, ``S_station_term``.
 ``conversion_coefficients.csv``
     the ML to Mw relation per depth regime, with its validity range.
+
+The lower bound of the conversion needs care. Tables written before 2026-10
+record ``ml_fit_min`` as the smallest ML the fit happened to see, 2.0002 say,
+while the rule the released flags apply is the round number published as
+``conversion_fit_lower_bound_ml_<regime>`` in ``parameter_table.csv``.
+:func:`load_calibration` resolves this: ``ml_fit_min`` of the table it returns
+is always the published rule, and the range the fit saw is kept beside it as
+``ml_fit_set_min``.
 """
 
 from __future__ import annotations
@@ -113,6 +121,27 @@ def load_calibration(directory: str | Path | None = None) -> Calibration:
     unknown = set(conv.index) - set(REGIMES)
     if unknown:
         raise ValueError(f"{d / 'conversion_coefficients.csv'} has unknown regime(s) {unknown}")
+
+    # Older tables put the smallest fitted ML in ml_fit_min. Keep it under a
+    # name that says so, and take the bound the flags are defined by from the
+    # parameter table, so mw_from_ml applies the published rule.
+    conv = conv.rename(columns={"ml_fit_min": "ml_fit_set_min",
+                                "ml_fit_max": "ml_fit_set_max"})
+    bound = {}
+    for r in conv.index:
+        key = f"conversion_fit_lower_bound_ml_{r}"
+        if key not in params.index:
+            raise ValueError(f"{d / 'parameter_table.csv'} is missing {key}, "
+                             "which is the lower bound mw_from_ml flags against")
+        bound[r] = float(params[key])
+    conv["ml_fit_min"] = pd.Series(bound)
+    over = [r for r in conv.index
+            if "ml_fit_set_min" in conv.columns
+            and conv.at[r, "ml_fit_min"] > conv.at[r, "ml_fit_set_min"] + 1e-9]
+    if over:
+        raise ValueError(
+            f"{d.name}: the published lower bound is above the smallest fitted ML "
+            f"for {over}, so events inside the fit would be flagged below_range")
 
     return Calibration(parameters=params, parameter_table=ptab, station_terms=st,
                        conversion=conv, directory=d)
