@@ -139,8 +139,8 @@ class Calibration:
 
         >>> from rose.magnitudes import load_calibration
         >>> cal = load_calibration()
-        >>> cal.station_term_at("RO", "DRGR", "", "BH", "2016-03-01") == \
-        ...     cal.station_term("RO.DRGR..BH@2014-11-29")
+        >>> term = cal.station_term_at("RO", "DRGR", "", "BH", "2016-03-01")
+        >>> term == cal.station_term("RO.DRGR..BH@2014-11-29")
         True
         """
         try:
@@ -180,7 +180,7 @@ def load_calibration(directory: str | Path | None = None) -> Calibration:
     else:
         tried = "\n  ".join(str(d) for d in candidates)
         raise FileNotFoundError(
-            "no magnitude calibration directory holding "
+            "no magnitude calibration directory containing "
             f"{', '.join(_FILES)}. Tried:\n  {tried}"
         )
 

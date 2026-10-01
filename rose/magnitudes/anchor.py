@@ -45,7 +45,7 @@ SEED = 20260921         # fixed so the published value is reproducible
 def huber_line(x, y, delta=HUBER, iters=25, tol=1e-10):
     """Huber IRLS fit of ``y = a + b x``.
 
-    Returns ``(a, b)``. The scale is re estimated from the MAD of the
+    Returns ``(a, b)``. The scale is estimated again from the MAD of the
     residuals at every iteration, so a few badly measured events cannot pull
     the line.
     """
@@ -69,9 +69,9 @@ def anchor_set(ev, window=WINDOW, min_sta=5, min_fc_hz=1.25, quality=("A", "B"))
 
     ``ev`` needs the columns ``Mw``, ``Mw_quality``, ``ml_saturation_risk``,
     ``n_sta`` and ``fc_Hz``. The cuts keep earthquakes that are large enough
-    for Mw to be well determined and small enough that the Wood--Anderson
+    for Mw to be well determined and small enough that the Wood-Anderson
     response has not started to saturate: a corner frequency below 1.25 Hz
-    approaches the 1.25 Hz Wood--Anderson corner, where ML stops tracking
+    approaches the 1.25 Hz Wood-Anderson corner, where ML stops tracking
     moment. Events with no reported corner frequency are kept, since the
     corner is reported only above Mw 3.5.
     """
@@ -104,9 +104,9 @@ def binned(x, y, bins, name):
 
 
 def mc_bvalue(m, dm=0.1, mc=None):
-    """Maximum curvature completeness magnitude and Aki--Utsu b value.
+    """Maximum curvature completeness magnitude and Aki-Utsu b value.
 
-    ``mc`` fixes the completeness instead of re estimating it, which is how the
+    ``mc`` fixes the completeness instead of estimating it again, which is how the
     anchored magnitudes are scored: an additive shift moves Mc by exactly the
     shift and must leave the event set, and so b, untouched.
     """

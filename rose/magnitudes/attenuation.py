@@ -1,6 +1,6 @@
 """Distance correction of the Romanian local magnitude scale.
 
-``-log A0`` is the term that converts a Wood--Anderson displacement amplitude
+``-log A0`` is the term that converts a Wood-Anderson displacement amplitude
 into a magnitude at a reference distance. It is piecewise in hypocentral
 distance ``R`` and splits on focal depth, because the Vrancea intermediate
 depth earthquakes sample a different path than the crustal ones:
@@ -12,7 +12,7 @@ depth earthquakes sample a different path than the crustal ones:
 
 The shape is fitted with the scale fixed to Richter's point
 ``-log A0 = 3.0`` at ``R = 100`` km, so the five coefficients describe only
-the curve away from 100 km. The released magnitudes then carry a baseline
+the curve away from 100 km. The released magnitudes then include a baseline
 shift ``C`` per depth regime that puts them on the Mw scale, which makes the
 published correction ``3.0 + C`` at 100 km rather than 3.0. Pass ``anchor`` to
 :func:`neg_log_a0` to get that published form. **Omitting it gives the

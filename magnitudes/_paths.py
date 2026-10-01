@@ -1,7 +1,7 @@
 """Where the magnitude drivers read and write.
 
 The repository ships the calibration tables and the code that produced them.
-It does not ship their inputs: the Wood--Anderson amplitudes, the spectral
+It does not ship their inputs: the Wood-Anderson amplitudes, the spectral
 fits and the waveform archive are tens of gigabytes. Rerunning a driver
 therefore needs a working tree that is assembled separately, and this module
 is the one place that says where it is.
@@ -11,7 +11,7 @@ Set ``ROMANIA_ROOT`` to that tree::
     export ROMANIA_ROOT=/path/to/romania
     python magnitudes/ml/fit_ml.py
 
-The tree holds ``romania_ml/`` and ``romania_mw/``, each with an ``outputs/``
+The tree contains ``romania_ml/`` and ``romania_mw/``, each with an ``outputs/``
 directory, next to the waveform archive. ``magnitudes/README.md`` lists which
 file each driver needs and which Zenodo archive it comes from.
 

@@ -1,6 +1,6 @@
 """Computing a local magnitude with the released scale.
 
-A station magnitude is the Wood--Anderson displacement amplitude in
+A station magnitude is the Wood-Anderson displacement amplitude in
 millimetres, corrected for distance and for that station:
 
     ML_station = log10 A + (-log A0)(R, h) - S_station
@@ -18,7 +18,7 @@ instruments of one site are reduced to their median first, so a site with two
 sensors does not count twice.
 
 Measuring ``A`` from a waveform is not done here. It needs the instrument
-response and the Wood--Anderson simulation, which live in the vendored
+response and the Wood-Anderson simulation, which live in the vendored
 :mod:`rose.magnitudes.redpan_motion` and
 :mod:`rose.magnitudes.taiwan_ml` packages.
 """
