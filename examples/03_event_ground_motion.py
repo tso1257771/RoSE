@@ -706,7 +706,7 @@ def main():
     # Step 3 / 4   Coda window + ground-motion measurements
     # ────────────────────────────────────────────────────────────
     _section(
-        f"Step 3/4: coda window + PGA/PGV/PGD per station (Q2 + Q3)",
+        "Step 3/4: coda window + PGA/PGV/PGD per station (Q2 + Q3)",
         f"For every station with a valid response we (a) deconvolve to ground "
         f"velocity using the bundled StationXML, (b) define the coda window "
         f"with {args.coda_method!r} on the catalog P/S picks, and (c) measure "
