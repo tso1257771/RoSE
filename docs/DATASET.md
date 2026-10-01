@@ -91,6 +91,10 @@ completeness and b-values differ. Do not put both into one
 frequency-magnitude distribution. ML's absolute level is anchored to Mw at
 Mw 4.0, so ML - Mw = 0 there by construction and is not a check on either scale.
 
+[`MAGNITUDES.md`](MAGNITUDES.md) describes both scales, their uncertainties and
+the usual selections. `rose.magnitudes` applies them to an earthquake the
+catalog does not contain, and `magnitudes/calibration/` holds the coefficients.
+
 ## Station attributes
 
 | Attribute | Type | Description |
