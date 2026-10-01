@@ -39,7 +39,10 @@ bench = ["torch>=2.1", "scikit-learn>=1.2"]
 # RED-PAN-60s Keras inference (rose/redpan_inference, the TF model in
 # phase_picking/models/redpan_tf60/).
 tf = ["tensorflow>=2.13"]
-dev = ["pytest>=7", "ruff>=0.4"]
+# The rule set is pinned in [tool.ruff.lint] below rather than left to ruff's
+# default, so the upper bound here is a guard against behaviour changes in the
+# rules themselves, not against new rules being added to the default.
+dev = ["pytest>=7", "ruff>=0.4,<1.0"]
 
 [project.urls]
 Source = "https://github.com/tso1257771/RoSE"
@@ -66,6 +69,18 @@ packages = ["rose"]
 # Pin a stable target Python so ruff stops flagging f-strings / type unions
 # that are valid on the floor (3.10) but flagged on older defaults.
 target-version = "py310"
+
+[tool.ruff.lint]
+# State the rule set instead of inheriting ruff's default. The default is not
+# stable across ruff releases: 0.16 enables rule families (flake8-comprehensions,
+# flake8-bandit, flake8-2020 and others) that earlier versions did not, which
+# turns CI red on code that has not changed. These four families are the ones
+# this repository is clean against:
+#   E4  import placement and shadowing      E7  statement-level mistakes
+#   E9  syntax and IO errors                F   pyflakes: undefined and unused names
+# Adding a family is a deliberate change, made together with the fixes it asks
+# for, not something a dependency upgrade should do.
+select = ["E4", "E7", "E9", "F"]
 
 [tool.ruff.lint.per-file-ignores]
 # Standalone scripts under phase_picking/benchmark/ and phase_picking/training/
