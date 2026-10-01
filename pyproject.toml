@@ -55,6 +55,11 @@ packages = ["rose"]
 # the package: without it a converted dataset would carry no magnitudes.
 [tool.hatch.build.targets.wheel.force-include]
 "data/Enhanced_ROMPLUS_catalog.csv" = "rose/data/Enhanced_ROMPLUS_catalog.csv"
+# The magnitude calibration tables are the only way to reproduce a released
+# magnitude, so rose.magnitudes.load_calibration must find them in a wheel too.
+"magnitudes/calibration/parameter_table.csv" = "rose/magnitudes/calibration/parameter_table.csv"
+"magnitudes/calibration/station_terms.csv" = "rose/magnitudes/calibration/station_terms.csv"
+"magnitudes/calibration/conversion_coefficients.csv" = "rose/magnitudes/calibration/conversion_coefficients.csv"
 
 # Ruff configuration -------------------------------------------------------
 [tool.ruff]
@@ -75,6 +80,16 @@ target-version = "py310"
 # checkout, plus a few inline `if cond: stmt` and trailing-print idioms
 # (E701/E702) that read cleanly in tutorial-style scripts.
 "examples/*.py" = ["E402", "E701", "E702"]
+# The magnitude drivers under magnitudes/ do the same `sys.path` insert so they
+# run from a checkout (E402). They are otherwise kept as they were run to
+# produce the published calibration tables, which is why two formatting habits
+# of theirs are tolerated rather than tidied: a one-line lambda (E731) and a
+# few multi-assignment lines (E702). Changing them would make the released
+# drivers differ from the code the tables came from for no gain.
+"magnitudes/*.py" = ["E402"]
+"magnitudes/ml/*.py" = ["E402", "E702", "E731"]
+"magnitudes/mw/*.py" = ["E402"]
+"magnitudes/mw/sourcespec/*.py" = ["E402"]
 
 # uv-specific configuration -------------------------------------------------
 # Route the [cuda] extra at the official PyTorch CUDA index instead of PyPI.

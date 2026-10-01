@@ -36,6 +36,9 @@ produces them (`phase_picking/benchmark/`).
 | **Fine-tune EQT / PhaseNet on RoSE**              | [Training & benchmarking](#training--benchmarking) below + `phase_picking/training/` |
 | Run a single picker on RoSE / STEAD                | `phase_picking/benchmark/bench_pickers_rose.py`, `bench_stead_test.py` |
 | Build the SeisBench bundle from the native HDF5    | [`docs/DATASET.md`](docs/DATASET.md) + `rose.convert.convert_all` |
+| **Pick which magnitude to use, Mw or ML**          | [`docs/MAGNITUDES.md`](docs/MAGNITUDES.md) |
+| Apply the released magnitude scale to another earthquake | `rose.magnitudes` — see [`magnitudes/README.md`](magnitudes/README.md) |
+| Reproduce the magnitude calibration tables         | `ROMANIA_ROOT=… bash magnitudes/regenerate_magnitudes.sh` (needs the data archive) |
 | Load RoSE weights via `seisbench.models.X.from_pretrained("rose")` | [`seisbench_compat/README.md`](seisbench_compat/README.md) — converter + smoke test + the upstream-submission procedure |
 
 ---
@@ -258,11 +261,16 @@ push and PR (the badge at the top reflects current status).
 ```
 RoSE/                              # ── the RoSE dataset + its Python API  (the repo's headline)
 ├── rose/                          # the importable package: RoSE loader · convert · qc · splits
-│                                  #   + the picker loaders (pickers.load_*, checkpoint_io, redpan_inference/)
-├── docs/                          # DATASET.md, SEISBENCH_FORMAT.md (schemas)
+│   │                              #   + the picker loaders (pickers.load_*, checkpoint_io, redpan_inference/)
+│   └── magnitudes/                #   the released Mw and ML scales (+ the two vendored measurement packages)
+├── docs/                          # DATASET.md, SEISBENCH_FORMAT.md (schemas), MAGNITUDES.md
 ├── examples/                      # 01, 02, 03, 04 — runnable tutorials
 ├── tests/                         # pytest unit tests
 ├── stationxml_sources/sc3ml_niep/ # SeisComP SC3ML → FDSN StationXML helper
+├── magnitudes/                    # ── the magnitude calibration: the tables, the drivers that made them
+│   ├── calibration/               #   every coefficient of both scales, with its standard error
+│   ├── ml/                        #   local magnitude drivers + README (the method)
+│   └── mw/                        #   moment magnitude drivers + README (the method)
 ├── phase_picking/                 # ── the phase-picking extension (built on the `rose` API + SeisBench)
 │   ├── README.md
 │   ├── models/                    #   the 3 published checkpoints + SHA256SUMS + model cards

@@ -1,0 +1,28 @@
+method: Mw = SourceSpec event Mw; no external magnitudes in Mw or Mw_sigma
+catalog:
+  n_events: 19230
+  n_Mw: 19188
+  quality_counts:
+    A: 11656
+    B: 6281
+    C: 1251
+validation_USGS:
+  note: validation only; USGS magnitudes are not used in Mw or Mw_sigma
+  n: 17
+  usgs_minus_Mw:
+    mean: 0.1228009007301987
+    median: 0.16083357802674314
+    std: 0.14109694133493905
+  by_regime:
+    crustal:
+      n: 6
+      mean: 0.20222158866003723
+      std: 0.16875311827570788
+    slab:
+      n: 11
+      mean: 0.07948052549574132
+      std: 0.10846953350311761
+  ols_usgs_on_Mw:
+    slope: 0.9670797984341684
+    intercept: 0.27851807204223
+  fraction_within_2sigma: 0.8823529411764706

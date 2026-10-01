@@ -1,0 +1,10 @@
+# Python 3.11. pandas 3.x is required by the drivers.
+# Install into a separate environment and point SS_PYTHON at its interpreter.
+sourcespec==1.8
+obspy==1.5.1
+numpy==1.26.4
+scipy==1.13.1
+pandas==3.0.5
+matplotlib==3.8.4
+PyYAML==6.0.3
+h5py==3.16.0

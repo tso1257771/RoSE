@@ -93,7 +93,7 @@ jobs:
         # `--output-format=github` annotates each lint hit on the
         # relevant source line in the PR's "Files changed" tab.
         run: |
-          ruff check rose/ tests/ phase_picking/ --output-format=github
+          ruff check rose/ tests/ phase_picking/ magnitudes/ --output-format=github
 
       - name: pytest
         # `-q` for quieter output, `--tb=short` for compact tracebacks.
