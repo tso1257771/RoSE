@@ -7,7 +7,7 @@ magnitude the difference between them is zero by construction and is not a check
 
 ## Mw
 
-SourceSpec 1.8 S-wave spectral inversion (Brune omega-square, t* per station, 1/r spreading, stations <= 300 km hypocentral), RED-PAN-Motion S windows with a magnitude-dependent minimum. No external magnitude enters Mw or its uncertainty, and no depth correction is applied. Compared with USGS Mww/Mwr, which is not fitted: USGS minus Mw = +0.12 +- 0.14 (n = 17), an offset that is significant on that sample and is larger before 2019 than after. Mw_sigma = sqrt(station term^2 + systematic^2), systematic 0.10-0.18.
+SourceSpec 1.8 S wave spectral inversion (Brune omega-square, t* per station, 1/r spreading, stations <= 300 km hypocentral), RED-PAN-Motion S windows with a minimum length that depends on magnitude. No external magnitude enters Mw or its uncertainty, and no depth correction is applied. Compared with USGS Mww/Mwr, which is not fitted: USGS minus Mw = +0.12 +- 0.14 (n = 17), an offset that is significant on that sample and is larger before 2019 than after. Mw_sigma = sqrt(station term^2 + systematic^2), systematic 0.10-0.18.
 
 | Column | Meaning |
 |---|---|
@@ -19,7 +19,7 @@ SourceSpec 1.8 S-wave spectral inversion (Brune omega-square, t* per station, 1/
 
 ## ML
 
-Local magnitude from Wood-Anderson amplitudes (mean of the two horizontals) with a correction for each station. The distance correction is separate for crustal events (depth < 60 km, three segments) and intermediate-depth ones. The baseline constant is anchored to SourceSpec Mw at Mw 4.0 in each regime, giving C = -0.48 crustal and -0.35 intermediate-depth, so that -log A0 at 100 km is 2.516 and 2.652. ML minus Mw is zero at Mw 4.0 by construction. Attenuation shape, station terms and b-value are independent of Mw. The absolute level of ML has a common uncertainty of about 0.10 from the anchor.
+Local magnitude from Wood-Anderson amplitudes (mean of the two horizontals) with a correction for each station. The distance correction is separate for crustal events (depth < 60 km, three segments) and intermediate depth ones. The baseline constant is anchored to SourceSpec Mw at Mw 4.0 in each regime, giving C = -0.48 crustal and -0.35 intermediate depth, so that -log A0 at 100 km is 2.516 and 2.652. ML minus Mw is zero at Mw 4.0 by construction. Attenuation shape, station terms and b-value are independent of Mw. The absolute level of ML has a common uncertainty of about 0.10 from the anchor.
 
 | Column | Meaning |
 |---|---|
@@ -30,14 +30,14 @@ Local magnitude from Wood-Anderson amplitudes (mean of the two horizontals) with
 ## Which magnitude to use
 
 Use `Mw` wherever the magnitude stands for the size of the source, including
-ground-motion work and machine-learning labels. It is proportional to moment
+ground motion work and machine learning labels. It is proportional to moment
 over the whole range, it does not saturate, and it is measured for
 19,188 events, 886 of them where no local magnitude could be measured and
 4,089 where the NIEP bulletin gives no magnitude at all.
 
 `ML` is reported for continuity with the bulletin and for comparison with other
-local-magnitude studies. It runs about 1.33 magnitude units per unit of Mw for
-crustal events and 1.41 for intermediate-depth ones, because the corner
+local magnitude studies. It runs about 1.33 magnitude units per unit of Mw for
+crustal events and 1.41 for intermediate depth ones, because the corner
 frequency of a small earthquake lies above the Wood-Anderson band and the
 instrument then reads the flat part of the displacement spectrum. Completeness
 and b-value differ between the two scales and cannot be carried from one to
@@ -51,7 +51,7 @@ Two limits apply at the ends of the Mw range. Below about Mw 2.5 the corner
 frequency is at or beyond the resolvable band, so Mw is biased high by an
 amount covered by `Mw_sigma`, which is 0.20 below Mw 2 against 0.11 above
 Mw 3.8. Below about Mw 1.0 the smallest events are measured only when
-their spectrum clears the noise. At the other end the catalogue holds
+their spectrum clears the noise. At the other end the catalogue contains
 59 events at Mw 4.0 and above, 17 at 4.5 and above and 7 at 5.0 and above, so it
 does not constrain the behaviour of any model in the range a warning system
 exists for.
@@ -90,11 +90,12 @@ cal = load_calibration()
 cal.atten                      # the five -log A0 coefficients
 cal.anchor                     # the baseline shift per depth regime
 cal.station_term("BS.BLKB..HH@2012-11-20")
+cal.station_term_at("RO", "DRGR", "", "BH", "2016-03-01")   # when the epoch is not known
 
 # -log A0 of the released scale at 100 km, which is 3.0 + C, not 3.0
 neg_log_a0([100.0], [10.0], cal.atten, cal.anchor)
 
-# a station magnitude from a Wood--Anderson amplitude in mm
+# a station magnitude from a Wood-Anderson amplitude in mm
 station_magnitude([0.0], [80.0], [10.0], [-0.52], cal)
 
 # ML to Mw, with the validity of that conversion

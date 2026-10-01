@@ -9,7 +9,7 @@ described in [`docs/MAGNITUDES.md`](../docs/MAGNITUDES.md). This directory is
 here so the values can be checked, and so the same scale can be applied to an
 earthquake the catalog does not contain.
 
-| Path | What it holds |
+| Path | Contents |
 |---|---|
 | [`calibration/`](calibration/) | every coefficient of both scales, with its standard error |
 | [`ml/`](ml/) | the local magnitude drivers, and [`ml/README.md`](ml/README.md) for the method |
@@ -30,7 +30,7 @@ mw_from_ml([3.4], "crustal", cal.conversion)          # (Mw, validity flag)
 
 `rose/magnitudes/taiwan_ml/` and `rose/magnitudes/redpan_motion/` are copied
 unchanged from their own repositories, so a reader can see what was run. Their
-`__upstream__` strings give the version.
+`__upstream__` strings name the upstream commit or tag.
 
 ## The calibration tables
 
@@ -50,7 +50,7 @@ unchanged from their own repositories, so a reader can see what was run. Their
 
 ## Rerunning the drivers
 
-The repository ships the tables, not their inputs: the Wood--Anderson
+The repository ships the tables, not their inputs: the Wood-Anderson
 amplitudes, the spectral fits and the waveform archive are tens of gigabytes.
 Rerunning therefore needs a working tree assembled separately, named by
 `ROMANIA_ROOT`:
@@ -70,7 +70,7 @@ $ROMANIA_ROOT/
         Enhanced_ROMPLUS_catalog.csv   hypoDD3D origins              (read by extract_all_events.py)
         Enhanced_ROMPLUS_picks.csv     P and S picks                 (read by extract_all_events.py)
     romania_ml/outputs/
-        amplitudes/              Wood--Anderson amplitudes      (extract_wa_amplitudes.py)
+        amplitudes/              Wood-Anderson amplitudes       (extract_wa_amplitudes.py)
         observations.csv         amplitudes with geometry and QC (build_observations.py)
         fit_unanchored/          -log A0 shapes, station terms   (fit_ml.py)
         fit/                     the released ML                 (anchor_ml_to_mw.py)
@@ -90,7 +90,7 @@ $ROMANIA_ROOT/
 
 Of these, the two that are published are `Mw_catalog.csv` and the contents of
 `romania_ml/outputs/fit/`. The data archive listed in the repository root
-`README.md` holds them, along with `station_fits.csv.gz` and the collected
+`README.md` contains them, along with `station_fits.csv.gz` and the collected
 spectral fits, which is enough to rerun the `mw`, `anchor` and `conversion`
 stages without the waveforms.
 
