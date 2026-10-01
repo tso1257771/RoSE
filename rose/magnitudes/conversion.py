@@ -67,11 +67,21 @@ def quad(b, x):
 
 
 def run_odr(ml, mw, s_mw, s_ml, quadratic=False):
-    """Orthogonal distance regression of Mw on ML with errors on both."""
+    """Orthogonal distance regression of Mw on ML with errors on both.
+
+    Raises ``RuntimeError`` when ODRPACK stops without converging.
+    ``scipy.odr`` never raises for that on its own. It reports the reason in
+    ``Output.info``: 1 to 3 are its convergence criteria, 4 is the iteration
+    limit, and larger values are questionable results or errors.
+    """
     model = odr.Model(quad if quadratic else lin)
     data = odr.RealData(ml, mw, sx=s_ml, sy=s_mw)
     beta0 = [np.median(mw), 0.7, 0.0] if quadratic else [np.median(mw), 0.7]
-    return np.asarray(odr.ODR(data, model, beta0=beta0).run().beta, float)
+    out = odr.ODR(data, model, beta0=beta0).run()
+    if out.info >= 4:
+        raise RuntimeError(f"ODR did not converge (info {out.info}): "
+                           + ", ".join(out.stopreason))
+    return np.asarray(out.beta, float)
 
 
 #: Largest share of bootstrap replicates that may fail before the spread of
@@ -82,10 +92,10 @@ MAX_FAILED_FRACTION = 0.05
 def _reps_to_stats(reps, ml_grid, attempted=None, what="bootstrap"):
     """Spread of the replicate coefficients and of their predictions.
 
-    A replicate whose regression did not converge is dropped. Dropping is
-    silent in aggregate, so the share dropped is checked here: past
-    :data:`MAX_FAILED_FRACTION` the survivors are a selected subset and the
-    spread they give understates the real one.
+    A replicate whose regression did not converge, or raised, is dropped.
+    Dropping is silent in aggregate, so the share dropped is checked here:
+    past :data:`MAX_FAILED_FRACTION` the survivors are a selected subset and
+    the spread they give understates the real one.
     """
     reps = np.asarray(reps)
     if attempted:
@@ -93,15 +103,15 @@ def _reps_to_stats(reps, ml_grid, attempted=None, what="bootstrap"):
         if failed:
             share = failed / attempted
             msg = (f"{what}: {failed} of {attempted} replicates "
-                   f"({share:.1%}) did not converge")
+                   f"({share:.1%}) did not converge or failed")
             if share > MAX_FAILED_FRACTION:
                 raise RuntimeError(
                     msg + ". The spread of the rest is not the spread of the whole, "
                     "so no uncertainty is reported."
                 )
-            warnings.warn(msg + "; the reported spread is over the rest.", stacklevel=3)
+            warnings.warn(msg + ". The reported spread is over the rest.", stacklevel=3)
     if len(reps) < 2:
-        raise RuntimeError(f"{what}: {len(reps)} replicate(s) converged, too few for a spread")
+        raise RuntimeError(f"{what}: {len(reps)} replicate(s) succeeded, too few for a spread")
     pred = np.array([lin(b, ml_grid) for b in reps])
     return (reps.std(axis=0), np.cov(reps.T),
             pred.std(axis=0), np.percentile(pred, [2.5, 97.5], axis=0))
@@ -115,7 +125,7 @@ def bootstrap_events(ml, mw, s_mw, s_ml, ml_grid, nboot=NBOOT, seed=SEED):
         i = rng.integers(0, len(ml), len(ml))
         try:
             reps.append(run_odr(ml[i], mw[i], s_mw[i], s_ml[i]))
-        except Exception:                      # a replicate that did not converge
+        except Exception:                      # did not converge, or the fit raised
             continue
     return _reps_to_stats(reps, ml_grid, nboot, "event bootstrap")
 
@@ -136,7 +146,7 @@ def bootstrap_years(ml, mw, s_mw, s_ml, year, ml_grid, nboot=NBOOT, seed=SEED):
         i = np.concatenate([idx[y] for y in drawn])
         try:
             reps.append(run_odr(ml[i], mw[i], s_mw[i], s_ml[i]))
-        except Exception:                      # a replicate that did not converge
+        except Exception:                      # did not converge, or the fit raised
             continue
     return _reps_to_stats(reps, ml_grid, nboot, "year block bootstrap")
 
@@ -218,7 +228,7 @@ def mw_from_ml(ml, regime, conversion, warned=None):
         ``extrapolated``
             above the validated range, supported by a few events only.
         ``do_not_convert``
-            above the extrapolation range, or the event carries an amplitude
+            above the extrapolation range, or the event has an amplitude
             quality warning. Take Mw from the Mw catalog instead.
 
         A missing ML gives ``no_input``, which the released catalog has no
