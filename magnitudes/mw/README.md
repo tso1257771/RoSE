@@ -69,7 +69,7 @@ fitted separately, which `Mw_nfits` records.
 `sigma_stat` is the station scatter shrunk towards the catalogue median (0.245) and divided
 by √n; `sigma_sys` is 0.10 for Mw ≥ 3.8 and 0.18 for Mw ≤ 2, linear in between. It combines
 the station-distance systematic (0.10) with the ±0.15 sensitivity of small-event Mw to fc,
-t* and weighting choices. Median σ is 0.19 at Mw ≤ 2 and 0.10 above 3.8.
+t* and weighting choices. Median σ is 0.20 at Mw ≤ 2 and 0.11 above 3.8.
 
 Corner frequency, stress drop and t* are reported only for Mw ≥ 3.5; below that the corner
 frequency is band-limited and is not interpreted. On the 192 events with a reported fc, the
@@ -95,7 +95,7 @@ rises by 0.08 ± 0.02 per decade (events of quality A or B with ML ≥ 2.5). It 
 the changing station mix: a magnitude built only from the 38 station channels that recorded in
 every year differs from the published one by 0.00 ± 0.01 per decade, and the drift against ML
 survives that restriction unchanged. It is therefore either in the local magnitude or in the
-waveform archive behind it, and it is smaller than the per-event uncertainty of 0.10 to 0.19.
+waveform archive behind it, and it is smaller than the per-event uncertainty of 0.11 to 0.20.
 
 ## Statistics
 

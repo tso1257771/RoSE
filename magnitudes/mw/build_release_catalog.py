@@ -145,7 +145,7 @@ conversion in `../../romania_ml/outputs/conversion/` within its stated range.
 
 Two limits apply at the ends of the Mw range. Below about Mw 2.5 the corner
 frequency is at or beyond the resolvable band, so Mw is biased high by an
-amount covered by `Mw_sigma`, which is 0.19 below Mw 2 against 0.10 above
+amount covered by `Mw_sigma`, which is 0.20 below Mw 2 against 0.11 above
 Mw 3.8, and below about Mw 1.0 the smallest events are measured only when
 their spectrum clears the noise. At the other end the catalogue holds
 {n_ge4} events at Mw 4.0 and above, {n_ge45} at 4.5 and above and {n_ge5} at 5.0 and above, so it
