@@ -1,4 +1,4 @@
-# Vendored unchanged from taiwan-local-magnitude v3.1.0, src/taiwan_ml/model.py
+# Vendored unchanged from taiwan-local-magnitude commit 9d645e4, src/taiwan_ml/model.py
 # (MIT, Copyright (c) 2026 Wu-Yu Liao). Provenance: rose/magnitudes/taiwan_ml/__init__.py
 """Per-station ML computation and robust event aggregation.
 
