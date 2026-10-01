@@ -59,7 +59,8 @@ no free constant. Scientifically clean and fully independent of Mw, but it place
 0.5 below Mw at M 4–5 and, in practice, corresponds to an implicit reference magnitude of
 about M 3. Replaced by the explicit Mw 4.0 anchor so that ML and Mw are reported on one
 baseline and saturation above the anchor stays readable. The fixed-point value is kept in
-`outputs/fit/report.json` (`fixed_point_before`) so the shift is traceable.
+[`../calibration/fit_report.json`](../calibration/fit_report.json) (`fixed_point_before`)
+so the shift is traceable.
 
 ## 6. Amplitude handling that was replaced
 
