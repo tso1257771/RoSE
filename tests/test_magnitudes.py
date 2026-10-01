@@ -10,6 +10,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+import pathlib
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -36,6 +38,50 @@ from rose.magnitudes.calibration import Calibration
 @pytest.fixture(scope="module")
 def cal() -> Calibration:
     return load_calibration()
+
+
+# --------------------------------------------------------------------------
+# importing without the dataset stack
+
+
+def test_magnitudes_imports_without_seisbench():
+    """Someone checking a published magnitude need not install the whole stack.
+
+    rose.magnitudes needs only NumPy, pandas and SciPy. Run in a subprocess so
+    the blocked imports cannot leak into the rest of the suite.
+    """
+    import subprocess
+    import sys
+    import textwrap
+
+    code = textwrap.dedent("""
+        import sys
+        from importlib.abc import MetaPathFinder
+        BLOCK = {"seisbench", "obspy", "h5py", "torch"}
+
+        class Block(MetaPathFinder):
+            def find_spec(self, name, path=None, target=None):
+                if name.split(".")[0] in BLOCK:
+                    raise ImportError("No module named %r" % name)
+                return None
+
+        sys.meta_path.insert(0, Block())
+        from rose.magnitudes import load_calibration, neg_log_a0
+        cal = load_calibration()
+        print(round(float(neg_log_a0([100.0], [10.0], cal.atten, cal.anchor)[0]), 6))
+
+        import rose
+        try:
+            rose.RoSE
+        except ImportError as exc:
+            assert "not installed" in str(exc), exc
+        else:
+            raise AssertionError("rose.RoSE resolved without seisbench")
+    """)
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                         cwd=str(pathlib.Path(__file__).resolve().parent.parent))
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.strip() == "2.516415", out.stdout
 
 
 # --------------------------------------------------------------------------
