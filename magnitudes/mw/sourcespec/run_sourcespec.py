@@ -1,7 +1,7 @@
 """
 Run SourceSpec over the Vrancea catalogue and collect one Mw per event.
 
-  * Base configuration: vrancea.conf.
+  * Base configuration: vrancea.conf, shipped next to this file.
   * Per-event overrides derived from the catalogue ML, so that the S window and
     the spectral band resolve the low-frequency plateau of large events:
 
@@ -32,6 +32,13 @@ Run SourceSpec over the Vrancea catalogue and collect one Mw per event.
 Usage:
     python run_sourcespec.py --jobs 6                 # all events
     python run_sourcespec.py --events 2016_0000850 --jobs 1
+
+Which copies run. The configuration and the window wrapper are read from
+this directory. The published run read them from
+$ROMANIA_ROOT/romania_mw/sourcespec/ instead: vrancea.conf there is
+identical to the shipped file, and the wrapper differs in two docstring
+lines only, so the shipped copies reproduce that run. SS_CONFIG and
+SS_WRAPPER name other copies.
 """
 import argparse
 import json
@@ -56,17 +63,20 @@ sys.path.insert(0, str(_REPO / "magnitudes"))
 from _paths import work_root  # noqa: E402
 
 ROOT = work_root()
+HERE = Path(__file__).resolve().parent
 MW_ROOT = ROOT / "romania_mw"
-BUNDLES = MW_ROOT / "data" / "all_events"
+BUNDLES = MW_ROOT / "data" / "all_events"       # written by extract_all_events.py
 SAC_ROOT = ROOT / "sac"
 INVENTORY = (ROOT / "seisbench_integration" / "data" / "rose_stationxml"
              / "_merged_for_sourcespec.xml")
-BASE_CONFIG = MW_ROOT / "sourcespec" / "vrancea.conf"
+# The shipped copies, unless SS_CONFIG / SS_WRAPPER name others. See the
+# module docstring for how they relate to the copies the published run read.
+BASE_CONFIG = Path(os.environ.get("SS_CONFIG") or HERE / "vrancea.conf")
 # SourceSpec 1.8 pins obspy and pandas versions that the rest of this
 # repository does not, so it runs from its own environment. SS_PYTHON names
 # that interpreter; see sourcespec/requirements-sourcespec.txt.
 PYTHON = Path(os.environ.get("SS_PYTHON") or sys.executable)
-SOURCE_SPEC = MW_ROOT / "sourcespec" / "source_spec_redpan_windows.py"
+SOURCE_SPEC = Path(os.environ.get("SS_WRAPPER") or HERE / "source_spec_redpan_windows.py")
 OUT_ROOT = MW_ROOT / "sourcespec" / os.environ.get("SS_OUT", "outputs")
 RESULTS_JSONL = OUT_ROOT / "results.jsonl"
 SUMMARY_CSV = MW_ROOT / "outputs" / os.environ.get("SS_SUMMARY", "sourcespec_mw.csv")

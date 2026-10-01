@@ -13,8 +13,9 @@
 # Stages, in order. With no argument the two cheap ones run, because the
 # others need the waveform archive and hours to days of compute:
 #
-#   amplitudes   Wood--Anderson amplitudes from the waveforms      (hours, needs SAC + StationXML)
+#   amplitudes   Wood-Anderson amplitudes from the waveforms       (hours, needs SAC + StationXML)
 #   observations amplitude table with path geometry and QC         (minutes)
+#   bundles      origin and picks per event, for SourceSpec        (minutes)
 #   sourcespec   S-wave spectral inversion, one run per event      (days, needs SourceSpec 1.8)
 #   station_fits collect the per station spectral fits             (minutes)
 #   mw           Mw catalog from the fits                          (seconds)
@@ -25,8 +26,9 @@
 #   release      merge both magnitudes into the release catalog    (seconds)
 #   tables       copy the result into magnitudes/calibration/      (seconds)
 #
-# `anchor` reads `fit`'s output, `conversion` reads `anchor`'s. Running a later
-# stage without its input stops with the missing file named.
+# `sourcespec` reads `bundles`' output, `anchor` reads `fit`'s and `conversion`
+# reads `anchor`'s. Running a later stage without its input stops with the
+# missing file named.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -34,7 +36,7 @@ REPO="$(dirname "$HERE")"
 
 usage() {
     # the header comment of this file, which is the documentation
-    sed -n '3,29p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,31p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
 for arg in "$@"; do
@@ -63,8 +65,9 @@ run() {
 
 stage() {
     case "$1" in
-    amplitudes)   run "Wood--Anderson amplitudes"     magnitudes/ml/extract_wa_amplitudes.py ;;
+    amplitudes)   run "Wood-Anderson amplitudes"      magnitudes/ml/extract_wa_amplitudes.py ;;
     observations) run "amplitude table with QC"       magnitudes/ml/build_observations.py ;;
+    bundles)      run "origin and picks per event"    magnitudes/mw/sourcespec/extract_all_events.py ;;
     sourcespec)   run "spectral inversion"            magnitudes/mw/sourcespec/run_sourcespec.py ;;
     station_fits) run "per station spectral fits"     magnitudes/mw/build_station_table.py ;;
     mw)           run "Mw catalog"                    magnitudes/mw/build_mw_catalog.py ;;

@@ -1,16 +1,20 @@
 """
 Build per-event input bundles for ALL ROMPLUS events with magnitude.
 
-Bundles produced (one dir per event_index):
-    data/all_events/<event_id>/event.yaml
-    data/all_events/<event_id>/picks.csv
+Inputs, under $ROMANIA_ROOT:
+    outputs/reloc_results_hypoDD3D/Enhanced_ROMPLUS_catalog.csv   origins
+    outputs/reloc_results_hypoDD3D/Enhanced_ROMPLUS_picks.csv     P and S picks
+
+Bundles produced (one dir per event_index), where run_sourcespec.py reads them:
+    $ROMANIA_ROOT/romania_mw/data/all_events/<event_id>/event.yaml
+    $ROMANIA_ROOT/romania_mw/data/all_events/<event_id>/picks.csv
 
 Filter by magnitude with --min-mag.
 
 Usage:
     python extract_all_events.py                  # all 19,206 with mag
     python extract_all_events.py --min-mag 3.5    # 469 events
-    python extract_all_events.py --out-dir data/m35  --min-mag 3.5
+    python extract_all_events.py --out-dir /elsewhere/m35 --min-mag 3.5
 """
 import argparse
 import sys
@@ -29,7 +33,7 @@ from _paths import work_root  # noqa: E402
 ROOT = work_root()
 CAT = ROOT / "outputs/reloc_results_hypoDD3D/Enhanced_ROMPLUS_catalog.csv"
 PICKS = ROOT / "outputs/reloc_results_hypoDD3D/Enhanced_ROMPLUS_picks.csv"
-DEFAULT_OUT = Path(__file__).resolve().parents[1] / "data" / "all_events"
+DEFAULT_OUT = ROOT / "romania_mw" / "data" / "all_events"   # BUNDLES in run_sourcespec.py
 
 
 def main():
