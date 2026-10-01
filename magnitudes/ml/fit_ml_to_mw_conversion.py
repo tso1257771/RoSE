@@ -187,7 +187,10 @@ def main():
                          a_se_year_block=float(sd_yr[0]), b_se_year_block=float(sd_yr[1]),
                          a_se_event=float(sd_ev[0]), b_se_event=float(sd_ev[1]),
                          resid_std=float(resid.std()),
-                         ml_fit_min=float(ml.min()), ml_fit_max=float(ml.max()),
+                         # the rule the flags apply, and separately the range
+                         # the fit actually saw. They are not the same number.
+                         ml_fit_min=FIT_LOWER_ML,
+                         ml_fit_set_min=float(ml.min()), ml_fit_set_max=float(ml.max()),
                          validated_ml_max=VALIDATED_MAX[r],
                          extrapolation_ml_max=EXTRAPOLATION_MAX[r],
                          n_ml_ge_3_5=int((ml >= 3.5).sum()), n_ml_ge_4=int((ml >= 4.0).sum())))

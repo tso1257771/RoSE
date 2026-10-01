@@ -125,6 +125,66 @@ def test_station_magnitude_follows_amplitude_decade_for_decade(cal):
     assert np.allclose(np.diff(ml), 1.0)
 
 
+def test_event_magnitude_matches_the_vendored_aggregator(cal):
+    """The catalog's ML came from taiwan_ml.event_ml. Pin both against it.
+
+    `fit_ml.py` used that function purely as the aggregator: it added the
+    Romania distance correction into log10_A itself and passed a zeroed
+    coefficient dict so the Taiwan attenuation contributes nothing. This test
+    does the same, then compares the public API against it on random events
+    with two instruments at some sites and outliers the trim has to remove.
+    """
+    from rose.magnitudes.local import site_ids
+    from rose.magnitudes.taiwan_ml.model import event_ml
+
+    ZERO = {"n": 0.0, "K": 0.0, "dK": 0.0, "rref": 100.0,
+            "h_break": 40.0, "n_cheb": 0, "depth_term": True}
+
+    rng = np.random.default_rng(3)
+    nets, stas = ["RO", "BS"], [f"S{i:02d}" for i in range(14)]
+    rows = []
+    for ev in range(40):
+        for sta in rng.choice(stas, rng.integers(2, 12), replace=False):
+            for chan in (["HH"] if rng.random() < 0.6 else ["HH", "BH"]):
+                rows.append({
+                    "public_id": f"ev{ev:03d}",
+                    "station_key": f"{rng.choice(nets)}.{sta}..{chan}@2014-01-01",
+                    "log10_A": float(rng.normal(0.0, 0.6)),
+                    "R_km": float(rng.uniform(5.0, 400.0)),
+                    "depth_km": 8.0,                       # crustal, one anchor applies
+                })
+    obs = pd.DataFrame(rows)
+    obs.loc[obs.sample(frac=0.04, random_state=1).index, "log10_A"] += 4.0   # outliers
+
+    terms = {k: float(v) for k, v in
+             zip(obs.station_key.unique(),
+                 rng.normal(0.0, 0.3, obs.station_key.nunique()))}
+
+    # what the driver ran: Romania correction into log10_A, Taiwan atten zeroed
+    driver_obs = obs.copy()
+    driver_obs["log10_A"] = obs.log10_A + neg_log_a0(obs.R_km, obs.depth_km, cal.atten)
+    want = event_ml(driver_obs, ZERO, terms,
+                    anchor_c=cal.anchor["crustal"]).set_index("public_id")
+
+    # the same thing through the public API
+    sml = station_magnitude(obs.log10_A, obs.R_km, obs.depth_km,
+                            obs.station_key.map(terms), cal)
+    got = {pid: event_magnitude(g.ml, g.site) for pid, g in
+           pd.DataFrame({"public_id": obs.public_id,
+                         "site": site_ids(obs.station_key),
+                         "ml": sml}).groupby("public_id")}
+
+    checked = 0
+    for pid, (ml, n, _) in got.items():
+        if pid not in want.index:
+            assert np.isnan(ml), f"{pid}: reported {ml} where the catalog rule reports none"
+            continue
+        assert ml == pytest.approx(float(want.at[pid, "ml"]), abs=1e-12), pid
+        assert n == int(want.at[pid, "n_sta"]), f"{pid}: site count {n} != {want.at[pid, 'n_sta']}"
+        checked += 1
+    assert checked >= 30, f"only {checked} events compared"
+
+
 def test_event_magnitude_needs_three_sites():
     ml, n, sd = event_magnitude([3.0, 3.1], ["A", "B"])
     assert np.isnan(ml) and n == 2 and np.isnan(sd)
@@ -140,12 +200,21 @@ def test_event_magnitude_counts_sites_not_channels():
     assert ml == pytest.approx(3.2)
 
 
-def test_event_magnitude_trims_an_outlier_above_five_sites():
+def test_site_ids_reduces_station_keys_to_sites():
+    from rose.magnitudes.local import site_ids
+
+    got = site_ids(["BS.BLKB..HH@2012-11-20", "BS.BLKB..BH@2012-11-20",
+                    "RO.MLR..HH@2014-01-01"])
+    assert len(set(got)) == 2
+
+
+def test_event_magnitude_trims_an_outlier_and_stops_counting_it():
+    """n_sta is the count the median was taken over, which is ML_nstations."""
     good = [3.0, 3.1, 3.2, 3.3, 3.4]
-    clean, _, _ = event_magnitude(good, list("abcde"))
+    clean, n_clean, _ = event_magnitude(good, list("abcde"))
     with_bad, n, _ = event_magnitude(good + [9.0], list("abcdef"))
-    assert n == 6
-    assert with_bad == pytest.approx(clean, abs=1e-12)   # the outlier is dropped
+    assert n == n_clean == 5                             # the outlier is not counted
+    assert with_bad == pytest.approx(clean, abs=1e-12)   # nor does it move the median
 
 
 def test_event_magnitude_ignores_missing_amplitudes():
@@ -162,6 +231,31 @@ def test_conversion_is_referenced_at_ml_3(cal):
         mw, flag = mw_from_ml(3.0, regime, cal.conversion)
         assert mw == pytest.approx(float(cal.conversion.at[regime, "a"]))
         assert flag == "in_range"
+
+
+def test_lower_bound_is_one_number_in_every_table(cal):
+    """The rule bound is the published round number, not the fitted minimum.
+
+    conversion_coefficients.csv records the smallest ML the fit saw, 2.0002,
+    which is not the bound the released flags apply. Flagging against it would
+    call an ML 2.00 earthquake below_range where the catalog calls it in_range.
+    """
+    for regime in REGIMES:
+        published = float(cal.parameters[f"conversion_fit_lower_bound_ml_{regime}"])
+        assert float(cal.conversion.at[regime, "ml_fit_min"]) == published
+        assert published == 2.0
+        # the range the fit saw is kept, and is above the bound
+        assert float(cal.conversion.at[regime, "ml_fit_set_min"]) >= published
+
+
+def test_the_lower_bound_is_inclusive(cal):
+    for regime in REGIMES:
+        bound = float(cal.conversion.at[regime, "ml_fit_min"])
+        assert mw_from_ml(bound, regime, cal.conversion)[1] == "in_range"
+        assert mw_from_ml(bound - 1e-6, regime, cal.conversion)[1] == "below_range"
+        # between the bound and the smallest fitted ML, still inside the rule
+        mid = (bound + float(cal.conversion.at[regime, "ml_fit_set_min"])) / 2
+        assert mw_from_ml(mid, regime, cal.conversion)[1] == "in_range"
 
 
 def test_conversion_flags_match_the_released_vocabulary(cal):
