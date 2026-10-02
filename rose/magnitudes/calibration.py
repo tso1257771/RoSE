@@ -28,8 +28,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .attenuation import NAMES
-from .conversion import REGIMES
+from .attenuation import NAMES, REGIMES
 
 __all__ = ["DEFAULT_CALIBRATION_DIR", "CALIBRATION_SEARCH_PATHS", "Calibration", "load_calibration"]
 
@@ -113,11 +112,15 @@ class Calibration:
         >>> load_calibration().station_key_at("RO", "DRGR", "", "BH", "2016-03-01")
         'RO.DRGR..BH@2014-11-29'
         """
+        # Every calibrated epoch has a blank location code, which pandas reads
+        # back as NaN. NaN is truthy, so `location or ""` would keep it and the
+        # table would fail to find its own rows. Normalise both sides once.
+        loc = "" if location is None or pd.isna(location) else str(location)
         st = self.station_terms
         rows = st[(st.network == network) & (st.station == station)
-                  & (st.location.fillna("") == (location or ""))
+                  & (st.location.fillna("") == loc)
                   & (st.channel_prefix == channel_prefix)]
-        label = f"{network}.{station}.{location or ''}.{channel_prefix}"
+        label = f"{network}.{station}.{loc}.{channel_prefix}"
         if rows.empty:
             raise KeyError(f"no station term for {label!r} in any epoch; "
                            f"{len(st)} station epochs are calibrated")
@@ -133,9 +136,12 @@ class Calibration:
                         channel_prefix: str, time, default: float | None = None) -> float:
         """Correction of one channel at ``time``, by :meth:`station_key_at`.
 
-        ``default`` is returned, instead of raising, when the channel has no
-        calibrated epoch in force at ``time``. See :meth:`station_term` for
-        why that is not the same as a correction of zero.
+        ``default`` is returned, instead of raising, when the channel has
+        calibrated epochs but none in force at ``time``. A channel with no
+        calibrated epoch at all raises whatever ``default`` is, because that
+        is a wrong station rather than an uncalibrated time. See
+        :meth:`station_term` for why a default is not the same as a correction
+        of zero.
 
         >>> from rose.magnitudes import load_calibration
         >>> cal = load_calibration()
@@ -145,8 +151,8 @@ class Calibration:
         """
         try:
             key = self.station_key_at(network, station, location, channel_prefix, time)
-        except KeyError:
-            if default is None:
+        except KeyError as exc:
+            if default is None or "in any epoch" in str(exc):
                 raise
             return float(default)
         return self.station_term(key)

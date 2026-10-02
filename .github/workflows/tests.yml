@@ -5,7 +5,7 @@
 #   2. Install Python 3.10 / 3.11 / 3.12 (matrix) plus the package via
 #      `uv pip install -e ".[dev,cpu,bench]"`.
 #   3. `ruff check` for lint regressions.
-#   4. `pytest` to run the 50-test suite.
+#   4. `pytest` to run the test suite.
 #
 # Why uv (not plain pip): pyproject.toml configures `[tool.uv.sources]`
 # to route the .[cpu] extra's `torch` through the official PyTorch CPU
@@ -100,3 +100,5 @@ jobs:
         # `--strict-markers` catches typos in @pytest.mark.* decorators.
         run: |
           pytest tests/ -q --tb=short --strict-markers
+          # The published docstring examples are part of the documentation.
+          pytest --doctest-modules rose/magnitudes -q
