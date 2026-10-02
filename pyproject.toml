@@ -21,7 +21,13 @@ dependencies = [
     "obspy>=1.4",
     "h5py>=3.8",
     "pandas>=2.0",
-    "numpy>=1.24,<2.0",
+    # No upper bound. The cap that was here, <2.0, had no recorded reason and
+    # is contradicted by the evidence: the whole test suite, the magnitude
+    # drivers and the manuscript checks run on NumPy 2.5. Neither SeisBench
+    # nor ObsPy caps NumPy either, so keeping the cap only forced a downgrade
+    # on anyone installing this package and put CI on a different stack from
+    # the one the results were produced on.
+    "numpy>=1.24",
     "scipy>=1.10",        # examples/04: scipy.signal.hilbert for envelopes
     # rose.magnitudes.conversion fits the ML to Mw relation by orthogonal
     # distance regression. SciPy deprecated scipy.odr in 1.17 and removes it
