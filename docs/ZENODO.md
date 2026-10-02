@@ -164,9 +164,23 @@ If the project has a Zenodo community, add both records to it as well. A
 community collects the project's outputs on one page and is separate from the
 funding entry.
 
-## What still has to be decided
+## The ROMPLUS licence, settled
 
-The redistribution terms of the ROMPLUS bulletin have to be stated. "Access
-is open" is not a licence, and the manuscript currently names none for the
-data. The waveforms are a NIEP product, so this is a question for the NIEP
-co-authors rather than a choice to make here.
+The bulletin behind the picks and the legacy hypocenters is published as
+**Romanian Earthquake Catalogue (ROMPLUS)**, Popa, Chircea, Dinescu, Neagoe,
+Grecu and Borleanu, National Institute for Earth Physics, Mendeley Data
+version 2, 17 November 2022,
+[10.17632/tdfb4fgghy.2](https://doi.org/10.17632/tdfb4fgghy.2), under
+**CC BY 4.0**. Checked against the Mendeley record and against DataCite,
+which returns `cc-by-4.0`.
+
+So the bulletin content may be redistributed with attribution, and the
+dataset record carries the same licence. Cite that DOI as the source of the
+bulletin content. Note that other copies of older versions exist elsewhere
+with incomplete author lists, so this Mendeley record is the one to cite.
+
+One more thing worth knowing: the Mendeley description says the catalogue
+"standardizes all events to moment magnitude (Mw), converting earlier
+magnitude scales using established calibration relations". That is the
+publisher of the bulletin stating that its moment magnitude is a conversion,
+which is what Sect. 3.3 of the paper concludes from the data.
