@@ -23,6 +23,13 @@ dependencies = [
     "pandas>=2.0",
     "numpy>=1.24,<2.0",
     "scipy>=1.10",        # examples/04: scipy.signal.hilbert for envelopes
+    # rose.magnitudes.conversion fits the ML to Mw relation by orthogonal
+    # distance regression. SciPy deprecated scipy.odr in 1.17 and removes it
+    # in 1.19. odrpack is the package it points to instead, and the backend
+    # used whenever it is installed. scipy.odr stays a fallback for an
+    # environment without odrpack while SciPy still has it. SciPy itself is
+    # not capped: the package runs on either side of the removal.
+    "odrpack>=0.6",
     "matplotlib>=3.7",
     "tqdm>=4.65",
 ]
