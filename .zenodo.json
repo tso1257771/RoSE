@@ -49,6 +49,12 @@
       "relation": "cites",
       "scheme": "url",
       "resource_type": "software"
+    },
+    {
+      "identifier": "10.17632/tdfb4fgghy.2",
+      "relation": "isDerivedFrom",
+      "scheme": "doi",
+      "resource_type": "dataset"
     }
   ],
   "references": [
