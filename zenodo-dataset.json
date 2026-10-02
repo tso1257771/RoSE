@@ -5,8 +5,20 @@
   "creators": [
     {
       "name": "Liao, Wu-Yu",
-      "affiliation": "Department of Earth Sciences, National Cheng-Kung University, Taiwan",
+      "affiliation": "Department of Earth Sciences, National Cheng Kung University, Tainan, Taiwan",
       "orcid": "0000-0003-2353-7006"
+    },
+    {
+      "name": "Manea, Elena-Florinela",
+      "affiliation": "National Institute for Earth Physics, Măgurele, Romania"
+    },
+    {
+      "name": "Mărmureanu, Alexandru",
+      "affiliation": "National Institute for Earth Physics, Măgurele, Romania"
+    },
+    {
+      "name": "Lee, En-Jui",
+      "affiliation": "Department of Earth Sciences, National Cheng Kung University, Tainan, Taiwan"
     }
   ],
   "license": "cc-by-4.0",
@@ -37,5 +49,10 @@
       "resource_type": "software"
     }
   ],
-  "notes": "The author list is provisional. The waveforms are a NIEP product and the relocations and magnitudes are this work, so the dataset authorship is not the toolkit author list. Settle it before publishing. The ROMPLUS redistribution terms must also be stated."
+  "notes": "The author list is provisional. The waveforms are a NIEP product and the relocations and magnitudes are this work, so the dataset authorship is not the toolkit author list. Settle it before publishing. The ROMPLUS redistribution terms must also be stated. Funded by the European Union under the TRANSFORM² project, Grant Agreement No. 101188365 (HORIZON-INFRA-2024-DEV-01-01), and by the Seconds Matter project under SNSF-MAPS Grant Agreements No. IZ11Z0_230881 and F-RO-CH-2024-0263. ORCIDs are recorded only where known.",
+  "grants": [
+    {
+      "id": "10.13039/501100000780::101188365"
+    }
+  ]
 }

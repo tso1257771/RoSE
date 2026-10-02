@@ -20,6 +20,12 @@ This file says what goes in each record and in what order.
 
 ## Before anything: the deposited metadata is out of date
 
+> **Done on 2026-10-02.** The archive under
+> `seisbench_integration/data/rose/` has been repaired and now carries all
+> four magnitudes and the `split` column, 73 metadata columns against 61
+> before. Of 219,272 traces, 219,002 are on Mw, 228 on ML and 42 on neither.
+> The rest of this section records what was wrong and how it was fixed.
+
 **The archive built before the magnitudes were released must not be
 deposited.** Its `metadata{YEAR}.csv` files carry the NIEP bulletin local
 magnitude in `source_magnitude`, with `source_magnitude_type` reading `ml` for
@@ -134,12 +140,33 @@ Both records should be given reviewer access before submission. ESSD asks for
 the data to be deposited with a DOI at submission, and a referee who cannot
 open the archive will say so.
 
+## Authors and funding
+
+Both records carry the four manuscript authors, in manuscript order, with
+their affiliations. Only the first ORCID is recorded, because the others are
+not known here. Add them in the Zenodo form if you have them, since an ORCID
+is what links a record to an author page.
+
+Both records also name the grant from the acknowledgements, the European
+Union TRANSFORM² project, Grant Agreement No. 101188365 under the call
+HORIZON-INFRA-2024-DEV-01-01. In the Zenodo form this goes under **Funding**,
+where searching the grant number finds it. In the metadata files it is the
+`grants` field, keyed by the European Commission funder DOI. Recording it is
+what makes the deposit count as an output of the project, which is why you
+were asked for it.
+
+The Seconds Matter grants, SNSF-MAPS No. IZ11Z0_230881 and F-RO-CH-2024-0263,
+are in the notes rather than the `grants` field. Zenodo resolves European
+Commission grants by number reliably and bilateral SNSF agreements less so,
+so check whether the form finds them and move them up if it does.
+
+If the project has a Zenodo community, add both records to it as well. A
+community collects the project's outputs on one page and is separate from the
+funding entry.
+
 ## What still has to be decided
 
-* The dataset record needs an author list. The toolkit record has one author,
-  but the waveforms are a NIEP product and the relocations and magnitudes are
-  this work, so the dataset authorship is not the same list and is not ours
-  alone to set.
-* The redistribution terms of the ROMPLUS bulletin have to be stated. "Access
-  is open" is not a licence, and the manuscript currently names none for the
-  data.
+The redistribution terms of the ROMPLUS bulletin have to be stated. "Access
+is open" is not a licence, and the manuscript currently names none for the
+data. The waveforms are a NIEP product, so this is a question for the NIEP
+co-authors rather than a choice to make here.

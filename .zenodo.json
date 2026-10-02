@@ -1,12 +1,24 @@
 {
-  "title": "RoSE \u2014 Romanian SEismic Dataset Toolkit",
+  "title": "RoSE — Romanian SEismic Dataset Toolkit",
   "description": "Python toolkit, three published phase pickers (EQT-RoSE, PhaseNet-RoSE, RED-PAN-60s), the benchmark pipeline that scores them, and the RoSE Romanian earthquake catalog. Since v0.2.0 the catalog carries magnitudes measured for this release: a moment magnitude from S-wave spectral inversion for 19,188 events and a local magnitude from Wood-Anderson amplitudes for 18,330 events, each with its quality fields, alongside the NIEP bulletin magnitudes kept for continuity. The waveform archive itself is distributed separately.",
   "upload_type": "software",
   "creators": [
     {
       "name": "Liao, Wu-Yu",
-      "affiliation": "Department of Earth Sciences, National Cheng-Kung University, Taiwan",
+      "affiliation": "Department of Earth Sciences, National Cheng Kung University, Tainan, Taiwan",
       "orcid": "0000-0003-2353-7006"
+    },
+    {
+      "name": "Manea, Elena-Florinela",
+      "affiliation": "National Institute for Earth Physics, Măgurele, Romania"
+    },
+    {
+      "name": "Mărmureanu, Alexandru",
+      "affiliation": "National Institute for Earth Physics, Măgurele, Romania"
+    },
+    {
+      "name": "Lee, En-Jui",
+      "affiliation": "Department of Earth Sciences, National Cheng Kung University, Tainan, Taiwan"
     }
   ],
   "license": "MIT",
@@ -40,10 +52,16 @@
     }
   ],
   "references": [
-    "Mousavi, S. M., Ellsworth, W. L., Zhu, W., Chuang, L. Y., & Beroza, G. C. (2020). Earthquake transformer\u2014an attentive deep-learning model for simultaneous earthquake detection and phase picking. Nature Communications, 11(1). https://doi.org/10.1038/s41467-020-17591-w",
+    "Mousavi, S. M., Ellsworth, W. L., Zhu, W., Chuang, L. Y., & Beroza, G. C. (2020). Earthquake transformer—an attentive deep-learning model for simultaneous earthquake detection and phase picking. Nature Communications, 11(1). https://doi.org/10.1038/s41467-020-17591-w",
     "Zhu, W., & Beroza, G. C. (2019). PhaseNet: A Deep-Neural-Network-Based Seismic Arrival Time Picking Method. Geophysical Journal International, 216(1), 261-273. https://doi.org/10.1093/gji/ggy423",
     "Liao, W.-Y., Lee, E.-J., Chen, D.-Y., Chen, P., Mu, D., & Wu, Y.-M. (2022). RED-PAN: Real-Time Earthquake Detection and Phase-Picking With Multitask Attention Network. IEEE Transactions on Geoscience and Remote Sensing, 60, 1-11. https://doi.org/10.1109/TGRS.2022.3205558",
     "Liao, W.-Y. (2026). RED-PAN-Motion: multi-task earthquake detection, phase picking and first-motion polarity for 90-second seismic windows (v0.1.2) [Software]. https://github.com/tso1257771/RED-PAN-Motion",
-    "Woollam, J., M\u00fcnchmeyer, J., Tilmann, F., Rietbrock, A., Lange, D., Bornstein, T., Diehl, T., Giunchi, C., Haslinger, F., Jozinovi\u0107, D., Michelini, A., Saul, J., & Soto, H. (2022). SeisBench\u2014A Toolbox for Machine Learning in Seismology. Seismological Research Letters, 93(3), 1695-1709. https://doi.org/10.1785/0220210324"
-  ]
+    "Woollam, J., Münchmeyer, J., Tilmann, F., Rietbrock, A., Lange, D., Bornstein, T., Diehl, T., Giunchi, C., Haslinger, F., Jozinović, D., Michelini, A., Saul, J., & Soto, H. (2022). SeisBench—A Toolbox for Machine Learning in Seismology. Seismological Research Letters, 93(3), 1695-1709. https://doi.org/10.1785/0220210324"
+  ],
+  "grants": [
+    {
+      "id": "10.13039/501100000780::101188365"
+    }
+  ],
+  "notes": "Funded by the European Union under the TRANSFORM² project, Grant Agreement No. 101188365 (HORIZON-INFRA-2024-DEV-01-01), and by the Seconds Matter project under SNSF-MAPS Grant Agreements No. IZ11Z0_230881 and F-RO-CH-2024-0263. ORCIDs are recorded only where known."
 }
