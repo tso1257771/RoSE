@@ -73,7 +73,7 @@ it raises on missing-response traces so you can filter or skip cleanly.
 ### Path
 | Column | Description |
 |---|---|
-| `path_back_azimuth_deg` | source → station back-azimuth |
+| `path_back_azimuth_deg` | back-azimuth, measured at the station and pointing to the source. This is the sense ObsPy's rotation routines expect. Checked against the coordinates: the released values match the station to source azimuth to 0.000 degrees |
 | `path_ep_distance_km` | epicentral distance |
 | `path_hyp_distance_km` | hypocentral distance |
 
