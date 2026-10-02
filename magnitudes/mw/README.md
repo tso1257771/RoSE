@@ -106,26 +106,3 @@ size is included in `sigma_sys`, and it has one sign for small crustal events.
 offset against USGS rather than agreement with it, and it is not constant in time: the 7 slab
 events up to 2018 give +0.14 and the 4 from 2019 onwards −0.02. The slope is indistinguishable
 from 1. The comparison constrains the level between Mw 3.8 and 5.6 only.
-
-**Time dependence, stated not corrected.** Against the local magnitude, intermediate depth Mw
-rises by 0.08 ± 0.02 per decade (events of quality A or B with ML ≥ 2.5). It is not caused by
-the changing station mix: a magnitude built only from the 38 station channels that recorded in
-every year differs from the published one by 0.00 ± 0.01 per decade, and the drift against ML
-survives that restriction unchanged. It is therefore either in the local magnitude or in the
-waveform archive behind it, and it is smaller than the uncertainty of one event, 0.11 to 0.20.
-
-## Statistics
-
-Crustal events (depth < 60 km) and intermediate depth events (≥ 60 km) differ in both
-completeness and b-value, so a single cutoff mixes two sets.
-
-| | Mc | b-value | N ≥ Mc |
-|---|---|---|---|
-| Crustal | 2.0 | 1.51 ± 0.02 | 5,086 |
-| Intermediate depth | 2.6 (b-stability) | 0.86 ± 0.03 | 936 |
-
-Mc is the maximum curvature value + 0.2 (Woessner & Wiemer 2005), except for
-intermediate depth Mw, where the top of the distribution is flat and the b-stability value is
-quoted (Cao & Gao 2002). b is the Aki-Utsu maximum likelihood estimate with the half bin
-correction and the Shi & Bolt (1982) uncertainty, bin 0.1. b depends on the cutoff and must be
-quoted with its Mc.

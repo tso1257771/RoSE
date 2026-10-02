@@ -37,11 +37,9 @@ Rejected for three reasons:
 ## 2. Grond moment tensors
 
 466 events, M ≥ 3.5, 1-D Koulakov velocity model, 0.03–0.5 Hz. The scalar magnitudes agreed
-with USGS in the mean but the mechanisms did not: against Craiu et al. (2023) the median
-Kagan rotation was 79° and the agreement in fault type 28 %, and the disagreement did not improve
-with event size. The magnitude search range also started at 3.5, so 63 smaller events were
-forced up to that bound and the values near it are unreliable. Not used in the published
-Mw.
+with USGS in the mean, the mechanisms did not. The magnitude search range also started at
+3.5, so 63 smaller events were forced up to that bound and the values near it are
+unreliable. Not used in the published Mw.
 
 ## 3. Coda-envelope and spectral-ratio magnitudes
 
