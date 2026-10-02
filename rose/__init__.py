@@ -49,10 +49,16 @@ def __getattr__(name):
         else:
             value = getattr(import_module(where, __name__), name)
     except ImportError as exc:
+        # Only the dataset and picker names need SeisBench, ObsPy and h5py.
+        # rose.magnitudes, qc and splits can fail for their own reasons, and
+        # telling the reader to install a picker stack would send them after
+        # the wrong package.
+        if where is None:
+            raise
+        missing = getattr(exc, "name", None) or "a dependency"
         raise ImportError(
-            f"rose.{name} needs a dependency that is not installed ({exc}). "
-            'Install the dataset and picker stack with `pip install "rose-seismic[cpu]"`. '
-            "rose.magnitudes does not need it."
+            f"rose.{name} needs {missing}, which is not installed. Install the "
+            'dataset and picker stack with `pip install "rose-seismic[cpu]"`.'
         ) from exc
     globals()[name] = value                     # resolve once
     return value

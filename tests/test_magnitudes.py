@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import importlib.util
 import os
-from pathlib import Path
 
 import pathlib
 
@@ -220,7 +219,10 @@ def test_unknown_station_raises_unless_default_given(cal):
 
 def test_station_terms_are_centred(cal):
     """The fit has one additive degree of freedom, removed by centring S."""
-    assert abs(float(cal.station_terms.S_station_term.mean())) < 0.25
+    # The fit has one additive degree of freedom, removed by centring S. A
+    # common shift in the station terms moves every ML by that amount, which
+    # is the failure this pins, so the tolerance is numerical, not generous.
+    assert abs(float(cal.station_terms.S_station_term.mean())) < 1e-9
 
 
 def test_station_term_at_picks_the_epoch_in_force(cal):
@@ -270,6 +272,97 @@ def test_public_api_is_the_user_surface():
 def test_richter_fixed_point_at_100_km(cal, depth):
     """-log A0 is 3.0 at 100 km in both regimes, by construction."""
     assert neg_log_a0([100.0], [depth], cal.atten)[0] == pytest.approx(FIXED, abs=1e-12)
+
+
+def test_a_missing_depth_has_no_regime(cal):
+    """`nan < 60` is False, so a bare comparison returns the slab correction."""
+    assert np.isnan(neg_log_a0([150.0], [np.nan], cal.atten, cal.anchor)[0])
+    assert np.isnan(neg_log_a0([150.0], [np.nan], cal.atten)[0])
+    assert np.isfinite(neg_log_a0([150.0], [10.0], cal.atten, cal.anchor)[0])
+
+
+@pytest.mark.parametrize("R", [0.0, -5.0])
+def test_a_distance_at_or_below_zero_is_refused(cal, R):
+    with pytest.raises(ValueError, match="must be positive"):
+        neg_log_a0([R], [10.0], cal.atten, cal.anchor)
+
+
+def test_the_reference_distance_is_evaluable_in_both_regimes(cal):
+    """100 km is a point on the curve, so it is defined at any depth.
+
+    No earthquake 150 km deep is recorded 100 km from its hypocentre, but the
+    published reference value is a property of the curve, not of an event.
+    """
+    for depth in (10.0, 150.0):
+        assert np.isfinite(neg_log_a0([100.0], [depth], cal.atten, cal.anchor)[0])
+
+
+def test_epicentral_distance_passed_as_hypocentral_is_refused(cal):
+    """The likeliest user error on this catalog, worth about 0.6 magnitude."""
+    with pytest.raises(ValueError, match="not epicentral"):
+        station_magnitude([0.0], [60.0], [140.0], [0.0], cal)
+
+
+def test_station_term_at_accepts_the_tables_own_location_column(cal):
+    """A blank location reads back from the CSV as NaN, and NaN is truthy."""
+    row = cal.station_terms.reset_index().iloc[0]
+    assert pd.isna(row.location)
+    got = cal.station_term_at(row.network, row.station, row.location,
+                              row.channel_prefix, "2016-03-01")
+    assert got == pytest.approx(float(row.S_station_term))
+
+
+def test_an_unknown_channel_raises_even_with_a_default(cal):
+    """A default covers a missing epoch, not a wrong station."""
+    with pytest.raises(KeyError, match="in any epoch"):
+        cal.station_term_at("XX", "NOSUCH", "", "HH", "2016-03-01", default=0.0)
+
+
+def test_a_missing_amplitude_warning_is_refused(cal):
+    """`bool(nan)` is True, so a missing flag would condemn the event."""
+    with pytest.raises(ValueError, match="must be 0 or 1"):
+        mw_from_ml([3.0, 3.0], "crustal", cal.conversion, warned=[np.nan, 0.0])
+    _, flag = mw_from_ml([3.0, 3.0], "crustal", cal.conversion, warned=[0, 1])
+    assert list(flag) == ["in_range", "do_not_convert"]
+
+
+def test_the_user_surface_needs_no_regression_backend():
+    """Reading a published magnitude must not require an ODR wrapper."""
+    import subprocess
+    import sys
+    import textwrap
+
+    code = textwrap.dedent("""
+        import sys
+        from importlib.abc import MetaPathFinder
+
+        class Block(MetaPathFinder):
+            def find_spec(self, name, path=None, target=None):
+                if name.split(".")[0] == "odrpack" or name == "scipy.odr":
+                    raise ImportError("No module named %r" % name)
+                return None
+
+        sys.meta_path.insert(0, Block())
+        from rose.magnitudes import load_calibration, neg_log_a0, mw_from_ml, mw_quality
+        cal = load_calibration()
+        print(round(float(neg_log_a0([100.0], [10.0], cal.atten, cal.anchor)[0]), 6))
+        assert mw_from_ml(3.4, "crustal", cal.conversion)[1] == "in_range"
+        assert mw_quality([3.0], [0.1], [9.0], [2.0], [0.0])[0] == "A"
+
+        from rose.magnitudes.conversion import run_odr
+        import numpy as np
+        try:
+            run_odr(np.array([2.0, 3.0, 4.0]), np.array([2.0, 3.0, 4.0]),
+                    np.ones(3), np.ones(3))
+        except ImportError as exc:
+            assert "odrpack" in str(exc), exc
+        else:
+            raise AssertionError("run_odr worked with no backend")
+    """)
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                         cwd=str(pathlib.Path(__file__).resolve().parent.parent))
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.strip() == "2.516415", out.stdout
 
 
 def test_correction_increases_with_distance(cal):
@@ -350,7 +443,7 @@ def test_event_magnitude_matches_the_vendored_aggregator(cal):
                     "public_id": f"ev{ev:03d}",
                     "station_key": f"{rng.choice(nets)}.{sta}..{chan}@2014-01-01",
                     "log10_A": float(rng.normal(0.0, 0.6)),
-                    "R_km": float(rng.uniform(5.0, 400.0)),
+                    "R_km": float(rng.uniform(10.0, 400.0)),
                     "depth_km": 8.0,                       # crustal, one anchor applies
                 })
     obs = pd.DataFrame(rows)
@@ -580,15 +673,57 @@ def test_released_mw_sigma_is_reproducible():
     the data archive, not of the catalog in this repository, so the check
     runs where the working tree is present.
     """
-    root = os.environ.get("ROMANIA_ROOT")
-    path = Path(root) / "romania_mw" / "outputs" / "Mw_catalog.csv" if root else None
-    if path is None or not path.is_file():
-        pytest.skip("Mw_catalog.csv is in the data archive: set ROMANIA_ROOT to check it")
+    path = _work_outputs() / "romania_mw" / "outputs" / "Mw_catalog.csv"
+    if not path.is_file():
+        pytest.skip("Mw_catalog.csv is in the data archive")
     df = pd.read_csv(path).dropna(subset=["Mw"])
     assert len(df) == 19_188
     sigma, sig_sys = mw_sigma(df.Mw, df.Mw_station_std, df.Mw_nsta)
     assert np.nanmax(np.abs(sigma - df.Mw_sigma)) < 1e-9
     assert np.nanmax(np.abs(sig_sys - df.Mw_sigma_sys)) < 1e-9
+
+
+def _work_outputs():
+    """The driver outputs, which the data archive holds and the repo does not."""
+    root = os.environ.get("ROMANIA_ROOT")
+    if not root:
+        pytest.skip("set ROMANIA_ROOT to check the released values against the archive")
+    return pathlib.Path(root)
+
+
+def test_released_mw_quality_is_reproducible(cal):
+    """Reproduce Mw_quality for every event, from the two files it needs.
+
+    The corner frequency has to come from sourcespec_mw.csv. Taking the
+    catalog's own fc_Hz column instead demotes 11,464 class A events, which is
+    the trap the parameter name warns about.
+    """
+    root = _work_outputs()
+    mwc = root / "romania_mw/outputs/Mw_catalog.csv"
+    ssp = root / "romania_mw/outputs/sourcespec_mw.csv"
+    if not (mwc.is_file() and ssp.is_file()):
+        pytest.skip("Mw_catalog.csv and sourcespec_mw.csv are in the data archive")
+
+    d = pd.read_csv(mwc).merge(
+        pd.read_csv(ssp, usecols=["event_index", "fc_wmean"]), on="event_index", how="left")
+    got = pd.Series(mw_quality(d.Mw, d.Mw_station_std, d.Mw_nsta, d.fc_wmean, d.frac_tstar_lo))
+    assert (got == d.Mw_quality.fillna("")).all(), (
+        f"{int((got != d.Mw_quality.fillna('')).sum())} of {len(d)} rows differ")
+
+
+def test_released_conversion_flags_are_reproducible(cal):
+    """Reproduce mw_from_ml_flag for every event carrying a local magnitude."""
+    root = _work_outputs()
+    ev_csv = root / "romania_ml/outputs/fit/event_ml.csv"
+    if not ev_csv.is_file():
+        pytest.skip("event_ml.csv is in the data archive")
+
+    ev = pd.read_csv(ev_csv)
+    warned = ev.ml_saturation_risk.fillna(False).astype(bool)
+    mw, flag = mw_from_ml(ev.ml, ev.regime.to_numpy(object), cal.conversion, warned=warned)
+    assert (pd.Series(flag) == ev.mw_from_ml_flag).all(), (
+        f"{int((pd.Series(flag) != ev.mw_from_ml_flag).sum())} of {len(ev)} flags differ")
+    assert np.nanmax(np.abs(mw - ev.mw_from_ml)) < 1e-12
 
 
 def test_released_magnitudes_are_in_range(catalog):

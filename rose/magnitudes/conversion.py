@@ -25,7 +25,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from .attenuation import DEPTH_SPLIT
+from .attenuation import DEPTH_SPLIT, REGIMES
 
 # The regression is done by ODRPACK. SciPy deprecated its wrapper,
 # ``scipy.odr``, in 1.17 and removes it in 1.19. The ``odrpack`` package is
@@ -35,18 +35,39 @@ from .attenuation import DEPTH_SPLIT
 # coefficients were fitted with ``scipy.odr``. ``odrpack`` gives them to
 # 1 part in 10^7, the level at which any rerun gives them
 # (``magnitudes/README.md``).
-try:
-    import odrpack as _odrpack
-    _scipy_odr = None
-except ImportError:  # pragma: no cover - depends on the environment
-    _odrpack = None
+# The import is deferred to the first fit. Reading the calibration tables,
+# evaluating the distance correction and computing an ML or an Mw uncertainty
+# do no regression at all, so none of them should need a regression backend
+# installed.
+_odrpack = None
+_scipy_odr = None
+_backend = None
+
+
+def _load_backend():
+    """Import a backend on first use. Returns its name."""
+    global _odrpack, _scipy_odr, _backend
+    if _backend is not None:
+        return _backend
+    try:
+        import odrpack as _mod
+        _odrpack, _backend = _mod, "odrpack"
+        return _backend
+    except ImportError:
+        pass
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
-            from scipy import odr as _scipy_odr
+            from scipy import odr as _mod
     except ImportError as exc:
-        raise ImportError("rose.magnitudes.conversion needs the odrpack package, or "
-                          "scipy.odr from a SciPy before 1.19; neither is installed") from exc
+        raise ImportError(
+            "fitting the ML to Mw relation needs the odrpack package, or scipy.odr "
+            "from a SciPy before 1.19; neither is installed. Install it with "
+            "`pip install odrpack`. Reading the published relation with "
+            "rose.magnitudes.mw_from_ml does not need it."
+        ) from exc
+    _scipy_odr, _backend = _mod, "scipy.odr"
+    return _backend
 
 __all__ = [
     "ML_REF",
@@ -57,7 +78,6 @@ __all__ = [
     "lin",
     "quad",
     "run_odr",
-    "ODR_BACKEND",
     "bootstrap_events",
     "bootstrap_years",
     "jackknife_years",
@@ -68,7 +88,6 @@ __all__ = [
 
 ML_REF = 3.0                                # the relation is referenced here
 NBOOT, SEED = 2000, 20260921
-REGIMES = ("crustal", "intermediate")
 
 
 def regime_from_depth(depth):
@@ -115,8 +134,22 @@ def _odr_odrpack(f, ml, mw, s_mw, s_ml, beta0):
 
 #: Which wrapper does the fit: ``"odrpack"``, or ``"scipy.odr"`` when that is
 #: the only one installed.
-ODR_BACKEND = "odrpack" if _odrpack is not None else "scipy.odr"
-_odr_fit = _odr_odrpack if _odrpack is not None else _odr_scipy
+def _odr_fit(f, ml, mw, s_mw, s_ml, beta0):
+    """Fit with whichever backend is available, importing it on first use."""
+    fit = _odr_odrpack if _load_backend() == "odrpack" else _odr_scipy
+    return fit(f, ml, mw, s_mw, s_ml, beta0)
+
+
+#: Readable as ``rose.magnitudes.conversion.ODR_BACKEND``. It is resolved by
+#: ``__getattr__`` rather than set here, so reading it imports a backend
+#: instead of requiring one at import time.
+_BACKEND_ATTR = "ODR_BACKEND"
+
+
+def __getattr__(name):
+    if name == _BACKEND_ATTR:
+        return _load_backend()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def run_odr(ml, mw, s_mw, s_ml, quadratic=False):
@@ -238,6 +271,35 @@ def resid_bins(ml, resid, lo=0.5, hi=6.5, step=0.5):
     return t
 
 
+def _as_warning_flag(warned, shape):
+    """``warned`` as a boolean array, refusing anything that is not 0 or 1.
+
+    ``bool(nan)`` is True, so a missing amplitude warning would otherwise
+    condemn the event to ``do_not_convert``. That happens as soon as a caller
+    left joins the catalog onto their own event list.
+    """
+    a = np.asarray(warned)
+    if a.dtype == bool:
+        return np.broadcast_to(a, shape)
+    try:
+        f = a.astype(float)
+    except (TypeError, ValueError):
+        raise TypeError(
+            "warned must be boolean or 0/1; got dtype "
+            f"{a.dtype} (pandas 'boolean' with pd.NA is not accepted, "
+            "fill or drop the missing values first)"
+        ) from None
+    bad = ~np.isin(f, (0.0, 1.0))
+    if bad.any():
+        n = int(bad.sum())
+        raise ValueError(
+            f"warned must be 0 or 1, the amplitude quality warning (ML_warning); "
+            f"{n} value(s) are not, the first being {f[bad].ravel()[0]!r}. "
+            "A missing value is not a warning: drop or fill those rows."
+        )
+    return np.broadcast_to(f.astype(bool), shape)
+
+
 def mw_from_ml(ml, regime, conversion, warned=None):
     """Convert ML to Mw with the fitted relation of its depth regime.
 
@@ -303,7 +365,7 @@ def mw_from_ml(ml, regime, conversion, warned=None):
     if warned is None:
         warn_flag = np.zeros(ml.shape, bool)
     else:
-        warn_flag = np.broadcast_to(np.asarray(warned).astype(bool), ml.shape)
+        warn_flag = _as_warning_flag(warned, ml.shape)
 
     mw = np.full(ml.shape, np.nan)
     flag = np.full(ml.shape, "no_input", dtype=object)

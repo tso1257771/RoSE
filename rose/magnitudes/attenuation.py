@@ -42,6 +42,8 @@ __all__ = [
     "FIXED",
     "CRUSTAL_RMAX",
     "NAMES",
+    "REGIMES",
+    "check_distance",
     "columns",
     "neg_log_a0",
 ]
@@ -52,6 +54,9 @@ R2 = 190.0              # km, second crustal hinge
 FIXED = 3.0             # -log A0 at R = 100 km (Richter's fixed point)
 CRUSTAL_RMAX = 400.0    # km, largest crustal distance the coefficients were fitted over;
                         # neg_log_a0 extrapolates past it without a warning
+
+#: The two depth regimes, split at :data:`DEPTH_SPLIT`.
+REGIMES = ("crustal", "intermediate")
 
 #: Coefficient names, in the column order :func:`columns` returns.
 NAMES = ["n1_crustal", "n3_crustal", "K_crustal", "n_intermediate", "K_intermediate"]
@@ -75,14 +80,46 @@ def columns(R, h):
         never mix.
     """
     R = np.asarray(R, float)
-    crust = np.asarray(h, float) < DEPTH_SPLIT
-    return np.column_stack([
-        np.where(crust & (R <= R1), np.log10(np.maximum(R, 1e-6) / R1), 0.0),
-        np.where(crust & (R > R2), np.log10(np.maximum(R, 1e-6) / R2), 0.0),
+    h = np.broadcast_to(np.asarray(h, float), R.shape)
+    check_distance(R)
+
+    # A missing depth has no regime, so it gets no correction rather than the
+    # intermediate depth one. `nan < DEPTH_SPLIT` is False, so a bare
+    # comparison would silently return a crustal event's correction as though
+    # it were a slab event's, which is wrong by up to 0.3 magnitude units.
+    known = np.isfinite(h)
+    crust = known & (h < DEPTH_SPLIT)
+    interm = known & ~crust
+    logR = np.where(R > 0, np.log10(np.where(R > 0, R, 1.0)), np.nan)
+
+    out = np.column_stack([
+        np.where(crust & (R <= R1), logR - np.log10(R1), 0.0),
+        np.where(crust & (R > R2), logR - np.log10(R2), 0.0),
         np.where(crust, R - 100.0, 0.0),
-        np.where(~crust, np.log10(np.maximum(R, 1e-6) / 100.0), 0.0),
-        np.where(~crust, R - 100.0, 0.0),
+        np.where(interm, logR - 2.0, 0.0),
+        np.where(interm, R - 100.0, 0.0),
     ])
+    out[~known] = np.nan
+    return out
+
+
+def check_distance(R):
+    """Reject a distance at which the correction is undefined.
+
+    Only the sign is checked here, because these functions evaluate a curve
+    rather than an earthquake. The reference value at 100 km, for instance, is
+    defined in both regimes, although no 150 km deep earthquake can be
+    recorded 100 km from its hypocentre. The check that a distance is
+    consistent with a focal depth belongs where a real event is passed, in
+    :func:`rose.magnitudes.station_magnitude`.
+    """
+    R = np.asarray(R, float)
+    bad = np.isfinite(R) & (R <= 0.0)
+    if bad.any():
+        raise ValueError(
+            f"hypocentral distance must be positive; {int(bad.sum())} value(s) are not, "
+            f"the first being {float(R[bad][0])}"
+        )
 
 
 def neg_log_a0(R, h, co, anchor=None):
@@ -119,5 +156,7 @@ def neg_log_a0(R, h, co, anchor=None):
     v = FIXED + columns(R, h) @ np.array([co[n] for n in NAMES])
     if anchor is None:
         return v
-    crust = np.asarray(h, float) < DEPTH_SPLIT
-    return v + np.where(crust, anchor["crustal"], anchor["intermediate"])
+    h = np.broadcast_to(np.asarray(h, float), np.asarray(R, float).shape)
+    known = np.isfinite(h)
+    shift = np.where(known & (h < DEPTH_SPLIT), anchor["crustal"], anchor["intermediate"])
+    return v + np.where(known, shift, np.nan)

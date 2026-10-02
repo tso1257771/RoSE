@@ -28,6 +28,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from .attenuation import check_distance as _check_distance
 from .attenuation import neg_log_a0 as _neg_log_a0
 
 __all__ = ["MIN_STATIONS", "event_magnitude", "site_ids", "station_magnitude"]
@@ -76,8 +77,23 @@ def station_magnitude(log10_amp_mm, R_km, depth_km, station_term, cal):
     -------
     numpy.ndarray
     """
+    R = np.asarray(R_km, float)
+    h = np.broadcast_to(np.asarray(depth_km, float), R.shape)
+    _check_distance(R)
+    # R is the distance to the hypocentre, so it cannot be shorter than the
+    # focal depth. Passing epicentral distance for a Vrancea intermediate
+    # depth earthquake is the likeliest way to get this wrong, and it returns
+    # a plausible magnitude about 0.6 units low.
+    short = np.isfinite(R) & np.isfinite(h) & (R < h - 1e-6)
+    if short.any():
+        i = int(np.flatnonzero(short)[0])
+        raise ValueError(
+            f"R_km must be hypocentral distance, not epicentral: {int(short.sum())} "
+            f"value(s) are shorter than the focal depth, the first being "
+            f"R_km={float(R[i])} at depth_km={float(h[i])}"
+        )
     return (np.asarray(log10_amp_mm, float)
-            + _neg_log_a0(R_km, depth_km, cal.atten, cal.anchor)
+            + _neg_log_a0(R, h, cal.atten, cal.anchor)
             - np.asarray(station_term, float))
 
 
