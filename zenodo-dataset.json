@@ -1,0 +1,41 @@
+{
+  "title": "RoSE — Romanian SEismic Dataset (waveforms, picks and event catalog)",
+  "description": "Waveform dataset for machine learning and seismological work in Romania, in SeisBench format. 19,230 relocated events from 2014 to 2024, 219,272 three-component traces at 100 Hz in instrument counts, and 416,063 P and S picks that combine routine analyst picks with deep-learning repicks. The event catalog carries two magnitudes measured for this release, a moment magnitude from S-wave spectral inversion for 19,188 events and a local magnitude from Wood-Anderson amplitudes for 18,330 events, each with its uncertainty, station count and quality fields, alongside the NIEP bulletin magnitudes kept for continuity. Instrument responses are included, so the counts can be converted to ground motion. The waveforms derive from the ROMPLUS bulletin, a registered product of the National Institute for Earth Physics (NIEP), which should be cited separately. The companion toolkit, which loads these files and holds the magnitude calibration, is a separate record.",
+  "upload_type": "dataset",
+  "creators": [
+    {
+      "name": "Liao, Wu-Yu",
+      "affiliation": "Department of Earth Sciences, National Cheng-Kung University, Taiwan",
+      "orcid": "0000-0003-2353-7006"
+    }
+  ],
+  "license": "cc-by-4.0",
+  "access_right": "open",
+  "keywords": [
+    "Romania",
+    "Vrancea",
+    "SeisBench",
+    "waveform dataset",
+    "earthquake catalog",
+    "phase picking",
+    "moment magnitude",
+    "local magnitude",
+    "machine learning",
+    "seismology"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "10.5281/zenodo.20250669",
+      "relation": "isSupplementedBy",
+      "scheme": "doi",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://github.com/tso1257771/RoSE",
+      "relation": "isSupplementedBy",
+      "scheme": "url",
+      "resource_type": "software"
+    }
+  ],
+  "notes": "The author list is provisional. The waveforms are a NIEP product and the relocations and magnitudes are this work, so the dataset authorship is not the toolkit author list. Settle it before publishing. The ROMPLUS redistribution terms must also be stated."
+}
