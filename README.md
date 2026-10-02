@@ -39,6 +39,7 @@ produces them (`phase_picking/benchmark/`).
 | **Pick which magnitude to use, Mw or ML**          | [`docs/MAGNITUDES.md`](docs/MAGNITUDES.md) |
 | Apply the released magnitude scale to another earthquake | `rose.magnitudes` — see [`magnitudes/README.md`](magnitudes/README.md) |
 | Reproduce the magnitude calibration tables         | `ROMANIA_ROOT=… bash magnitudes/regenerate_magnitudes.sh` (needs the data archive) |
+| Deposit or update the Zenodo records                | [`docs/ZENODO.md`](docs/ZENODO.md) |
 | Load RoSE weights via `seisbench.models.X.from_pretrained("rose")` | [`seisbench_compat/README.md`](seisbench_compat/README.md) — converter + smoke test + the upstream-submission procedure |
 
 ---

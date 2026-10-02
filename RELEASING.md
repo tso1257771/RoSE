@@ -1,5 +1,9 @@
 # Release procedure (`v0.1.x → v0.1.{x+1}`)
 
+> This file covers the **toolkit** record. The dataset is a separate record
+> with its own DOI, and [`docs/ZENODO.md`](docs/ZENODO.md) covers both, what
+> goes in each and the order they have to be published in.
+
 Each public release mints (a) a tagged git commit, (b) a GitHub Release with the 77 MB picks CSV attached, and (c) a Zenodo software DOI via the `tso1257771/RoSE` ↔ Zenodo integration. Steps:
 
 1. **Pre-flight gate**
