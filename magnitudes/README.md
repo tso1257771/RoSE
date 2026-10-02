@@ -103,6 +103,17 @@ build. The published tables were written with the versions recorded in
 `calibration/fit_report.json` and `calibration/conversion_report.json`. Nothing
 at that level reaches a reported magnitude, which is given to two decimals.
 
+The orthogonal distance regression has also changed wrapper since the tables
+were written. The published conversion coefficients were fitted with
+`scipy.odr`, which SciPy deprecated in 1.17 and removes in 1.19. The
+conversion now uses the `odrpack` package, which wraps ODRPACK95, and falls
+back to `scipy.odr` only where `odrpack` is not installed. Under one
+interpreter the two wrappers give `a` and `b` within 4e-8 of each other, the
+bootstrap standard errors within 3e-9 (1 part in 4 x 10^6 at most), the
+residual standard deviation within 3e-10, and the same `mw_from_ml_flag` for
+all 18,330 events. That is the level of the difference between SciPy builds
+above, and no converted magnitude changes at two decimals.
+
 The `release` stage does not reproduce
 [`data/Enhanced_ROMPLUS_catalog.csv`](../data/Enhanced_ROMPLUS_catalog.csv)
 byte for byte. It reads the working tree copy of the release catalog, whose

@@ -24,9 +24,29 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from scipy import odr
 
 from .attenuation import DEPTH_SPLIT
+
+# The regression is done by ODRPACK. SciPy deprecated its wrapper,
+# ``scipy.odr``, in 1.17 and removes it in 1.19. The ``odrpack`` package is
+# the wrapper SciPy points to instead and is the one used here. ``scipy.odr``
+# is a fallback for an environment without ``odrpack``, while SciPy still has
+# it, so the module imports on either side of that removal. The published
+# coefficients were fitted with ``scipy.odr``. ``odrpack`` gives them to
+# 1 part in 10^7, the level at which any rerun gives them
+# (``magnitudes/README.md``).
+try:
+    import odrpack as _odrpack
+    _scipy_odr = None
+except ImportError:  # pragma: no cover - depends on the environment
+    _odrpack = None
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            from scipy import odr as _scipy_odr
+    except ImportError as exc:
+        raise ImportError("rose.magnitudes.conversion needs the odrpack package, or "
+                          "scipy.odr from a SciPy before 1.19; neither is installed") from exc
 
 __all__ = [
     "ML_REF",
@@ -37,6 +57,7 @@ __all__ = [
     "lin",
     "quad",
     "run_odr",
+    "ODR_BACKEND",
     "bootstrap_events",
     "bootstrap_years",
     "jackknife_years",
@@ -66,22 +87,50 @@ def quad(b, x):
     return b[0] + b[1] * (x - ML_REF) + b[2] * (x - ML_REF) ** 2
 
 
+def _odr_scipy(f, ml, mw, s_mw, s_ml, beta0):
+    """Fit with ``scipy.odr``. Returns the coefficients, success and the reason.
+
+    ``scipy.odr`` never raises for a fit that stopped. It reports the reason in
+    ``Output.info``: 1 to 3 are the convergence criteria, 4 is the iteration
+    limit, and larger values are questionable results or errors.
+    """
+    data = _scipy_odr.RealData(ml, mw, sx=s_ml, sy=s_mw)
+    out = _scipy_odr.ODR(data, _scipy_odr.Model(f), beta0=beta0).run()
+    return out.beta, out.info < 4, f"info {out.info}: " + ", ".join(out.stopreason)
+
+
+def _odr_odrpack(f, ml, mw, s_mw, s_ml, beta0):
+    """Fit with ``odrpack``. Same return as :func:`_odr_scipy`.
+
+    The standard errors become weights, as ``scipy.odr.RealData`` does with
+    ``sx`` and ``sy``, and the model takes its arguments the other way round.
+    ``OdrResult.success`` is ``info < 4``, the same rule as above.
+    """
+    ml, mw = np.asarray(ml, float), np.asarray(mw, float)
+    out = _odrpack.odr_fit(lambda x, b: f(b, x), ml, mw, beta0,
+                           weight_x=1.0 / np.asarray(s_ml, float) ** 2,
+                           weight_y=1.0 / np.asarray(s_mw, float) ** 2)
+    return out.beta, out.success, f"info {out.info}: {out.stopreason}"
+
+
+#: Which wrapper does the fit: ``"odrpack"``, or ``"scipy.odr"`` when that is
+#: the only one installed.
+ODR_BACKEND = "odrpack" if _odrpack is not None else "scipy.odr"
+_odr_fit = _odr_odrpack if _odrpack is not None else _odr_scipy
+
+
 def run_odr(ml, mw, s_mw, s_ml, quadratic=False):
     """Orthogonal distance regression of Mw on ML with errors on both.
 
-    Raises ``RuntimeError`` when ODRPACK stops without converging.
-    ``scipy.odr`` never raises for that on its own. It reports the reason in
-    ``Output.info``: 1 to 3 are its convergence criteria, 4 is the iteration
-    limit, and larger values are questionable results or errors.
+    Raises ``RuntimeError`` when ODRPACK stops without converging, whichever
+    wrapper does the call (:data:`ODR_BACKEND` names it).
     """
-    model = odr.Model(quad if quadratic else lin)
-    data = odr.RealData(ml, mw, sx=s_ml, sy=s_mw)
+    f = quad if quadratic else lin
     beta0 = [np.median(mw), 0.7, 0.0] if quadratic else [np.median(mw), 0.7]
-    out = odr.ODR(data, model, beta0=beta0).run()
-    if out.info >= 4:
-        raise RuntimeError(f"ODR did not converge (info {out.info}): "
-                           + ", ".join(out.stopreason))
-    return np.asarray(out.beta, float)
+    beta, ok, reason = _odr_fit(f, ml, mw, s_mw, s_ml, beta0)
+    if not ok:
+        raise RuntimeError(f"ODR did not converge ({reason})")
+    return np.asarray(beta, float)
 
 
 #: Largest share of bootstrap replicates that may fail before the spread of

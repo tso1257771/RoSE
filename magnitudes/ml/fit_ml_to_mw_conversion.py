@@ -35,6 +35,7 @@ sys.path.insert(0, str(_REPO / "magnitudes"))
 from _paths import ml_root, work_root  # noqa: E402
 from rose.magnitudes.conversion import (  # noqa: E402
     NBOOT,
+    ODR_BACKEND,
     SEED,
     bootstrap_events,
     bootstrap_years,
@@ -238,8 +239,10 @@ def main():
         "range every such event has a SourceSpec Mw, which should be used directly")
     rep["software"] = dict(python=sys.version.split()[0], numpy=np.__version__,
                            pandas=pd.__version__, scipy=__import__("scipy").__version__)
+    if ODR_BACKEND == "odrpack":
+        rep["software"]["odrpack"] = __import__("odrpack").__version__
     rep["settings"] = dict(bootstrap_replicates=NBOOT, seed=SEED,
-                           odr="scipy.odr orthogonal distance regression",
+                           odr=f"{ODR_BACKEND} orthogonal distance regression",
                            mw_sigma_floor=MW_SIGMA_FLOOR)
 
     par_path = FIT / "parameter_table.csv"

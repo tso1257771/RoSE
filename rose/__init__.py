@@ -9,7 +9,7 @@ except PackageNotFoundError:  # editable install or unpinned env
     __version__ = "0.1.0+dev"
 
 # Resolved on first use. Loading the dataset and the pickers needs SeisBench,
-# ObsPy and h5py, while rose.magnitudes needs only NumPy, pandas and SciPy.
+# ObsPy and h5py, while rose.magnitudes needs only NumPy, pandas, SciPy and odrpack.
 # Importing those eagerly here would make `import rose.magnitudes` fail in an
 # environment that has no SeisBench, which is the environment someone checking
 # a published magnitude is most likely to be in.

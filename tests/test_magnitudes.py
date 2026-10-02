@@ -7,6 +7,7 @@ that the data descriptor states.
 
 from __future__ import annotations
 
+import importlib.util
 import os
 from pathlib import Path
 
@@ -47,7 +48,7 @@ def cal() -> Calibration:
 def test_magnitudes_imports_without_seisbench():
     """Someone checking a published magnitude need not install the whole stack.
 
-    rose.magnitudes needs only NumPy, pandas and SciPy. Run in a subprocess so
+    rose.magnitudes needs only NumPy, pandas, SciPy and odrpack. Run in a subprocess so
     the blocked imports cannot leak into the rest of the suite.
     """
     import subprocess
@@ -82,6 +83,117 @@ def test_magnitudes_imports_without_seisbench():
                          cwd=str(pathlib.Path(__file__).resolve().parent.parent))
     assert out.returncode == 0, out.stderr
     assert out.stdout.strip() == "2.516415", out.stdout
+
+
+def _run_without(blocked, body):
+    """Run ``body`` in a subprocess where the modules in ``blocked`` are absent.
+
+    A name blocks itself and its submodules. A DeprecationWarning is an error
+    there, so an import that SciPy has deprecated fails rather than passes.
+    """
+    import subprocess
+    import sys
+    import textwrap
+
+    code = textwrap.dedent("""
+        import sys
+        from importlib.abc import MetaPathFinder
+        BLOCK = %r
+
+        class Block(MetaPathFinder):
+            def find_spec(self, name, path=None, target=None):
+                if any(name == b or name.startswith(b + ".") for b in BLOCK):
+                    raise ImportError("No module named %%r" %% name)
+                return None
+
+        sys.meta_path.insert(0, Block())
+    """ % sorted(blocked)) + textwrap.dedent(body)
+    out = subprocess.run([sys.executable, "-W", "error::DeprecationWarning", "-c", code],
+                         capture_output=True, text=True,
+                         cwd=str(pathlib.Path(__file__).resolve().parent.parent))
+    assert out.returncode == 0, out.stderr
+    return out.stdout.strip()
+
+
+# One synthetic problem, fitted under each wrapper. The published relation
+# came from scipy.odr. odrpack gives the same coefficients to 1 part in 10^7,
+# so both must print the same five decimals.
+_SYNTHETIC_FIT = """
+    import sys
+    import numpy as np
+    from rose.magnitudes.conversion import ODR_BACKEND, run_odr
+    rng = np.random.default_rng(0)
+    ml = rng.uniform(2.0, 5.0, 200)
+    mw = 3.2 + 0.75 * (ml - 3.0) + rng.normal(0, 0.1, 200)
+    b = run_odr(ml, mw, np.full(200, 0.1), np.full(200, 0.05))
+    print(ODR_BACKEND, round(float(b[0]), 5), round(float(b[1]), 5),
+          "scipy.odr" in sys.modules)
+"""
+_SYNTHETIC_RESULT = "3.19499 0.74365"
+
+
+def test_conversion_imports_without_scipy_odr():
+    """SciPy removes scipy.odr in 1.19. The conversion runs on odrpack instead.
+
+    scipy.odr is blocked the way SeisBench is above, so this is what a user
+    on a SciPy without it sees.
+    """
+    out = _run_without({"scipy.odr"}, _SYNTHETIC_FIT)
+    assert out == f"odrpack {_SYNTHETIC_RESULT} False", out
+
+
+@pytest.mark.skipif(importlib.util.find_spec("scipy.odr") is None,
+                    reason="this SciPy no longer has scipy.odr")
+def test_conversion_falls_back_to_scipy_odr_without_odrpack():
+    """Without odrpack, and while SciPy still has it, scipy.odr does the fit.
+
+    This is the wrapper the published coefficients came from. Its deprecation
+    warning must not reach the user: the subprocess turns one into an error.
+    """
+    out = _run_without({"odrpack"}, _SYNTHETIC_FIT)
+    assert out == f"scipy.odr {_SYNTHETIC_RESULT} True", out
+
+
+def test_run_odr_raises_when_the_fit_did_not_converge(monkeypatch):
+    """Neither wrapper raises on its own when ODRPACK stops. run_odr must."""
+    from rose.magnitudes import conversion
+    monkeypatch.setattr(conversion, "_odr_fit",
+                        lambda f, ml, mw, s_mw, s_ml, beta0:
+                        (np.asarray(beta0, float), False, "info 4: iteration limit"))
+    with pytest.raises(RuntimeError, match="did not converge"):
+        conversion.run_odr(np.array([2.0, 3.0, 4.0]), np.array([2.5, 3.2, 3.9]),
+                           np.full(3, 0.1), np.full(3, 0.05))
+
+
+def test_bootstrap_counts_a_replicate_that_did_not_converge(monkeypatch):
+    """A fit reported as stopped is a failed replicate, and past 5% the spread
+    is refused, whichever wrapper reports it."""
+    from rose.magnitudes import conversion
+    rng = np.random.default_rng(1)
+    ml = rng.uniform(2.0, 5.0, 60)
+    mw = 3.2 + 0.75 * (ml - 3.0) + rng.normal(0, 0.1, 60)
+    s_mw, s_ml, grid = np.full(60, 0.1), np.full(60, 0.05), np.array([2.5, 3.5])
+    real = conversion._odr_fit
+
+    def stopping_every(k):
+        calls = [0]
+
+        def fit(*args):
+            calls[0] += 1
+            beta, ok, reason = real(*args)
+            if calls[0] % k == 0:
+                return beta, False, "info 4: iteration limit"
+            return beta, ok, reason
+        return fit
+
+    monkeypatch.setattr(conversion, "_odr_fit", stopping_every(50))      # 2 of 100
+    with pytest.warns(UserWarning, match=r"2 of 100 replicates \(2.0%\) did not converge"):
+        sd, _, _, _ = conversion.bootstrap_events(ml, mw, s_mw, s_ml, grid, nboot=100, seed=1)
+    assert np.all(sd > 0)
+
+    monkeypatch.setattr(conversion, "_odr_fit", stopping_every(10))      # 10 of 100, past 5%
+    with pytest.raises(RuntimeError, match="no uncertainty is reported"):
+        conversion.bootstrap_events(ml, mw, s_mw, s_ml, grid, nboot=100, seed=1)
 
 
 # --------------------------------------------------------------------------
