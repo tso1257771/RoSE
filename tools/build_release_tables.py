@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -41,7 +42,7 @@ EVENT_ONLY = ["Mw_sigma", "Mw_quality", "Mw_nstations", "Mw_fc_Hz",
               "ML_nstations", "ML_warning", "Mw_ROMPLUS", "ML_ROMPLUS"]
 
 
-def load_catalog(path: Path | None) -> pd.DataFrame:
+def load_catalog(path: Path | None) -> tuple[pd.DataFrame, Path]:
     """The released event table, from ``--catalog-csv`` or the repository."""
     for p in ([path] if path else CATALOG_SEARCH_PATHS):
         if p and Path(p).is_file():
@@ -56,7 +57,7 @@ def load_catalog(path: Path | None) -> pd.DataFrame:
                     "data/ of this repository."
                 )
             print(f"catalog: {p}")
-            return df
+            return df, Path(p)
     raise FileNotFoundError("no event catalog found; pass --catalog-csv")
 
 
@@ -99,7 +100,7 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="report, write nothing")
     args = ap.parse_args()
 
-    cat = load_catalog(args.catalog_csv)
+    cat, cat_path = load_catalog(args.catalog_csv)
     picks_csv = args.picks_csv or args.outdir / "Enhanced_ROMPLUS_picks.csv"
     if not picks_csv.is_file():
         print(f"no pick table at {picks_csv}", file=sys.stderr)
@@ -126,9 +127,16 @@ def main() -> int:
         return 0
 
     args.outdir.mkdir(parents=True, exist_ok=True)
-    write(cat, args.outdir / "Enhanced_ROMPLUS_catalog.csv")
+    out_cat = args.outdir / "Enhanced_ROMPLUS_catalog.csv"
+    # Rewriting the catalog would reserialise it, changing its bytes and so
+    # its checksum without changing a single value. Leave the authoritative
+    # copy alone when it already is the output.
+    if out_cat.resolve() == cat_path.resolve():
+        print(f"\ncatalog already in place, left untouched: {out_cat}")
+    else:
+        shutil.copyfile(cat_path, out_cat)
+        print(f"\ncopied {cat_path} -> {out_cat}")
     write(picks, picks_csv)
-    print(f"\nwrote {args.outdir / 'Enhanced_ROMPLUS_catalog.csv'}")
     print(f"wrote {picks_csv}")
     print("\nRebuild SHA256SUMS before depositing.")
     return 0
