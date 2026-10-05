@@ -50,12 +50,16 @@ keywords:
   - RED-PAN
   - Romania
   - Vrancea
-# When the dataset Zenodo record is published, uncomment and fill in
-# its DOI under `references` so this software citation includes a
-# pointer to the dataset it consumes.
-# references:
-#   - type: data
-#     title: "RoSE — Romanian SEismic Dataset"
-#     doi: "10.5281/zenodo.XXXXXXX"
-#     authors:
-#       - name: "<dataset authors per the Zenodo record>"
+references:
+  - type: data
+    title: "RoSE — Romanian SEismic Dataset (waveforms, picks and event catalog)"
+    doi: "10.5281/zenodo.23153184"
+    authors:
+      - family-names: "Liao"
+        given-names: "Wu-Yu"
+      - family-names: "Manea"
+        given-names: "Elena-Florinela"
+      - family-names: "Mărmureanu"
+        given-names: "Alexandru"
+      - family-names: "Lee"
+        given-names: "En-Jui"
