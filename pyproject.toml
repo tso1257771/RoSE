@@ -1,6 +1,6 @@
 [project]
 name = "rose-seismic"
-version = "0.2.0"
+version = "0.3.0"
 description = "RoSE — a ROMPLUS-enhanced Romanian seismic dataset for ML and seismological applications, in SeisBench format"
 readme = "README.md"
 requires-python = ">=3.10"
