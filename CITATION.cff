@@ -38,7 +38,9 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.20250670"
     description: "Version DOI for v0.1.0"
-  # After publishing the v0.3.0 Zenodo record, add its version DOI here.
+  - type: doi
+    value: "10.5281/zenodo.23157260"
+    description: "Version DOI for v0.3.0"
 keywords:
   - seismology
   - phase picking
