@@ -3,12 +3,12 @@
 
 The event table is the authoritative copy in this repository, which carries
 the released magnitudes. The pick table is the merged analyst and RED-PAN
-pick set, holding the thirteen fields the data descriptor describes and
-nothing else.
+pick set, with the two magnitudes measured for this release joined on so that
+a user working pick by pick has them without merging the event table first.
 
-No magnitude is joined onto the picks. A magnitude describes the event, so
-repeating it over 416,062 rows would put the same number in two files where
-they can disagree. The event table has it, one join away on ``event_index``.
+The uncertainty, the quality class and the station counts are not carried
+across. They describe the event rather than the pick, and the event table has
+them, one join away on ``event_index``.
 
     python tools/build_release_tables.py /path/to/data
     python tools/build_release_tables.py /path/to/data --check
@@ -31,16 +31,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from rose.convert import CATALOG_SEARCH_PATHS  # noqa: E402
 
-#: Event fields joined onto each pick. None: the pick table carries the
-#: fields the data descriptor describes and nothing else. A magnitude belongs
-#: to the event, and repeating it over 416,062 rows puts the same number in
-#: two files where they can disagree. Join on ``event_index`` to get it.
-PICK_MAGNITUDES: list[str] = []
+#: The two magnitudes measured for this release, joined onto every pick so a
+#: user working pick by pick has them without merging the event table first.
+PICK_MAGNITUDES = ["Mw", "ML"]
 
-#: Event fields that stay in the event table only.
-EVENT_ONLY = ["Mw", "ML", "Mw_sigma", "Mw_quality", "Mw_nstations",
-              "Mw_fc_Hz", "ML_nstations", "ML_warning",
-              "Mw_ROMPLUS", "ML_ROMPLUS"]
+#: Fields that stay in the event table only. The uncertainty, the quality
+#: class and the station counts describe the event, not the pick.
+EVENT_ONLY = ["Mw_sigma", "Mw_quality", "Mw_nstations", "Mw_fc_Hz",
+              "ML_nstations", "ML_warning", "Mw_ROMPLUS", "ML_ROMPLUS"]
 
 
 def load_catalog(path: Path | None) -> pd.DataFrame:
