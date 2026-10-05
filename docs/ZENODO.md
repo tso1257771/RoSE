@@ -41,8 +41,8 @@ The waveforms are not affected. Only the metadata tables are, so they can be
 rewritten in place:
 
 ```bash
-python tools/repair_archive_metadata.py /path/to/data/rose --check   # report only
-python tools/repair_archive_metadata.py /path/to/data/rose
+python tools/repair_archive_metadata.py `RoSE/data/rose` --check   # report only
+python tools/repair_archive_metadata.py `RoSE/data/rose`
 ```
 
 That adds the eleven magnitude fields, sets `source_magnitude` to Mw where it
@@ -55,8 +55,30 @@ HDF5 untouched.
 Check the result against what the manuscript claims before going further:
 
 ```bash
-head -1 /path/to/data/rose/metadata2014.csv | tr ',' '\n' | grep -E 'split|source_mw|source_ml'
+head -1 `RoSE/data/rose`/metadata2014.csv | tr ',' '\n' | grep -E 'split|source_mw|source_ml'
 ```
+
+## Where the files are
+
+Everything lives under `RoSE/data/`, beside the code:
+
+```
+RoSE/
+├── rose/, magnitudes/, tools/ ...   the package, tracked in git
+└── data/
+    ├── Enhanced_ROMPLUS_catalog.csv   3.5 MB, tracked in git
+    ├── Enhanced_ROMPLUS_picks.csv      80 MB, gitignored
+    ├── rose/                           35 GB, gitignored
+    ├── rose_stationxml.zip            4.6 MB, gitignored
+    └── SHA256SUMS                             gitignored
+```
+
+Only the event table is small enough to version, and `.gitignore` keeps the
+rest out. A single waveform file is 8 GB, eighty times GitHub's limit for one
+file, so the archive reaches Zenodo by upload rather than through the
+repository. `tools/build_release_tables.py` compiles the two tables and
+`tools/repair_archive_metadata.py` brings the trace metadata up to the
+released schema.
 
 ## Record 1: the dataset
 
@@ -80,7 +102,7 @@ needed to go from counts to ground motion, so both belong in the record.
 Build the checksums from the archive directory:
 
 ```bash
-cd /path/to/data
+cd RoSE/data
 ( find rose -type f \( -name '*.hdf5' -o -name '*.csv' -o -name chunks \) | sort | xargs sha256sum
   sha256sum Enhanced_ROMPLUS_catalog.csv Enhanced_ROMPLUS_picks.csv rose_stationxml.zip
 ) > SHA256SUMS
