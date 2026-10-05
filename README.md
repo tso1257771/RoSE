@@ -310,7 +310,7 @@ catalog CSV; `outputs/`, `checkpoints/`, `phase_picking/benchmark/eval/`,
 
 ## Citation
 
-**Toolkit (this repository) — v0.2.0.** Cite the concept DOI
+**Toolkit (this repository) — v0.3.0.** Cite the concept DOI
 [`10.5281/zenodo.20250669`](https://doi.org/10.5281/zenodo.20250669), which always
 resolves to the newest version, and name the version you used. The v0.1.0 record
 is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
@@ -320,7 +320,7 @@ is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
   author    = {Liao, Wu-Yu},
   title     = {{RoSE — Romanian SEismic Dataset Toolkit}},
   year      = 2026,
-  version   = {v0.2.0},
+  version   = {v0.3.0},
   publisher = {Zenodo},
   doi       = {10.5281/zenodo.20250669},
   url       = {https://doi.org/10.5281/zenodo.20250669}
