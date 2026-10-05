@@ -55,6 +55,12 @@
       "relation": "isDerivedFrom",
       "scheme": "doi",
       "resource_type": "dataset"
+    },
+    {
+      "identifier": "10.5281/zenodo.23153184",
+      "relation": "isSupplementTo",
+      "scheme": "doi",
+      "resource_type": "dataset"
     }
   ],
   "references": [
