@@ -36,6 +36,10 @@ produces them (`phase_picking/benchmark/`).
 | **Fine-tune EQT / PhaseNet on RoSE**              | [Training & benchmarking](#training--benchmarking) below + `phase_picking/training/` |
 | Run a single picker on RoSE / STEAD                | `phase_picking/benchmark/bench_pickers_rose.py`, `bench_stead_test.py` |
 | Build the SeisBench bundle from the native HDF5    | [`docs/DATASET.md`](docs/DATASET.md) + `rose.convert.convert_all` |
+| **Pick which magnitude to use, Mw or ML**          | [`docs/MAGNITUDES.md`](docs/MAGNITUDES.md) |
+| Apply the released magnitude scale to another earthquake | `rose.magnitudes` — see [`magnitudes/README.md`](magnitudes/README.md) |
+| Reproduce the magnitude calibration tables         | `ROMANIA_ROOT=… bash magnitudes/regenerate_magnitudes.sh` (needs the data archive) |
+| Deposit or update the Zenodo records                | [`docs/ZENODO.md`](docs/ZENODO.md) |
 | Load RoSE weights via `seisbench.models.X.from_pretrained("rose")` | [`seisbench_compat/README.md`](seisbench_compat/README.md) — converter + smoke test + the upstream-submission procedure |
 
 ---
@@ -72,7 +76,7 @@ Zenodo — **not** in this repo. Mount or symlink them at `./data/rose/` and
 `ROSE_STATIONXML_DIR` environment variables.
 
 The two compiled ROMPLUS source tables are versioned here:
-`data/Enhanced_ROMPLUS_catalog.csv` (2.9 MB, 19 231 events) is committed
+`data/Enhanced_ROMPLUS_catalog.csv` (3.5 MB, 19 230 events) is committed
 to the repo, and `data/Enhanced_ROMPLUS_picks.csv` (77 MB, 416 063 picks)
 ships as a GitHub Release asset on each tagged version. See
 [`docs/DATASET.md`](docs/DATASET.md) for the download recipe and the
@@ -106,7 +110,7 @@ Four runnable examples, each end-to-end against the published dataset:
 
 1. **`01_load_and_browse.py`** — open the bundle, filter on
    `trace_p_snr_db` / `source_magnitude`, plot a random pick.
-2. **`02_eqt_instance_vrancea.py`** — full demo on the *M*<sub>w</sub> 5.8
+2. **`02_eqt_instance_vrancea.py`** — full demo on the *M*<sub>w</sub> 5.56
    Vrancea slab event (2018-10-28, 153 km depth, 68 stations): rebuild an
    ObsPy `Stream` from SeisBench, run `EQTransformer.from_pretrained("instance")`
    for an off-the-shelf-picker comparison, plot a record section with catalog
@@ -153,7 +157,10 @@ print(out.picks, out.detections)
 ```
 
 `load_redpan_tf60()` needs TensorFlow (the `.[tf]` extra); it reorders ZNE → ENZ
-internally. `examples/04_picker_inference.py` runs all three on held-out test
+internally. To avoid TensorFlow, the bundled checkpoint can be ported to
+PyTorch with `scripts/convert_redpan_60s.py` from
+[RED-PAN-Motion](https://github.com/tso1257771/RED-PAN-Motion), which
+reproduces it to 1.2e-7 (max abs difference, picker and detector). `examples/04_picker_inference.py` runs all three on held-out test
 traces; [`phase_picking/models/README.md`](phase_picking/models/README.md) has the per-model cards
 (architecture, training recipe, dev loss) and `SHA256SUMS` to verify the
 checkpoints.
@@ -255,11 +262,16 @@ push and PR (the badge at the top reflects current status).
 ```
 RoSE/                              # ── the RoSE dataset + its Python API  (the repo's headline)
 ├── rose/                          # the importable package: RoSE loader · convert · qc · splits
-│                                  #   + the picker loaders (pickers.load_*, checkpoint_io, redpan_inference/)
-├── docs/                          # DATASET.md, SEISBENCH_FORMAT.md (schemas)
+│   │                              #   + the picker loaders (pickers.load_*, checkpoint_io, redpan_inference/)
+│   └── magnitudes/                #   the released Mw and ML scales (+ the two vendored measurement packages)
+├── docs/                          # DATASET.md, SEISBENCH_FORMAT.md (schemas), MAGNITUDES.md
 ├── examples/                      # 01, 02, 03, 04 — runnable tutorials
 ├── tests/                         # pytest unit tests
 ├── stationxml_sources/sc3ml_niep/ # SeisComP SC3ML → FDSN StationXML helper
+├── magnitudes/                    # ── the magnitude calibration: the tables, the drivers that made them
+│   ├── calibration/               #   every coefficient of both scales, with its standard error
+│   ├── ml/                        #   local magnitude drivers + README (the method)
+│   └── mw/                        #   moment magnitude drivers + README (the method)
 ├── phase_picking/                 # ── the phase-picking extension (built on the `rose` API + SeisBench)
 │   ├── README.md
 │   ├── models/                    #   the 3 published checkpoints + SHA256SUMS + model cards
@@ -284,7 +296,8 @@ catalog CSV; `outputs/`, `checkpoints/`, `phase_picking/benchmark/eval/`,
 | Concern | Provenance |
 |---|---|
 | Event hypocenters | hypoDD3D relocations of the NIEP ROMPLUS catalog |
-| Origin time, magnitude | inherited from ROMPLUS (`source_*_raw`) |
+| Origin time | inherited from ROMPLUS (`source_*_raw`) |
+| Magnitude | measured for this release (Mw, ML); see [`docs/DATASET.md`](docs/DATASET.md) |
 | Manual picks | NIEP ROMPLUS bulletins |
 | ML-assisted repicks | RED-PAN 60 s, 3 s / 5 s P / S consistency window vs. NLLoc theoretical |
 | Pick selection | higher-SNR among manual / RED-PAN; theoretical-only never used |
@@ -297,17 +310,20 @@ catalog CSV; `outputs/`, `checkpoints/`, `phase_picking/benchmark/eval/`,
 
 ## Citation
 
-**Toolkit (this repository) — v0.1.0**, [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670):
+**Toolkit (this repository) — v0.3.0.** Cite the concept DOI
+[`10.5281/zenodo.20250669`](https://doi.org/10.5281/zenodo.20250669), which always
+resolves to the newest version, and name the version you used. The v0.1.0 record
+is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
 
 ```bibtex
 @software{liao_rose_2026,
   author    = {Liao, Wu-Yu},
   title     = {{RoSE — Romanian SEismic Dataset Toolkit}},
   year      = 2026,
-  version   = {v0.1.0},
+  version   = {v0.3.0},
   publisher = {Zenodo},
-  doi       = {10.5281/zenodo.20250670},
-  url       = {https://doi.org/10.5281/zenodo.20250670}
+  doi       = {10.5281/zenodo.20250669},
+  url       = {https://doi.org/10.5281/zenodo.20250669}
 }
 ```
 
@@ -322,6 +338,16 @@ GitHub's "Cite this repository" sidebar renders the same info from
 Liao et al. 2022; SeisBench — Woollam et al. 2022; PhaseNet —
 Zhu & Beroza 2019; EQTransformer — Mousavi et al. 2020. Per-model
 cards: [`phase_picking/models/README.md`](phase_picking/models/README.md).
+
+**Software** — the RED-PAN 60 s model bundled here as
+`redpan_tf60/train.hdf5` is the published `REDPAN_60s_240107` checkpoint.
+[RED-PAN-Motion](https://github.com/tso1257771/RED-PAN-Motion) (MIT)
+maintains a pure-PyTorch implementation of the same architecture, and its
+`scripts/convert_redpan_60s.py` ports a TensorFlow checkpoint to PyTorch and
+verifies the result. Converting the bundled checkpoint with that script
+reproduces it to 1.2e-7, so a TensorFlow-free path is available. The
+amplitude window used for the released magnitudes comes from the same
+package.
 
 ---
 

@@ -1,6 +1,6 @@
 [project]
 name = "rose-seismic"
-version = "0.1.0"
+version = "0.3.0"
 description = "RoSE — a ROMPLUS-enhanced Romanian seismic dataset for ML and seismological applications, in SeisBench format"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -21,8 +21,21 @@ dependencies = [
     "obspy>=1.4",
     "h5py>=3.8",
     "pandas>=2.0",
-    "numpy>=1.24,<2.0",
+    # No upper bound. The cap that was here, <2.0, had no recorded reason and
+    # is contradicted by the evidence: the whole test suite, the magnitude
+    # drivers and the manuscript checks run on NumPy 2.5. Neither SeisBench
+    # nor ObsPy caps NumPy either, so keeping the cap only forced a downgrade
+    # on anyone installing this package and put CI on a different stack from
+    # the one the results were produced on.
+    "numpy>=1.24",
     "scipy>=1.10",        # examples/04: scipy.signal.hilbert for envelopes
+    # rose.magnitudes.conversion fits the ML to Mw relation by orthogonal
+    # distance regression. SciPy deprecated scipy.odr in 1.17 and removes it
+    # in 1.19. odrpack is the package it points to instead, and the backend
+    # used whenever it is installed. scipy.odr stays a fallback for an
+    # environment without odrpack while SciPy still has it. SciPy itself is
+    # not capped: the package runs on either side of the removal.
+    "odrpack>=0.6",
     "matplotlib>=3.7",
     "tqdm>=4.65",
 ]
@@ -39,7 +52,10 @@ bench = ["torch>=2.1", "scikit-learn>=1.2"]
 # RED-PAN-60s Keras inference (rose/redpan_inference, the TF model in
 # phase_picking/models/redpan_tf60/).
 tf = ["tensorflow>=2.13"]
-dev = ["pytest>=7", "ruff>=0.4"]
+# The rule set is pinned in [tool.ruff.lint] below rather than left to ruff's
+# default, so the upper bound here is a guard against behaviour changes in the
+# rules themselves, not against new rules being added to the default.
+dev = ["pytest>=7", "ruff>=0.4,<1.0"]
 
 [project.urls]
 Source = "https://github.com/tso1257771/RoSE"
@@ -51,11 +67,33 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["rose"]
 
+# The event catalog supplies the released magnitudes, so it must travel with
+# the package: without it a converted dataset would carry no magnitudes.
+[tool.hatch.build.targets.wheel.force-include]
+"data/Enhanced_ROMPLUS_catalog.csv" = "rose/data/Enhanced_ROMPLUS_catalog.csv"
+# The magnitude calibration tables are the only way to reproduce a released
+# magnitude, so rose.magnitudes.load_calibration must find them in a wheel too.
+"magnitudes/calibration/parameter_table.csv" = "rose/magnitudes/calibration/parameter_table.csv"
+"magnitudes/calibration/station_terms.csv" = "rose/magnitudes/calibration/station_terms.csv"
+"magnitudes/calibration/conversion_coefficients.csv" = "rose/magnitudes/calibration/conversion_coefficients.csv"
+
 # Ruff configuration -------------------------------------------------------
 [tool.ruff]
 # Pin a stable target Python so ruff stops flagging f-strings / type unions
 # that are valid on the floor (3.10) but flagged on older defaults.
 target-version = "py310"
+
+[tool.ruff.lint]
+# State the rule set instead of inheriting ruff's default. The default is not
+# stable across ruff releases: 0.16 enables rule families (flake8-comprehensions,
+# flake8-bandit, flake8-2020 and others) that earlier versions did not, which
+# turns CI red on code that has not changed. These four families are the ones
+# this repository is clean against:
+#   E4  import placement and shadowing      E7  statement-level mistakes
+#   E9  syntax and IO errors                F   pyflakes: undefined and unused names
+# Adding a family is a deliberate change, made together with the fixes it asks
+# for, not something a dependency upgrade should do.
+select = ["E4", "E7", "E9", "F"]
 
 [tool.ruff.lint.per-file-ignores]
 # Standalone scripts under phase_picking/benchmark/ and phase_picking/training/
@@ -70,6 +108,16 @@ target-version = "py310"
 # checkout, plus a few inline `if cond: stmt` and trailing-print idioms
 # (E701/E702) that read cleanly in tutorial-style scripts.
 "examples/*.py" = ["E402", "E701", "E702"]
+# The magnitude drivers under magnitudes/ do the same `sys.path` insert so they
+# run from a checkout (E402). They are otherwise kept as they were run to
+# produce the published calibration tables, which is why two formatting habits
+# of theirs are tolerated rather than tidied: a one-line lambda (E731) and a
+# few multi-assignment lines (E702). Changing them would make the released
+# drivers differ from the code the tables came from for no gain.
+"magnitudes/*.py" = ["E402"]
+"magnitudes/ml/*.py" = ["E402", "E702", "E731"]
+"magnitudes/mw/*.py" = ["E402"]
+"magnitudes/mw/sourcespec/*.py" = ["E402"]
 
 # uv-specific configuration -------------------------------------------------
 # Route the [cuda] extra at the official PyTorch CUDA index instead of PyPI.

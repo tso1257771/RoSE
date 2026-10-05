@@ -73,7 +73,7 @@ it raises on missing-response traces so you can filter or skip cleanly.
 ### Path
 | Column | Description |
 |---|---|
-| `path_back_azimuth_deg` | source → station back-azimuth |
+| `path_back_azimuth_deg` | back-azimuth, measured at the station and pointing to the source. This is the sense ObsPy's rotation routines expect. Checked against the coordinates: the released values match the station to source azimuth to 0.000 degrees |
 | `path_ep_distance_km` | epicentral distance |
 | `path_hyp_distance_km` | hypocentral distance |
 
@@ -91,7 +91,11 @@ it raises on missing-response traces so you can filter or skip cleanly.
 | `source_id` | `event_index` |
 | `source_origin_time` | catalog (relocated) origin time |
 | `source_latitude_deg`, `source_longitude_deg`, `source_depth_km` | hypocenter (hypoDD3D) |
-| `source_magnitude`, `source_magnitude_type` | M, ml |
+| `source_magnitude`, `source_magnitude_type` | preferred magnitude and the scale it is on: `mw` where a moment magnitude was measured, otherwise `ml`, empty if neither |
+| `source_magnitude_uncertainty` | `Mw_sigma` when the preferred magnitude is Mw |
+| `source_mw`, `source_mw_sigma`, `source_mw_quality`, `source_mw_nstations`, `source_mw_fc_hz` | moment magnitude and its quality fields. `source_mw_nstations` is `-1` when the event has no moment magnitude |
+| `source_ml`, `source_ml_nstations`, `source_ml_warning` | local magnitude and its quality fields. The two integer fields are `-1` when the event has no local magnitude |
+| `source_ml_romplus`, `source_mw_romplus` | NIEP bulletin magnitudes, for continuity only |
 | `source_catalog` | `hypoDD_3D` / `SSST` / `ROMPLUS` |
 | `source_gap_deg` | azimuthal gap |
 | `source_tres_mae_s`, `source_tres_mad_s` | travel-time residual statistics |

@@ -20,7 +20,7 @@ remains a registered NIEP product and should be cited separately
 
 | File | Size | Rows | Distribution |
 |---|---:|---:|---|
-| `data/Enhanced_ROMPLUS_catalog.csv` | 2.9 MB | 19 231 events | committed to the repo |
+| `data/Enhanced_ROMPLUS_catalog.csv` | 3.5 MB | 19 230 events | committed to the repo; supplies the released magnitudes to `rose.convert` (override with `--catalog-csv`) |
 | `data/Enhanced_ROMPLUS_picks.csv` | 77 MB | 416 063 picks | GitHub Release asset, attached to each tagged release |
 
 Fetch the picks file once per checkout (replace `vX.Y.Z` with the tag
@@ -64,13 +64,36 @@ catalog SAC archive.
 | `time` | str | Catalog origin time (relocated, hypoDD3D) |
 | `event_time_utc` | str | Same, kept as ISO string |
 | `latitude`, `longitude`, `depth` | float | Hypocenter (deg, deg, km) |
-| `magnitude` | float | Local magnitude |
+| `ML_ROMPLUS`, `Mw_ROMPLUS` | float | NIEP bulletin magnitudes, kept for continuity. Not used to calibrate the measured magnitudes below |
+| `Mw` | float | Moment magnitude from S-wave spectral inversion (SourceSpec 1.8). 19,188 events |
+| `Mw_sigma` | float | Combined station-scatter and systematic uncertainty (1 sigma) |
+| `Mw_quality` | str | `A` (>=5 sites, std. err. < 0.15), `B` (>=3 sites), `C` (1-2 sites) |
+| `Mw_nstations` | int (float64 when empty) | Distinct sites used |
+| `Mw_fc_Hz` | float | Corner frequency. Reported only for Mw >= 3.5 (192 events); empty means not reported |
+| `ML` | float | Local magnitude from Wood-Anderson amplitudes with per-station corrections. 18,330 events |
+| `ML_nstations` | int (float64 when empty) | Stations used (minimum 3) |
+| `ML_warning` | int (float64 when empty) | `0` normal, `1` amplitude quality warning (48 events) |
 | `source` | str | Hypocenter solution: `hypoDD_3D`, `SSST`, `ROMPLUS` |
 | `raw_time`, `raw_lat`, `raw_lon`, `raw_depth` | str/float | Original ROMPLUS solution |
 | `Nsta`, `Npha` | int | Stations / phases used by the relocation |
 | `gap` | float | Azimuthal gap in degrees |
 | `TRes_MAE`, `TRes_MAD` | float | Travel-time residual statistics (s) |
+
 | `year` | int | Convenience |
+
+**Which magnitude to use.** `Mw` is the default for anything where magnitude
+stands for the size of the source, including ground-motion work and ML labels:
+it is proportional to moment wherever the corner frequency is resolved and does
+not saturate over this catalog's range. `ML` is provided for continuity with the
+NIEP bulletin. The two scales are **not interchangeable** — ML rises about 1.33
+(crustal) and 1.41 (intermediate-depth) magnitude units per unit of Mw, so their
+completeness and b-values differ. Do not put both into one
+frequency-magnitude distribution. ML's absolute level is anchored to Mw at
+Mw 4.0, so ML - Mw = 0 there by construction and is not a check on either scale.
+
+[`MAGNITUDES.md`](MAGNITUDES.md) describes both scales, their uncertainties and
+the usual selections. `rose.magnitudes` applies them to an earthquake the
+catalog does not contain, and `magnitudes/calibration/` holds the coefficients.
 
 ## Station attributes
 

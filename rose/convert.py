@@ -33,6 +33,13 @@ import seisbench.data as sbd
 logger = logging.getLogger("rose.convert")
 
 COMPONENT_ORDER = "ZNE"  # canonical SeisBench order; on-disk components stacked Z,N,E
+# Event catalog shipped with the repository; supplies the released magnitudes.
+DEFAULT_CATALOG_CSV = Path(__file__).resolve().parent.parent / "data" / "Enhanced_ROMPLUS_catalog.csv"
+# Repository layout first, then the copy shipped inside an installed wheel.
+CATALOG_SEARCH_PATHS = (
+    DEFAULT_CATALOG_CSV,
+    Path(__file__).resolve().parent / "data" / "Enhanced_ROMPLUS_catalog.csv",
+)
 TARGET_SAMPLING_RATE_HZ = 100.0
 
 
@@ -101,6 +108,7 @@ def _build_metadata(
     station_attrs: dict,
     npts: int,
     stations_df: pd.DataFrame | None,
+    catalog_df: pd.DataFrame | None = None,
     physical_info: dict | None = None,
 ) -> dict:
     net, sta, loc, band = _split_station_id(station_id)
@@ -153,8 +161,21 @@ def _build_metadata(
         "source_latitude_deg": _float(_attr(event_attrs, "latitude")),
         "source_longitude_deg": _float(_attr(event_attrs, "longitude")),
         "source_depth_km": _float(_attr(event_attrs, "depth")),
-        "source_magnitude": _float(_attr(event_attrs, "magnitude")),
-        "source_magnitude_type": "ml",
+        # Magnitudes are filled from the released catalog below. Mw is the
+        # preferred scale; ML is used only where no Mw could be measured.
+        "source_magnitude": np.nan,
+        "source_magnitude_type": "",
+        "source_magnitude_uncertainty": np.nan,
+        "source_mw": np.nan,
+        "source_mw_sigma": np.nan,
+        "source_mw_quality": "",
+        "source_mw_nstations": -1,
+        "source_mw_fc_hz": np.nan,
+        "source_ml": np.nan,
+        "source_ml_nstations": -1,
+        "source_ml_warning": -1,
+        "source_ml_romplus": np.nan,
+        "source_mw_romplus": np.nan,
         "source_catalog": _attr(event_attrs, "source"),
         "source_gap_deg": _float(_attr(event_attrs, "gap")),
         "source_tres_mae_s": _float(_attr(event_attrs, "TRes_MAE")),
@@ -181,6 +202,31 @@ def _build_metadata(
         md["station_elevation_m"] = _float(srow.get("elevation_m"))
         region = srow.get("region")
         md["station_region"] = "" if region is None else str(region)
+
+    if catalog_df is not None and str(event_id) in catalog_df.index:
+        crow = catalog_df.loc[str(event_id)]
+        mw = _float(crow.get("Mw"))
+        ml = _float(crow.get("ML"))
+        md["source_mw"] = mw
+        md["source_mw_sigma"] = _float(crow.get("Mw_sigma"))
+        quality = crow.get("Mw_quality")
+        md["source_mw_quality"] = "" if pd.isna(quality) else str(quality)
+        md["source_mw_nstations"] = _int(crow.get("Mw_nstations"), default=-1)
+        md["source_mw_fc_hz"] = _float(crow.get("Mw_fc_Hz"))
+        md["source_ml"] = ml
+        md["source_ml_nstations"] = _int(crow.get("ML_nstations"), default=-1)
+        md["source_ml_warning"] = _int(crow.get("ML_warning"), default=-1)
+        md["source_ml_romplus"] = _float(crow.get("ML_ROMPLUS"))
+        md["source_mw_romplus"] = _float(crow.get("Mw_ROMPLUS"))
+        # Preferred magnitude: Mw where measured, otherwise ML. The type field
+        # always names the scale actually stored in source_magnitude.
+        if not np.isnan(mw):
+            md["source_magnitude"] = mw
+            md["source_magnitude_type"] = "mw"
+            md["source_magnitude_uncertainty"] = md["source_mw_sigma"]
+        elif not np.isnan(ml):
+            md["source_magnitude"] = ml
+            md["source_magnitude_type"] = "ml"
 
     if physical_info is not None:
         md["trace_status_physical"] = physical_info.get("status_physical", "unknown")
@@ -246,12 +292,62 @@ def _load_stations_df(stations_csv: str | Path | None) -> pd.DataFrame | None:
     return df.set_index("station")
 
 
+def _load_catalog_df(catalog_csv: str | Path | None) -> pd.DataFrame:
+    """Index the released event catalog by ``event_index`` for magnitude lookup.
+
+    Raises rather than warning when the catalog is absent: a RoSE dataset with
+    no magnitudes is not a valid release artifact, and a warning is too easy to
+    miss in a long conversion log.
+    """
+    if catalog_csv:
+        path = Path(catalog_csv)
+    else:
+        path = next((p for p in CATALOG_SEARCH_PATHS if p.exists()),
+                    DEFAULT_CATALOG_CSV)
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Event catalog not found at {path}. It supplies the released "
+            "magnitudes. Pass --catalog-csv / catalog_csv=... to point at "
+            "data/Enhanced_ROMPLUS_catalog.csv."
+        )
+    df = pd.read_csv(path, dtype={"event_index": str})
+    if df["event_index"].duplicated().any():
+        dups = df.loc[df["event_index"].duplicated(), "event_index"].unique()[:5]
+        raise ValueError(
+            f"Duplicate event_index in {path}: {list(dups)}. Each event must "
+            "appear once, otherwise magnitude lookup is ambiguous."
+        )
+    return df.set_index("event_index")
+
+
+def _check_catalog_coverage(event_ids, catalog_df, chunk_label, max_missing=0.01):
+    """Fail loudly when the catalog does not cover the events being converted.
+
+    Without this, a catalog that matches no events produces a complete dataset
+    whose magnitude columns are silently empty.
+    """
+    ids = [str(e) for e in event_ids]
+    if not ids:
+        return
+    missing = [e for e in ids if e not in catalog_df.index]
+    if not missing:
+        return
+    frac = len(missing) / len(ids)
+    msg = (f"chunk {chunk_label}: {len(missing)}/{len(ids)} events "
+           f"({frac:.1%}) are absent from the event catalog, so they will "
+           f"carry no magnitude. First: {missing[:5]}")
+    if frac > max_missing:
+        raise ValueError(msg)
+    logger.warning(msg)
+
+
 def convert_year(
     src_h5: str | Path,
     out_dir: str | Path,
     chunk_label: str,
     units: str = "counts",
     stations_csv: str | Path | None = None,
+    catalog_csv: str | Path | None = None,
     physical_h5: str | Path | None = None,
     bucket_size: int = 1024,
     overwrite: bool = False,
@@ -265,6 +361,8 @@ def convert_year(
         published format. Physical units are derived per-trace via the
         ``trace_sensitivity_{e,n,z}`` columns.
     :param stations_csv: Optional station CSV for lat/lon/elev enrichment.
+    :param catalog_csv: Optional event catalog CSV supplying the released
+        magnitudes. Defaults to the catalog shipped with this repository.
     :param physical_h5: Optional companion ``*_physical.h5`` to harvest
         per-component sensitivity values and response status.
     :param bucket_size: Bucket size for the SeisBench writer.
@@ -285,6 +383,7 @@ def convert_year(
         waveforms_path.unlink(missing_ok=True)
 
     stations_df = _load_stations_df(stations_csv)
+    catalog_df = _load_catalog_df(catalog_csv)
     physical_index = _load_physical_index(physical_h5)
     if physical_h5:
         logger.info(
@@ -306,6 +405,7 @@ def convert_year(
         writer.bucket_size = bucket_size
 
         with h5py.File(src_h5, "r") as h5:
+            _check_catalog_coverage(h5.keys(), catalog_df, chunk_label)
             for event_id in h5.keys():
                 ev_group = h5[event_id]
                 if "waveforms" not in ev_group:
@@ -336,6 +436,7 @@ def convert_year(
                         station_attrs=dict(sta_group.attrs),
                         npts=npts,
                         stations_df=stations_df,
+                        catalog_df=catalog_df,
                         physical_info=phys_info,
                     )
                     md["trace_chunk"] = chunk_label
@@ -366,6 +467,7 @@ def convert_all(
     tag: str = "ROMPLUS",
     years: Iterable[int] | None = None,
     stations_csv: str | Path | None = None,
+    catalog_csv: str | Path | None = None,
     include_physical: bool = True,
     bucket_size: int = 1024,
     overwrite: bool = False,
@@ -417,6 +519,7 @@ def convert_all(
             chunk_label=chunk_label,
             units="counts",
             stations_csv=stations_csv,
+            catalog_csv=catalog_csv,
             physical_h5=phys_path,
             bucket_size=bucket_size,
             overwrite=overwrite,
@@ -444,6 +547,12 @@ def _parse_args():
         help="Optional comma list, e.g. '2014,2015,2018-2020'.",
     )
     p.add_argument("--stations-csv", default="")
+    p.add_argument(
+        "--catalog-csv",
+        default="",
+        help="Event catalog CSV supplying the released magnitudes "
+             "(default: data/Enhanced_ROMPLUS_catalog.csv).",
+    )
     p.add_argument("--bucket-size", type=int, default=1024)
     p.add_argument("--overwrite", action="store_true")
     p.add_argument("--log-level", default="INFO")
@@ -481,6 +590,7 @@ def main():
         tag=args.tag,
         years=_expand_years(args.years),
         stations_csv=args.stations_csv or None,
+        catalog_csv=args.catalog_csv or None,
         include_physical=not args.no_physical,
         bucket_size=args.bucket_size,
         overwrite=args.overwrite,

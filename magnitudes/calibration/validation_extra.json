@@ -1,0 +1,30 @@
+{
+  "anchor_centred_bin": {
+    "crustal": {
+      "n": 17,
+      "median_ML_minus_Mw": 0.021842895063317158
+    },
+    "intermediate": {
+      "n": 66,
+      "median_ML_minus_Mw": -0.021280569297519092
+    }
+  },
+  "b_value_invariance": {
+    "crustal": {
+      "mc_unanchored": 1.9,
+      "mc_anchored": 1.4164147594015248,
+      "b_unanchored": 1.2668395396997207,
+      "b_anchored": 1.2668395396997223,
+      "n": 4317,
+      "same_event_set": true
+    },
+    "intermediate": {
+      "mc_unanchored": 2.1,
+      "mc_anchored": 1.7519052651780882,
+      "b_unanchored": 0.616759131768914,
+      "b_anchored": 0.6167591317689142,
+      "n": 1341,
+      "same_event_set": true
+    }
+  }
+}

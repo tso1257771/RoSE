@@ -159,7 +159,9 @@ def select_test_traces(
     before sampling so the chosen traces have clear P and S arrivals:
 
       * test split (catalog-held-out)
-      * source magnitude ≥ ``min_magnitude``
+      * ``source_magnitude`` ≥ ``min_magnitude``. Since v0.2.0 this column
+        holds Mw where a moment magnitude was measured, so the same
+        threshold selects fewer events than it did against the bulletin ML
       * epicentral distance ≤ ``max_distance_km``  (closer ⇒ stronger signal)
       * trace_p_snr_db AND trace_s_snr_db ≥ ``min_snr_db``
       * both P and S sample positions ≥ ``edge_margin_s`` from the window edges
@@ -618,7 +620,7 @@ def main() -> None:
         "--min-magnitude",
         type=float,
         default=2.5,
-        help="Minimum source magnitude (default 2.5; 0 disables).",
+        help="Minimum source_magnitude, which is Mw where measured (default 2.5; 0 disables).",
     )
     ap.add_argument(
         "--max-distance-km",
