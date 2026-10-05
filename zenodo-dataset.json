@@ -55,10 +55,17 @@
       "resource_type": "dataset"
     }
   ],
-  "notes": "The author list is provisional. The waveforms are a NIEP product and the relocations and magnitudes are this work, so the dataset authorship is not the toolkit author list. Settle it before publishing. The ROMPLUS bulletin behind the picks and the legacy hypocenters is CC BY 4.0 (doi:10.17632/tdfb4fgghy.2), so it is redistributed here with attribution. Funded by the European Union under the TRANSFORM² project, Grant Agreement No. 101188365 (HORIZON-INFRA-2024-DEV-01-01), and by the Seconds Matter project under SNSF-MAPS Grant Agreements No. IZ11Z0_230881 and F-RO-CH-2024-0263. ORCIDs are recorded only where known.",
+  "notes": "The author list is provisional. The waveforms are a NIEP product and the relocations and magnitudes are this work, so the dataset authorship is not the toolkit author list. Settle it before publishing. The ROMPLUS bulletin behind the picks and the legacy hypocenters is CC BY 4.0 (doi:10.17632/tdfb4fgghy.2), so it is redistributed here with attribution. Funded by the European Union under the TRANSFORM² project, Grant Agreement No. 101188365 (HORIZON-INFRA-2024-DEV-01-01), and by the Seconds Matter project under SNSF-MAPS Grant Agreements No. IZ11Z0_230881 and F-RO-CH-2024-0263. ORCIDs are recorded only where known. Funding contact at the National Institute for Earth Physics: Elena-Florinela Manea, elena.manea@infp.ro.",
   "grants": [
     {
       "id": "10.13039/501100000780::101188365"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Manea, Elena-Florinela",
+      "type": "ContactPerson",
+      "affiliation": "National Institute for Earth Physics, Măgurele, Romania"
     }
   ]
 }
