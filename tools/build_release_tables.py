@@ -3,14 +3,12 @@
 
 The event table is the authoritative copy in this repository, which carries
 the released magnitudes. The pick table is the merged analyst and RED-PAN
-pick set, with the two released magnitudes joined on so that a user working
-pick by pick does not have to merge the event table first.
+pick set, holding the thirteen fields the data descriptor describes and
+nothing else.
 
-Only the magnitudes themselves are carried across. The uncertainty, the
-quality class and the amplitude warning belong to the event, not to the pick,
-and repeating them over 416,062 rows would put the same fact in two files
-where they can disagree. They stay in the event table, one join away on
-``event_index``.
+No magnitude is joined onto the picks. A magnitude describes the event, so
+repeating it over 416,062 rows would put the same number in two files where
+they can disagree. The event table has it, one join away on ``event_index``.
 
     python tools/build_release_tables.py /path/to/data
     python tools/build_release_tables.py /path/to/data --check
@@ -33,12 +31,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from rose.convert import CATALOG_SEARCH_PATHS  # noqa: E402
 
-#: Event fields joined onto each pick. The magnitudes only.
-PICK_MAGNITUDES = ["Mw", "ML"]
+#: Event fields joined onto each pick. None: the pick table carries the
+#: fields the data descriptor describes and nothing else. A magnitude belongs
+#: to the event, and repeating it over 416,062 rows puts the same number in
+#: two files where they can disagree. Join on ``event_index`` to get it.
+PICK_MAGNITUDES: list[str] = []
 
-#: Event fields deliberately not joined onto the picks.
-EVENT_ONLY = ["Mw_sigma", "Mw_quality", "Mw_nstations", "Mw_fc_Hz",
-              "ML_nstations", "ML_warning", "Mw_ROMPLUS", "ML_ROMPLUS"]
+#: Event fields that stay in the event table only.
+EVENT_ONLY = ["Mw", "ML", "Mw_sigma", "Mw_quality", "Mw_nstations",
+              "Mw_fc_Hz", "ML_nstations", "ML_warning",
+              "Mw_ROMPLUS", "ML_ROMPLUS"]
 
 
 def load_catalog(path: Path | None) -> pd.DataFrame:
@@ -67,8 +69,9 @@ def build_picks(picks_csv: Path, cat: pd.DataFrame) -> tuple[pd.DataFrame, dict]
     # Drop any previously joined copy so a rerun cannot stack columns.
     picks = picks.drop(columns=[c for c in PICK_MAGNITUDES + EVENT_ONLY
                                 if c in picks.columns], errors="ignore")
-    picks = picks.merge(cat[["event_index"] + PICK_MAGNITUDES],
-                        on="event_index", how="left")
+    if PICK_MAGNITUDES:
+        picks = picks.merge(cat[["event_index"] + PICK_MAGNITUDES],
+                            on="event_index", how="left")
 
     orphans = int((~picks.event_index.isin(cat.event_index)).sum())
     stats = {
@@ -78,8 +81,6 @@ def build_picks(picks_csv: Path, cat: pd.DataFrame) -> tuple[pd.DataFrame, dict]
         "added": [c for c in picks.columns if c not in before],
         "removed": [c for c in before if c not in picks.columns],
         "orphan_picks": orphans,
-        "with_mw": int(picks.Mw.notna().sum()),
-        "with_ml": int(picks.ML.notna().sum()),
     }
     return picks, stats
 
@@ -110,12 +111,12 @@ def main() -> int:
           f"with ML {int(cat.ML.notna().sum()):,}")
     picks, s = build_picks(picks_csv, cat)
     print(f"picks  : {s['rows']:,}  columns {s['columns_before']} -> {s['columns_after']}")
-    print(f"         joined {PICK_MAGNITUDES}, kept in the event table only: {EVENT_ONLY}")
+    print(f"         joined onto picks: {PICK_MAGNITUDES or 'nothing'}")
+    print(f"         event table only : {EVENT_ONLY}")
     if s["added"]:
         print(f"         added  : {s['added']}")
     if s["removed"]:
         print(f"         removed: {s['removed']}")
-    print(f"         picks carrying Mw {s['with_mw']:,}  ML {s['with_ml']:,}")
 
     if s["orphan_picks"]:
         print(f"\n{s['orphan_picks']:,} picks reference an event that is not in the "
