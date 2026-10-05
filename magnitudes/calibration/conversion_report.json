@@ -1,0 +1,833 @@
+{
+  "model": "Mw = a + b (ML - 3), one linear form for both regimes",
+  "sigma_ML_within_event": 0.20873833039974712,
+  "sigma_ML_used": "sigma_within / sqrt(n_sta), the error of the event mean",
+  "n_bootstrap": 2000,
+  "anchor_C": {
+    "crustal": -0.48358524059847513,
+    "intermediate": -0.3480947348219119
+  },
+  "mw_catalogue": {
+    "path": "romania_mw/outputs/Mw_catalog.csv",
+    "sha256": "0c0549300b43bd0820e31712282e8da9e6ee87fd76096db5e68c8aa887a76892",
+    "mtime_utc": "2026-09-22T05:18:11.836301+00:00",
+    "magnitude_column": "Mw (SourceSpec)"
+  },
+  "selection": "regime, Mw quality A/B, n_sta >= 3, ML >= 2.0, no amplitude quality warning (ml_saturation_risk). No cut on Mw: selecting on the dependent variable truncates the sample and manufactures curvature",
+  "note": "ML is anchored to SourceSpec Mw at Mw 4.0; refit this conversion whenever the Mw catalogue changes",
+  "crustal": {
+    "n": 663,
+    "ml_range_of_fit": [
+      2.000240368161837,
+      4.868879327713468
+    ],
+    "fit_lower_bound_ml": 2.0,
+    "validated_range_ml": [
+      2.0,
+      4.5
+    ],
+    "extrapolation_range_ml": [
+      4.5,
+      5.0
+    ],
+    "do_not_convert_above_ml": 5.0,
+    "coeffs": {
+      "a": 3.170165631547523,
+      "b": 0.753978654079147
+    },
+    "se_year_block": {
+      "a": 0.07213594235028013,
+      "b": 0.015301260669983063
+    },
+    "se_event_bootstrap": {
+      "a": 0.011844082461376831,
+      "b": 0.015871821870113746
+    },
+    "se_year_jackknife": {
+      "a": 0.03584179337109168,
+      "b": 0.006046324641675521
+    },
+    "se_published": "year_block",
+    "cov_year_block": [
+      [
+        0.005206197277401634,
+        0.0007124869330123465
+      ],
+      [
+        0.0007124869330123465,
+        0.00023424570094124114
+      ]
+    ],
+    "resid_std": 0.20619503762174624,
+    "resid_nmad": 0.2090395803242317,
+    "n_above_ml_3_5": 31,
+    "n_above_ml_4": 12,
+    "n_above_ml_4_5": 3,
+    "prediction": [
+      {
+        "ml": 2.0,
+        "mw": 2.416186977468376,
+        "sd_year_block": 0.06335188535286086,
+        "ci95_year_block": [
+          2.3367653777477084,
+          2.531032379179266
+        ],
+        "sd_event": 0.011053617678511912
+      },
+      {
+        "ml": 2.5,
+        "mw": 2.7931763045079494,
+        "sd_year_block": 0.06745365545127846,
+        "ci95_year_block": [
+          2.7153161329968154,
+          2.9189569274226494
+        ],
+        "sd_event": 0.008261579400946717
+      },
+      {
+        "ml": 3.0,
+        "mw": 3.170165631547523,
+        "sd_year_block": 0.07213594235028013,
+        "ci95_year_block": [
+          3.0937822136675006,
+          3.315475825505828
+        ],
+        "sd_event": 0.011844082461376831
+      },
+      {
+        "ml": 3.5,
+        "mw": 3.5471549585870967,
+        "sd_year_block": 0.07729331803481769,
+        "ci95_year_block": [
+          3.4708393083728817,
+          3.7144352308476067
+        ],
+        "sd_event": 0.018392070281617354
+      },
+      {
+        "ml": 4.0,
+        "mw": 3.92414428562667,
+        "sd_year_block": 0.0828370939612526,
+        "ci95_year_block": [
+          3.8472089795934563,
+          4.113774983302955
+        ],
+        "sd_event": 0.025733471858152387
+      },
+      {
+        "ml": 4.5,
+        "mw": 4.301133612666243,
+        "sd_year_block": 0.08869484510446309,
+        "ci95_year_block": [
+          4.221938843839126,
+          4.514096359979838
+        ],
+        "sd_event": 0.03334834723405342
+      },
+      {
+        "ml": 5.0,
+        "mw": 4.678122939705817,
+        "sd_year_block": 0.09480839229366451,
+        "ci95_year_block": [
+          4.595674115764961,
+          4.9141570986341705
+        ],
+        "sd_event": 0.04108491593456153
+      },
+      {
+        "ml": 5.5,
+        "mw": 5.0551122667453905,
+        "sd_year_block": 0.10113135636171136,
+        "ci95_year_block": [
+          4.969254915884015,
+          5.314849743057624
+        ],
+        "sd_event": 0.04888543480624153
+      }
+    ],
+    "year_jackknife": [
+      {
+        "year": 2014,
+        "n_held_out": 46,
+        "a": 3.1622388676308857,
+        "b": 0.7549841003773954,
+        "held_out_median_residual": 0.12843729578613194
+      },
+      {
+        "year": 2015,
+        "n_held_out": 43,
+        "a": 3.156669499148695,
+        "b": 0.7479927126213319,
+        "held_out_median_residual": 0.15171270017386318
+      },
+      {
+        "year": 2016,
+        "n_held_out": 26,
+        "a": 3.165632241338515,
+        "b": 0.7524349665209766,
+        "held_out_median_residual": 0.07131849429844728
+      },
+      {
+        "year": 2017,
+        "n_held_out": 31,
+        "a": 3.1662128605848876,
+        "b": 0.7589528107712028,
+        "held_out_median_residual": 0.17161890335574626
+      },
+      {
+        "year": 2018,
+        "n_held_out": 26,
+        "a": 3.16532103458601,
+        "b": 0.7556035248008437,
+        "held_out_median_residual": 0.16839431799964522
+      },
+      {
+        "year": 2019,
+        "n_held_out": 19,
+        "a": 3.169105347671794,
+        "b": 0.7570953473846003,
+        "held_out_median_residual": 0.06443337340979793
+      },
+      {
+        "year": 2020,
+        "n_held_out": 45,
+        "a": 3.1607268698863207,
+        "b": 0.749477059208041,
+        "held_out_median_residual": 0.12744927312832033
+      },
+      {
+        "year": 2021,
+        "n_held_out": 35,
+        "a": 3.161265055617707,
+        "b": 0.7558556022965877,
+        "held_out_median_residual": 0.12994032878589312
+      },
+      {
+        "year": 2022,
+        "n_held_out": 15,
+        "a": 3.1651714135839777,
+        "b": 0.7513101150189936,
+        "held_out_median_residual": 0.19207377890152522
+      },
+      {
+        "year": 2023,
+        "n_held_out": 318,
+        "a": 3.2878408020313397,
+        "b": 0.7718036646688192,
+        "held_out_median_residual": -0.2702467574826546
+      },
+      {
+        "year": 2024,
+        "n_held_out": 59,
+        "a": 3.164195359470612,
+        "b": 0.7541053555719722,
+        "held_out_median_residual": 0.0361401259641827
+      }
+    ],
+    "diagnostics": {
+      "quadratic": {
+        "coeffs": [
+          3.1792202273939103,
+          0.7540164846164895,
+          -0.017721351150079098
+        ],
+        "se_event": [
+          0.011844082461376831,
+          0.015871821870113746
+        ],
+        "se_year_block": [
+          0.08180331305936414,
+          0.012408542783550108,
+          0.029958928248089337
+        ],
+        "resid_std": 0.20637684156428168,
+        "c_resolved_2sigma": false,
+        "note": "curvature is not resolved; the published relation is linear"
+      },
+      "linear_ml_ge_3": {
+        "n": 69,
+        "coeffs": [
+          3.1751044847547463,
+          0.7385444552548066
+        ],
+        "resid_std": 0.21819874277458623,
+        "mw_at_ml_4": 3.913648940009553,
+        "mw_at_ml_4_primary": 3.92414428562667,
+        "note": "agrees with the published line; no separate upper-range relation is needed"
+      }
+    },
+    "residual_by_ml_bin_fit_set": [
+      {
+        "bin": "(2.0, 2.5]",
+        "n": 447,
+        "mean": -0.026069546991027787,
+        "se": 0.009955742047932922,
+        "median": -0.06798412484024796,
+        "std": 0.21048802692092936
+      },
+      {
+        "bin": "(2.5, 3.0]",
+        "n": 147,
+        "mean": -0.021758473026176058,
+        "se": 0.015446953559195007,
+        "median": -0.06865769271974775,
+        "std": 0.1872843587067786
+      },
+      {
+        "bin": "(3.0, 3.5]",
+        "n": 38,
+        "mean": -0.017690238906337388,
+        "se": 0.03246115141318861,
+        "median": -0.08992359922963944,
+        "std": 0.20010397632395602
+      },
+      {
+        "bin": "(3.5, 4.0]",
+        "n": 19,
+        "mean": -0.07765632155745103,
+        "se": 0.05536928284614843,
+        "median": -0.05386163089726814,
+        "std": 0.24134910850268115
+      },
+      {
+        "bin": "(4.0, 4.5]",
+        "n": 9,
+        "mean": -0.06064614073162492,
+        "se": 0.09627268787352351,
+        "median": -0.05754007264163796,
+        "std": 0.28881806362057055
+      },
+      {
+        "bin": "(4.5, 5.0]",
+        "n": 3,
+        "mean": 0.0299735751780581,
+        "se": 0.07502909814399918,
+        "median": 0.10460530101425913,
+        "std": 0.1299542100314783
+      }
+    ],
+    "residual_by_ml_bin_all_AB": [
+      {
+        "bin": "(0.5, 1.0]",
+        "n": 4413,
+        "mean": 0.04839145376466916,
+        "se": 0.0034108856616552013,
+        "median": 0.012276541053093837,
+        "std": 0.22658654906956346
+      },
+      {
+        "bin": "(1.0, 1.5]",
+        "n": 7279,
+        "mean": -0.006107015006913647,
+        "se": 0.0022981844555039774,
+        "median": -0.02996654111219965,
+        "std": 0.19607433128911828
+      },
+      {
+        "bin": "(1.5, 2.0]",
+        "n": 2060,
+        "mean": -0.011374849686597351,
+        "se": 0.004267691058345294,
+        "median": -0.041616006051522936,
+        "std": 0.19369864521242677
+      },
+      {
+        "bin": "(2.0, 2.5]",
+        "n": 447,
+        "mean": -0.026069546991027787,
+        "se": 0.009955742047932922,
+        "median": -0.06798412484024796,
+        "std": 0.21048802692092936
+      },
+      {
+        "bin": "(2.5, 3.0]",
+        "n": 148,
+        "mean": -0.01840815027096004,
+        "se": 0.01570377659462992,
+        "median": -0.06853290394240208,
+        "std": 0.1910446877079781
+      },
+      {
+        "bin": "(3.0, 3.5]",
+        "n": 38,
+        "mean": -0.017690238906337388,
+        "se": 0.03246115141318861,
+        "median": -0.08992359922963944,
+        "std": 0.20010397632395602
+      },
+      {
+        "bin": "(3.5, 4.0]",
+        "n": 21,
+        "mean": -0.05306820868013166,
+        "se": 0.052967125104556374,
+        "median": -0.032647200649373875,
+        "std": 0.24272586013582534
+      },
+      {
+        "bin": "(4.0, 4.5]",
+        "n": 9,
+        "mean": -0.06064614073162492,
+        "se": 0.09627268787352351,
+        "median": -0.05754007264163796,
+        "std": 0.28881806362057055
+      },
+      {
+        "bin": "(4.5, 5.0]",
+        "n": 4,
+        "mean": 0.05617939583854503,
+        "se": 0.05917286388743183,
+        "median": 0.10500232317576197,
+        "std": 0.11834572777486366
+      },
+      {
+        "bin": "(5.0, 5.5]",
+        "n": 2,
+        "mean": 0.4781060773282664,
+        "se": 0.20005115766773904,
+        "median": 0.4781060773282664,
+        "std": 0.28291506034215497
+      }
+    ],
+    "level_structure": {
+      "note": "half of the crustal fit set is the 2023 Gorj sequence, which sits low in Mw - ML. The split is largely geographic and is reported, not corrected",
+      "n_2023": 318,
+      "n_other": 345,
+      "median_residual_2023": -0.16085346790481614,
+      "median_residual_other": 0.10894256634186483,
+      "median_Mw_minus_ML_west": 0.17942801990244517,
+      "median_Mw_minus_ML_east": 0.5291827800904334,
+      "east_west_split_longitude": 24.5
+    }
+  },
+  "intermediate": {
+    "n": 889,
+    "ml_range_of_fit": [
+      2.00221626078702,
+      5.425301387383978
+    ],
+    "fit_lower_bound_ml": 2.0,
+    "validated_range_ml": [
+      2.0,
+      5.0
+    ],
+    "extrapolation_range_ml": [
+      5.0,
+      5.5
+    ],
+    "do_not_convert_above_ml": 5.5,
+    "coeffs": {
+      "a": 3.289716315920151,
+      "b": 0.7105911963359
+    },
+    "se_year_block": {
+      "a": 0.006727117788220883,
+      "b": 0.003985097324265808
+    },
+    "se_event_bootstrap": {
+      "a": 0.0027117196549086096,
+      "b": 0.004291832387027083
+    },
+    "se_year_jackknife": {
+      "a": 0.0022501757781267723,
+      "b": 0.001311804171067676
+    },
+    "se_published": "year_block",
+    "cov_year_block": [
+      [
+        4.527675211265415e-05,
+        -2.032557007314296e-05
+      ],
+      [
+        -2.032557007314296e-05,
+        1.5888945156448733e-05
+      ]
+    ],
+    "resid_std": 0.08348429721033375,
+    "resid_nmad": 0.07779754863067183,
+    "n_above_ml_3_5": 112,
+    "n_above_ml_4": 40,
+    "n_above_ml_4_5": 17,
+    "prediction": [
+      {
+        "ml": 2.0,
+        "mw": 2.579125119584251,
+        "sd_year_block": 0.010087910041068036,
+        "ci95_year_block": [
+          2.559915448611819,
+          2.6004343781100676
+        ],
+        "sd_event": 0.004345111504497001
+      },
+      {
+        "ml": 2.5,
+        "mw": 2.934420717752201,
+        "sd_year_block": 0.00833905097692009,
+        "ci95_year_block": [
+          2.918649369865758,
+          2.951572316807437
+        ],
+        "sd_event": 0.002917490775834824
+      },
+      {
+        "ml": 3.0,
+        "mw": 3.289716315920151,
+        "sd_year_block": 0.006727117788220883,
+        "ci95_year_block": [
+          3.276972898113318,
+          3.30312363489802
+        ],
+        "sd_event": 0.0027117196549086096
+      },
+      {
+        "ml": 3.5,
+        "mw": 3.6450119140881005,
+        "sd_year_block": 0.005376704996506603,
+        "ci95_year_block": [
+          3.635104165615302,
+          3.6565238435599317
+        ],
+        "sd_event": 0.003924921294207225
+      },
+      {
+        "ml": 4.0,
+        "mw": 4.00030751225605,
+        "sd_year_block": 0.004528167382535186,
+        "ci95_year_block": [
+          3.992257870767296,
+          4.010563031220447
+        ],
+        "sd_event": 0.005715461789198869
+      },
+      {
+        "ml": 4.5,
+        "mw": 4.355603110424001,
+        "sd_year_block": 0.0044766218749172125,
+        "ci95_year_block": [
+          4.3473053173182175,
+          4.36534011579816
+        ],
+        "sd_event": 0.007690117839216155
+      },
+      {
+        "ml": 5.0,
+        "mw": 4.710898708591951,
+        "sd_year_block": 0.005245616009550662,
+        "ci95_year_block": [
+          4.700352348372787,
+          4.720974947622535
+        ],
+        "sd_event": 0.009737516825014279
+      },
+      {
+        "ml": 5.5,
+        "mw": 5.0661943067599005,
+        "sd_year_block": 0.006552353132291985,
+        "ci95_year_block": [
+          5.052480175014137,
+          5.077905228301993
+        ],
+        "sd_event": 0.011819918276917517
+      }
+    ],
+    "year_jackknife": [
+      {
+        "year": 2014,
+        "n_held_out": 74,
+        "a": 3.2923408517790183,
+        "b": 0.7097639015225611,
+        "held_out_median_residual": -0.026199503682839964
+      },
+      {
+        "year": 2015,
+        "n_held_out": 88,
+        "a": 3.2929431220023786,
+        "b": 0.7083382073701455,
+        "held_out_median_residual": -0.04596990875635276
+      },
+      {
+        "year": 2016,
+        "n_held_out": 98,
+        "a": 3.292541735859886,
+        "b": 0.7088438289570985,
+        "held_out_median_residual": -0.02764561725157333
+      },
+      {
+        "year": 2017,
+        "n_held_out": 94,
+        "a": 3.2906992968774875,
+        "b": 0.7101573427175137,
+        "held_out_median_residual": -0.015923165484918567
+      },
+      {
+        "year": 2018,
+        "n_held_out": 83,
+        "a": 3.290795052848606,
+        "b": 0.7101985468450248,
+        "held_out_median_residual": -0.01755864993161005
+      },
+      {
+        "year": 2019,
+        "n_held_out": 98,
+        "a": 3.2903172274586288,
+        "b": 0.7112591595915748,
+        "held_out_median_residual": -0.006151891856738478
+      },
+      {
+        "year": 2020,
+        "n_held_out": 93,
+        "a": 3.2877235519997394,
+        "b": 0.7105697377687505,
+        "held_out_median_residual": 0.01738895915005667
+      },
+      {
+        "year": 2021,
+        "n_held_out": 71,
+        "a": 3.28622675834985,
+        "b": 0.7106041370266849,
+        "held_out_median_residual": 0.030649291588856542
+      },
+      {
+        "year": 2022,
+        "n_held_out": 71,
+        "a": 3.2880853619000434,
+        "b": 0.7114311881977217,
+        "held_out_median_residual": 0.026280590587885122
+      },
+      {
+        "year": 2023,
+        "n_held_out": 67,
+        "a": 3.2883783546750673,
+        "b": 0.7119427738156068,
+        "held_out_median_residual": 0.024773461606964364
+      },
+      {
+        "year": 2024,
+        "n_held_out": 52,
+        "a": 3.287009576458235,
+        "b": 0.7131983788505419,
+        "held_out_median_residual": 0.05736486796003892
+      }
+    ],
+    "diagnostics": {
+      "quadratic": {
+        "coeffs": [
+          3.2855304306579245,
+          0.7078228054484009,
+          0.007253814962323746
+        ],
+        "se_event": [
+          0.0027117196549086096,
+          0.004291832387027083
+        ],
+        "se_year_block": [
+          0.006155010878763533,
+          0.005936730399877798,
+          0.006999476199992454
+        ],
+        "resid_std": 0.08345260353069146,
+        "c_resolved_2sigma": false,
+        "note": "curvature is not resolved; the published relation is linear"
+      },
+      "linear_ml_ge_3": {
+        "n": 213,
+        "coeffs": [
+          3.2720213098409423,
+          0.7294795937668297
+        ],
+        "resid_std": 0.0643088740208932,
+        "mw_at_ml_4": 4.001500903607772,
+        "mw_at_ml_4_primary": 4.00030751225605,
+        "note": "agrees with the published line; no separate upper-range relation is needed"
+      }
+    },
+    "residual_by_ml_bin_fit_set": [
+      {
+        "bin": "(2.0, 2.5]",
+        "n": 470,
+        "mean": -0.0025718226472720767,
+        "se": 0.004314585432514253,
+        "median": 0.0020938334116591406,
+        "std": 0.09353798321322827
+      },
+      {
+        "bin": "(2.5, 3.0]",
+        "n": 206,
+        "mean": -0.0047351607257137595,
+        "se": 0.005305648904180559,
+        "median": -0.0017301884795521971,
+        "std": 0.07615038752792443
+      },
+      {
+        "bin": "(3.0, 3.5]",
+        "n": 101,
+        "mean": -0.017368926794399598,
+        "se": 0.006342585724750292,
+        "median": -0.021920248904549133,
+        "std": 0.06374219765003733
+      },
+      {
+        "bin": "(3.5, 4.0]",
+        "n": 72,
+        "mean": -1.6383691402912762e-05,
+        "se": 0.0066166230257603195,
+        "median": -0.006960617727280738,
+        "std": 0.056143908120842086
+      },
+      {
+        "bin": "(4.0, 4.5]",
+        "n": 23,
+        "mean": -0.005801931002254288,
+        "se": 0.014200084596486376,
+        "median": -0.011394549004113408,
+        "std": 0.06810121334153674
+      },
+      {
+        "bin": "(4.5, 5.0]",
+        "n": 15,
+        "mean": 0.011883787032920168,
+        "se": 0.025643485167942258,
+        "median": 0.015814675195509942,
+        "std": 0.09931679099415727
+      },
+      {
+        "bin": "(5.0, 5.5]",
+        "n": 2,
+        "mean": 0.06210635690177435,
+        "se": 0.019190961087043323,
+        "median": 0.06210635690177435,
+        "std": 0.027140117444270983
+      }
+    ],
+    "residual_by_ml_bin_all_AB": [
+      {
+        "bin": "(0.5, 1.0]",
+        "n": 42,
+        "mean": -0.021826503405467573,
+        "se": 0.021541371480129808,
+        "median": -0.0063085682581065505,
+        "std": 0.1396040428507996
+      },
+      {
+        "bin": "(1.0, 1.5]",
+        "n": 600,
+        "mean": -0.036004073252460425,
+        "se": 0.005756877842514255,
+        "median": -0.035812245679339494,
+        "std": 0.1410141322569442
+      },
+      {
+        "bin": "(1.5, 2.0]",
+        "n": 816,
+        "mean": -0.03083903799796605,
+        "se": 0.004229389249440698,
+        "median": -0.02526968058946588,
+        "std": 0.12081552248531724
+      },
+      {
+        "bin": "(2.0, 2.5]",
+        "n": 470,
+        "mean": -0.0025718226472720767,
+        "se": 0.004314585432514253,
+        "median": 0.0020938334116591406,
+        "std": 0.09353798321322827
+      },
+      {
+        "bin": "(2.5, 3.0]",
+        "n": 206,
+        "mean": -0.0047351607257137595,
+        "se": 0.005305648904180559,
+        "median": -0.0017301884795521971,
+        "std": 0.07615038752792443
+      },
+      {
+        "bin": "(3.0, 3.5]",
+        "n": 101,
+        "mean": -0.017368926794399598,
+        "se": 0.006342585724750292,
+        "median": -0.021920248904549133,
+        "std": 0.06374219765003733
+      },
+      {
+        "bin": "(3.5, 4.0]",
+        "n": 72,
+        "mean": -1.6383691402912762e-05,
+        "se": 0.0066166230257603195,
+        "median": -0.006960617727280738,
+        "std": 0.056143908120842086
+      },
+      {
+        "bin": "(4.0, 4.5]",
+        "n": 23,
+        "mean": -0.005801931002254288,
+        "se": 0.014200084596486376,
+        "median": -0.011394549004113408,
+        "std": 0.06810121334153674
+      },
+      {
+        "bin": "(4.5, 5.0]",
+        "n": 15,
+        "mean": 0.011883787032920168,
+        "se": 0.025643485167942258,
+        "median": 0.015814675195509942,
+        "std": 0.09931679099415727
+      },
+      {
+        "bin": "(5.0, 5.5]",
+        "n": 3,
+        "mean": 0.14676233925132612,
+        "se": 0.08537798121714849,
+        "median": 0.08129731798881767,
+        "std": 0.14787900131576245
+      },
+      {
+        "bin": "(5.5, 6.0]",
+        "n": 3,
+        "mean": 0.2237697369460753,
+        "se": 0.013645736190764765,
+        "median": 0.23442374162139146,
+        "std": 0.023635108389085967
+      }
+    ]
+  },
+  "flag_counts": {
+    "below_range": 16726,
+    "in_range": 1551,
+    "do_not_convert": 48,
+    "extrapolated": 5
+  },
+  "flag_counts_by_regime": {
+    "crustal": {
+      "below_range": 15227,
+      "in_range": 664,
+      "do_not_convert": 40,
+      "extrapolated": 3
+    },
+    "intermediate": {
+      "below_range": 1499,
+      "in_range": 887,
+      "do_not_convert": 8,
+      "extrapolated": 2
+    }
+  },
+  "flag_definition": {
+    "below_range": "ML < 2.0: the catalogue Mw is biased high there, do not convert",
+    "in_range": "inside the validated range, residual bin means near zero",
+    "extrapolated": "above the validated range, supported by a few events only",
+    "do_not_convert": "above the extrapolation range, or the event carries an amplitude quality warning: take Mw from the Mw catalogue"
+  },
+  "method_notes": "Two choices carry the fit. The ML error on the x axis is the error of the event mean, sigma_within / sqrt(n_sta) with a median of 0.05, not the station-level scatter of 0.209: the larger value over-corrects attenuation and raises the crustal slope to 0.87. The fit set is bounded in ML only, because bounding it in Mw truncates the sample at low ML and produces curvature that is not in the scales",
+  "slope_discussion": "dML/dMw is 1/b, about 1.33 (crustal) and 1.41 (intermediate), close to the Deichmann-type expectation that ML grows up to 1.5 times faster than Mw for small earthquakes, because the Wood-Anderson band lies above the corner frequency. The difference between the two scales is therefore a slope, not an offset, and the anchor fixes only the point Mw 4.0",
+  "limits": "Consistency between crustal ML and Mw above ML 4.5 cannot be tested with 2014-2024 data: no crustal event free of an amplitude quality warning exceeds ML 4.9. Above the validated range every such event has a SourceSpec Mw, which should be used directly",
+  "software": {
+    "python": "3.11.16",
+    "numpy": "1.26.4",
+    "pandas": "3.0.5",
+    "scipy": "1.13.1"
+  },
+  "settings": {
+    "bootstrap_replicates": 2000,
+    "seed": 20260921,
+    "odr": "scipy.odr orthogonal distance regression",
+    "mw_sigma_floor": 0.05
+  }
+}

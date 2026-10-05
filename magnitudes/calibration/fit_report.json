@@ -1,0 +1,589 @@
+{
+  "basis": "outputs/fit_unanchored (amplitudes, QC, -log A0 shapes/hinges, station terms, event-ML rule, saturation safeguards unchanged); this step only shifts the baseline",
+  "rule": "C = Huber intercept of (Mw - ML) on (Mw - 4.0), Mw in [3.5, 4.5], quality A/B, no saturation risk, fc >= 1.25 Hz or unknown, n_sta >= 5",
+  "fixed_point_before": {
+    "R_km": 100.0,
+    "neg_log_a0": 3.0
+  },
+  "mw_catalogue": {
+    "path": "romania_mw/outputs/Mw_catalog.csv",
+    "sha256": "0c0549300b43bd0820e31712282e8da9e6ee87fd76096db5e68c8aa887a76892",
+    "mtime_utc": "2026-09-22T05:18:11.836301+00:00",
+    "magnitude_column": "Mw (SourceSpec)"
+  },
+  "created_utc": "2026-09-22T05:22:24.371071+00:00",
+  "software": {
+    "python": "3.11.16",
+    "numpy": "1.26.4",
+    "pandas": "3.0.5",
+    "scipy": "1.13.1"
+  },
+  "settings": {
+    "huber_delta": 1.345,
+    "bootstrap_replicates": 2000,
+    "seed": 20260921,
+    "anchor_window": [
+      3.5,
+      4.5
+    ],
+    "m_star": 4.0
+  },
+  "anchor": {
+    "crustal": {
+      "C": -0.48358524059847513,
+      "slope": -0.3333803593430686,
+      "sigma": 0.038123674623698894,
+      "n": 37,
+      "mean_Mw": 3.8078491265758516,
+      "m_star": 4.0
+    },
+    "intermediate": {
+      "C": -0.3480947348219119,
+      "slope": -0.38261800122922107,
+      "sigma": 0.010813967463014412,
+      "n": 135,
+      "mean_Mw": 3.8554035540715175,
+      "m_star": 4.0
+    }
+  },
+  "anchor_pooled": {
+    "C": -0.36371759881890026,
+    "slope": -0.3898669135028222,
+    "sigma": 0.010460601331796222,
+    "n": 172,
+    "mean_Mw": 3.8451738225753576,
+    "m_star": 4.0
+  },
+  "anchor_sensitivity_to_M_star": {
+    "crustal": {
+      "M*=3.5": {
+        "C": -0.31689506092694075,
+        "slope": -0.3333803593430688,
+        "sigma": 0.0731140593221506,
+        "n": 37,
+        "mean_Mw": 3.8078491265758516,
+        "m_star": 3.5
+      },
+      "M*=4.0": {
+        "C": -0.48358524059847513,
+        "slope": -0.3333803593430686,
+        "sigma": 0.038123674623698894,
+        "n": 37,
+        "mean_Mw": 3.8078491265758516,
+        "m_star": 4.0
+      },
+      "M*=4.5": {
+        "C": -0.6502754202700103,
+        "slope": -0.3333803593430698,
+        "sigma": 0.09488300558996238,
+        "n": 37,
+        "mean_Mw": 3.8078491265758516,
+        "m_star": 4.5
+      }
+    },
+    "intermediate": {
+      "M*=3.5": {
+        "C": -0.156785734207301,
+        "slope": -0.3826180012292219,
+        "sigma": 0.012791272541870093,
+        "n": 135,
+        "mean_Mw": 3.8554035540715175,
+        "m_star": 3.5
+      },
+      "M*=4.0": {
+        "C": -0.3480947348219119,
+        "slope": -0.38261800122922107,
+        "sigma": 0.010813967463014412,
+        "n": 135,
+        "mean_Mw": 3.8554035540715175,
+        "m_star": 4.0
+      },
+      "M*=4.5": {
+        "C": -0.5394037354365219,
+        "slope": -0.38261800122922046,
+        "sigma": 0.028284598134140398,
+        "n": 135,
+        "mean_Mw": 3.8554035540715175,
+        "m_star": 4.5
+      }
+    },
+    "pooled": {
+      "M*=3.5": {
+        "C": -0.1687841420674893,
+        "slope": -0.38986691350282165,
+        "sigma": 0.014373719858671365,
+        "n": 172,
+        "mean_Mw": 3.8451738225753576,
+        "m_star": 3.5
+      },
+      "M*=4.0": {
+        "C": -0.36371759881890026,
+        "slope": -0.3898669135028222,
+        "sigma": 0.010460601331796222,
+        "n": 172,
+        "mean_Mw": 3.8451738225753576,
+        "m_star": 4.0
+      },
+      "M*=4.5": {
+        "C": -0.5586510555703081,
+        "slope": -0.3898669135028176,
+        "sigma": 0.025462989675990456,
+        "n": 172,
+        "mean_Mw": 3.8451738225753576,
+        "m_star": 4.5
+      }
+    }
+  },
+  "anchor_sensitivity_dC_dMstar": {
+    "crustal": -0.33338035934306953,
+    "intermediate": -0.38261800122922085
+  },
+  "anchor_loyo_C": {
+    "crustal": {
+      "per_year": {
+        "2014": {
+          "C": -0.49693729771057166,
+          "n_dropped": 3,
+          "n_used": 34
+        },
+        "2015": {
+          "C": -0.5063363874947594,
+          "n_dropped": 3,
+          "n_used": 34
+        },
+        "2016": {
+          "C": -0.49138372387581936,
+          "n_dropped": 1,
+          "n_used": 36
+        },
+        "2017": {
+          "C": -0.4839351614940287,
+          "n_dropped": 1,
+          "n_used": 36
+        },
+        "2018": {
+          "C": -0.48501166917166266,
+          "n_dropped": 1,
+          "n_used": 36
+        },
+        "2019": {
+          "C": -0.48164160562635006,
+          "n_dropped": 1,
+          "n_used": 36
+        },
+        "2020": {
+          "C": -0.4885440052864997,
+          "n_dropped": 4,
+          "n_used": 33
+        },
+        "2021": {
+          "C": -0.4886619053741383,
+          "n_dropped": 1,
+          "n_used": 36
+        },
+        "2022": {
+          "C": -0.49038098132916624,
+          "n_dropped": 3,
+          "n_used": 34
+        },
+        "2023": {
+          "C": -0.3861754156122467,
+          "n_dropped": 14,
+          "n_used": 23
+        },
+        "2024": {
+          "C": -0.4860685118571468,
+          "n_dropped": 5,
+          "n_used": 32
+        }
+      },
+      "C_min": -0.5063363874947594,
+      "C_max": -0.3861754156122467,
+      "jackknife_se": 0.09651515962601777,
+      "n_years": 11
+    },
+    "intermediate": {
+      "per_year": {
+        "2014": {
+          "C": -0.33932881157792233,
+          "n_dropped": 12,
+          "n_used": 123
+        },
+        "2015": {
+          "C": -0.3428752422678203,
+          "n_dropped": 17,
+          "n_used": 118
+        },
+        "2016": {
+          "C": -0.3471140116993862,
+          "n_dropped": 10,
+          "n_used": 125
+        },
+        "2017": {
+          "C": -0.3464367190649625,
+          "n_dropped": 17,
+          "n_used": 118
+        },
+        "2018": {
+          "C": -0.3474270284183259,
+          "n_dropped": 5,
+          "n_used": 130
+        },
+        "2019": {
+          "C": -0.34716887749272607,
+          "n_dropped": 16,
+          "n_used": 119
+        },
+        "2020": {
+          "C": -0.3529893503081789,
+          "n_dropped": 11,
+          "n_used": 124
+        },
+        "2021": {
+          "C": -0.35626441112441226,
+          "n_dropped": 15,
+          "n_used": 120
+        },
+        "2022": {
+          "C": -0.3482751650403025,
+          "n_dropped": 12,
+          "n_used": 123
+        },
+        "2023": {
+          "C": -0.35095096601078507,
+          "n_dropped": 13,
+          "n_used": 122
+        },
+        "2024": {
+          "C": -0.3503375823444979,
+          "n_dropped": 7,
+          "n_used": 128
+        }
+      },
+      "C_min": -0.35626441112441226,
+      "C_max": -0.33932881157792233,
+      "jackknife_se": 0.013915942255202398,
+      "n_years": 11
+    },
+    "interpretation": "the crustal constant is sequence-dependent: 2023 supplies a large share of the crustal anchor events and has a markedly different Mw - ML level, so the year-jackknife spread, not the event bootstrap, is the honest uncertainty on C_crustal"
+  },
+  "C": {
+    "crustal": -0.48358524059847513,
+    "intermediate": -0.3480947348219119
+  },
+  "C_uncertainty_budget": {
+    "crustal": {
+      "C_sigma_stat": 0.09651515962601777,
+      "stat_method": "year jackknife",
+      "C_sigma_sys": 0.1020518242554556,
+      "C_sigma_total": 0.14046263158399847
+    },
+    "intermediate": {
+      "C_sigma_stat": 0.010813967463014412,
+      "stat_method": "event bootstrap",
+      "C_sigma_sys": 0.1,
+      "C_sigma_total": 0.10058300995839772
+    },
+    "note": "C_sigma_sys is the median systematic Mw uncertainty of the anchor events; it is a common-mode shift of absolute ML. The ML->Mw conversion intercept and the validity/flag thresholds are invariant to C by construction and carry no extra term"
+  },
+  "scale_definition": {
+    "crustal": {
+      "neg_log_a0_at_100km": 2.516414759401525,
+      "formula": "ML = log10 A(mm) + (-log A0)(R) - S_j, -log A0(100 km) = 2.5164"
+    },
+    "intermediate": {
+      "neg_log_a0_at_100km": 2.651905265178088,
+      "formula": "ML = log10 A(mm) + (-log A0)(R) - S_j, -log A0(100 km) = 2.6519"
+    }
+  },
+  "events_with_ml": 18330,
+  "validation": {
+    "crustal": {
+      "n": 15077,
+      "median_ML_minus_Mw": -0.6091834762429233,
+      "median_in_Mw_3.5_4.0_bin": -0.12709780459394304,
+      "slope_ML_on_Mw": 1.0065089311886635,
+      "anchor_check_intercept_at_Mw4": 2.9543207148725696e-17,
+      "anchor_check_slope": 0.33338035934306864
+    },
+    "intermediate": {
+      "n": 2351,
+      "median_ML_minus_Mw": -0.5877487499264449,
+      "median_in_Mw_3.5_4.0_bin": -0.10821332891525959,
+      "slope_ML_on_Mw": 1.3100570232173172,
+      "anchor_check_intercept_at_Mw4": -4.547476521459729e-18,
+      "anchor_check_slope": 0.3826180012292217
+    }
+  },
+  "frequency_magnitude": {
+    "note": "anchored Mc = unanchored Mc + C on the same event set; b is invariant under the shift by construction",
+    "crustal": {
+      "unanchored": {
+        "Mc": 1.9,
+        "b": 1.2668395396997223,
+        "b_sigma": 0.019281045765615325,
+        "n": 4317
+      },
+      "anchored": {
+        "Mc": 1.416,
+        "b": 1.2668395396997223,
+        "b_sigma": 0.019281045765615325,
+        "n": 4317
+      }
+    },
+    "intermediate": {
+      "unanchored": {
+        "Mc": 2.1,
+        "b": 0.616759131768914,
+        "b_sigma": 0.016842292267223443,
+        "n": 1341
+      },
+      "anchored": {
+        "Mc": 1.752,
+        "b": 0.6167591317689142,
+        "b_sigma": 0.01684229226722345,
+        "n": 1341
+      }
+    },
+    "all_note": "pooled Mc mixes the two regimes, whose shifts differ; use the per-regime values",
+    "all": {
+      "unanchored": {
+        "Mc": 1.9,
+        "b": 0.9595143503069673,
+        "b_sigma": 0.01235642445374449,
+        "n": 6030
+      }
+    }
+  },
+  "residuals_unchanged": {
+    "all": {
+      "obs_std": 0.2583957504233181,
+      "obs_nmad": 0.1968036155138845,
+      "within_event_std": 0.20873833039974712,
+      "within_event_std_noS": 0.3667869708445137
+    },
+    "crustal": {
+      "obs_std": 0.24496017922868937,
+      "obs_nmad": 0.1862298500643064,
+      "within_event_std": 0.20364168941970137,
+      "within_event_std_noS": 0.3533334738797184
+    },
+    "intermediate": {
+      "obs_std": 0.2826030849992187,
+      "obs_nmad": 0.21799511952843348,
+      "within_event_std": 0.22560093065056197,
+      "within_event_std_noS": 0.40179792806814485
+    }
+  },
+  "loyo_unchanged": {
+    "test_events": 832.0,
+    "within_event_std_no_correction": 0.36100412834851237,
+    "within_event_std_train_corrections": 0.23341563222646333
+  },
+  "invariance_note": "station ML and event ML shift by the same C, so station residuals, within-event scatter, LOYO transport and the b-value are unchanged; Mc, the a-value, absolute ML and the conversion intercept shift",
+  "validation_only_external": {
+    "ML_ROMPLUS": {
+      "crustal": {
+        "n": 12266,
+        "median": -0.14592500646492845,
+        "std": 0.2432288091788893
+      },
+      "intermediate": {
+        "n": 2392,
+        "median": -1.0502853683590048,
+        "std": 0.31505143222624943
+      }
+    },
+    "Mw": {
+      "crustal": {
+        "n": 15909,
+        "median": -0.6179947503336676,
+        "std": 0.25583143941773495
+      },
+      "intermediate": {
+        "n": 2393,
+        "median": -0.5906996304805672,
+        "std": 0.2297976891232283
+      }
+    }
+  },
+  "largest_events": [
+    {
+      "public_id": "2018_0000140",
+      "regime": "intermediate",
+      "Mw": 5.557,
+      "ml": 5.914,
+      "ml_unanchored": 6.262,
+      "n_sta": 37,
+      "n_clipped": 2,
+      "ml_saturation_risk": true
+    },
+    {
+      "public_id": "2016_0000415",
+      "regime": "intermediate",
+      "Mw": 5.504,
+      "ml": 5.786,
+      "ml_unanchored": 6.135,
+      "n_sta": 45,
+      "n_clipped": 3,
+      "ml_saturation_risk": true
+    },
+    {
+      "public_id": "2014_0000782",
+      "regime": "crustal",
+      "Mw": 5.439,
+      "ml": 5.11,
+      "ml_unanchored": 5.594,
+      "n_sta": 39,
+      "n_clipped": 3,
+      "ml_saturation_risk": true
+    },
+    {
+      "public_id": "2016_0000850",
+      "regime": "intermediate",
+      "Mw": 5.427,
+      "ml": 5.67,
+      "ml_unanchored": 6.018,
+      "n_sta": 47,
+      "n_clipped": 1,
+      "ml_saturation_risk": true
+    },
+    {
+      "public_id": "2024_0000824",
+      "regime": "intermediate",
+      "Mw": 5.248,
+      "ml": 5.311,
+      "ml_unanchored": 5.659,
+      "n_sta": 61,
+      "n_clipped": 1,
+      "ml_saturation_risk": true
+    },
+    {
+      "public_id": "2023_0000780",
+      "regime": "crustal",
+      "Mw": 5.145,
+      "ml": 5.251,
+      "ml_unanchored": 5.734,
+      "n_sta": 19,
+      "n_clipped": 0,
+      "ml_saturation_risk": true
+    },
+    {
+      "public_id": "2022_0000708",
+      "regime": "intermediate",
+      "Mw": 5.094,
+      "ml": 5.425,
+      "ml_unanchored": 5.773,
+      "n_sta": 62,
+      "n_clipped": 2,
+      "ml_saturation_risk": false
+    },
+    {
+      "public_id": "2020_0000632",
+      "regime": "intermediate",
+      "Mw": 4.839,
+      "ml": 5.12,
+      "ml_unanchored": 5.468,
+      "n_sta": 61,
+      "n_clipped": 3,
+      "ml_saturation_risk": false
+    },
+    {
+      "public_id": "2017_0001425",
+      "regime": "intermediate",
+      "Mw": 4.835,
+      "ml": 4.827,
+      "ml_unanchored": 5.175,
+      "n_sta": 60,
+      "n_clipped": 2,
+      "ml_saturation_risk": false
+    },
+    {
+      "public_id": "2014_0001523",
+      "regime": "intermediate",
+      "Mw": 4.809,
+      "ml": 4.923,
+      "ml_unanchored": 5.271,
+      "n_sta": 55,
+      "n_clipped": 1,
+      "ml_saturation_risk": false
+    },
+    {
+      "public_id": "2023_0000080",
+      "regime": "crustal",
+      "Mw": 4.684,
+      "ml": 4.869,
+      "ml_unanchored": 5.352,
+      "n_sta": 23,
+      "n_clipped": 0,
+      "ml_saturation_risk": false
+    },
+    {
+      "public_id": "2023_0003021",
+      "regime": "crustal",
+      "Mw": 4.657,
+      "ml": 4.793,
+      "ml_unanchored": 5.277,
+      "n_sta": 25,
+      "n_clipped": 0,
+      "ml_saturation_risk": true
+    },
+    {
+      "public_id": "2017_0000069",
+      "regime": "intermediate",
+      "Mw": 4.636,
+      "ml": 4.94,
+      "ml_unanchored": 5.288,
+      "n_sta": 55,
+      "n_clipped": 1,
+      "ml_saturation_risk": false
+    },
+    {
+      "public_id": "2014_0000290",
+      "regime": "intermediate",
+      "Mw": 4.555,
+      "ml": 4.738,
+      "ml_unanchored": 5.086,
+      "n_sta": 59,
+      "n_clipped": 1,
+      "ml_saturation_risk": false
+    },
+    {
+      "public_id": "2023_0004209",
+      "regime": "intermediate",
+      "Mw": 4.539,
+      "ml": 4.677,
+      "ml_unanchored": 5.025,
+      "n_sta": 65,
+      "n_clipped": 1,
+      "ml_saturation_risk": false
+    },
+    {
+      "public_id": "2018_0000757",
+      "regime": "intermediate",
+      "Mw": 4.517,
+      "ml": 4.693,
+      "ml_unanchored": 5.041,
+      "n_sta": 54,
+      "n_clipped": 1,
+      "ml_saturation_risk": false
+    },
+    {
+      "public_id": "2018_0000576",
+      "regime": "intermediate",
+      "Mw": 4.506,
+      "ml": 4.689,
+      "ml_unanchored": 5.037,
+      "n_sta": 62,
+      "n_clipped": 0,
+      "ml_saturation_risk": false
+    }
+  ],
+  "station_terms": {
+    "n": 371,
+    "S_std": 0.37974629397920123,
+    "n_lt20_obs": 133,
+    "loyo_within_event_std_no_correction": 0.3610041283485123,
+    "loyo_within_event_std_train_corrections": 0.2334156322264633
+  }
+}

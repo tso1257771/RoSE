@@ -1,0 +1,33 @@
+parameter,value,se,se_method,unit,note
+n1_crustal,1.5851381776561506,0.0246820854695577,year jackknife,,-log A0 coefficient (unchanged by the anchor)
+n3_crustal,1.7772827573173735,0.1326094057930785,year jackknife,,-log A0 coefficient (unchanged by the anchor)
+K_crustal,0.0025607867111544,0.0001589418395698,year jackknife,,-log A0 coefficient (unchanged by the anchor)
+n_intermediate,0.8008710497711307,0.1266615602785853,year jackknife,,-log A0 coefficient (unchanged by the anchor)
+K_intermediate,0.0030583494667591,0.000287044202605,year jackknife,,-log A0 coefficient (unchanged by the anchor)
+R1_hinge_km,70.0,,,km,"crustal, fixed"
+R2_hinge_km,190.0,,,km,"crustal, fixed"
+depth_split_km,60.0,,,km,crustal / intermediate
+crustal_distance_cap_km,400.0,,,km,fit range
+neg_log_a0_at_100km_crustal,2.516414759401525,0.1404626315839984,year jackknife + Mw systematic,log10 mm,Richter fixed point 3.0 plus anchor C
+neg_log_a0_at_100km_intermediate,2.651905265178088,0.1005830099583977,event bootstrap + Mw systematic,log10 mm,Richter fixed point 3.0 plus anchor C
+C_crustal,-0.4835852405984751,0.0965151596260177,year jackknife,mag,"n=37, slope=-0.333; sequence-dependent (2023 supplies 14 of 37 anchor events)"
+C_intermediate,-0.3480947348219119,0.0108139674630144,event bootstrap,mag,"n=135, slope=-0.383"
+C_crustal_sigma_stat,0.0965151596260177,,year jackknife,mag,event bootstrap gives 0.038 and understates it
+C_crustal_sigma_sys,0.1020518242554556,,median Mw_sigma_sys,mag,common-mode systematic of absolute ML
+C_crustal_sigma_total,0.1404626315839984,,quadrature,mag,
+C_intermediate_sigma_stat,0.0108139674630144,,event bootstrap,mag,
+C_intermediate_sigma_sys,0.1,,median Mw_sigma_sys,mag,common-mode systematic of absolute ML
+C_intermediate_sigma_total,0.1005830099583977,,quadrature,mag,
+within_event_std,0.2087383303997471,,,mag,median over events
+Mc_FMD_crustal,1.416,,max curvature + 0.2,mag (anchored ML),b = 1.267
+Mc_FMD_intermediate,1.752,,max curvature + 0.2,mag (anchored ML),b = 0.617
+conversion_a_crustal,3.170165631547523,0.07213594235028013,year-block bootstrap,mag,"Mw = a + b (ML - 3), n = 663, residual std 0.206"
+conversion_b_crustal,0.753978654079147,0.015301260669983063,year-block bootstrap,,event bootstrap understates it: half of the crustal fit set is one sequence
+conversion_fit_lower_bound_ml_crustal,2.0,,,mag (anchored ML),"lower bound of the conversion fit, not Mc; below it the catalogue Mw is biased high"
+conversion_validated_max_ml_crustal,4.5,,,mag (anchored ML),residual bin means near zero to here; n(ML >= 3.5) = 31
+conversion_extrapolation_max_ml_crustal,5.0,,,mag (anchored ML),"above this, report Mw instead of converting"
+conversion_a_intermediate,3.289716315920151,0.006727117788220883,year-block bootstrap,mag,"Mw = a + b (ML - 3), n = 889, residual std 0.083"
+conversion_b_intermediate,0.7105911963359,0.003985097324265808,year-block bootstrap,,
+conversion_fit_lower_bound_ml_intermediate,2.0,,,mag (anchored ML),"lower bound of the conversion fit, not Mc; below it the catalogue Mw is biased high"
+conversion_validated_max_ml_intermediate,5.0,,,mag (anchored ML),residual bin means near zero to here; n(ML >= 3.5) = 112
+conversion_extrapolation_max_ml_intermediate,5.5,,,mag (anchored ML),"above this, report Mw instead of converting"
