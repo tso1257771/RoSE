@@ -80,6 +80,28 @@ repository. `tools/build_release_tables.py` compiles the two tables and
 `tools/repair_archive_metadata.py` brings the trace metadata up to the
 released schema.
 
+## How the files sit in the record
+
+Zenodo keeps a flat list of files, so the `rose/` directory does not survive
+the upload. That is not a problem and the archive should not be zipped.
+`rose.dataset.RoSE` takes any directory and reads the years from the `chunks`
+file, so the 23 waveform and metadata files only have to end up in one folder
+together, whatever it is called:
+
+```bash
+mkdir rose && mv chunks metadata*.csv waveforms*.hdf5 rose/
+python -c "from rose import RoSE; print(RoSE('rose'))"
+```
+
+Keeping the files separate is deliberate. Somebody who wants one year
+downloads one 8 GB file instead of all 35 GB, which a single archive would
+take away. `SHA256SUMS` therefore lists the names Zenodo serves, without a
+directory prefix, and verifies against the downloaded set as it arrives:
+
+```bash
+sha256sum -c SHA256SUMS
+```
+
 ## Record 1: the dataset
 
 Zenodo takes 50 GB per record, so the archive fits with room to spare.
