@@ -5,16 +5,17 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20250670.svg)](https://doi.org/10.5281/zenodo.20250670)
 
-> A ROMPLUS-enhanced Romanian seismic dataset for machine learning and
-> seismological applications, plus three published phase pickers benchmarked
-> on it.
+> A Romanian seismic waveform toolkit with enhanced phase labels, three
+> trained phase pickers, and a fixed benchmark.
 
-End-to-end glue for the **RoSE Romanian seismic dataset** (2014–2024) in
-[SeisBench](https://github.com/seisbench/seisbench) format: ~19,230 events and
-~416,000 picks, distributed as yearly chunks of bucketed HDF5 plus per-trace
-metadata. Built from the NIEP **ROMPLUS** catalog, relocated with hypoDD3D and
-repicked with RED-PAN. *ROMPLUS* names the source bulletin (a registered NIEP
-product); *RoSE* names the derived, ML-ready dataset that we publish.
+This repository contains software for the **RoSE Romanian seismic dataset**
+(2014–2024) in [SeisBench](https://github.com/seisbench/seisbench) format. The
+dataset has about 19,230 events and 416,000 picks in yearly waveform chunks
+with per-trace metadata. Event parameters through 2022 come from the published
+ROMPLUS catalog. The 2023–2024 event fields come from the current NIEP
+bulletin. The analyst picks, waveform windows, and response files were supplied
+separately for this study. They are not part of ROMPLUS. The data files are
+currently restricted while their redistribution terms are confirmed.
 
 This repo also ships a small ML pipeline: deterministic train/dev/test split,
 training scripts that fine-tune `seisbench.models.EQTransformer` and `PhaseNet`
@@ -252,7 +253,7 @@ push and PR (the badge at the top reflects current status).
 ## Repo layout
 
 ```
-RoSE/                              # ── the RoSE dataset + its Python API  (the repo's headline)
+RoSE/                              # ── the RoSE software toolkit
 ├── rose/                          # the importable package: RoSE loader · convert · qc · splits
 │   │                              #   + the picker loaders (pickers.load_*, checkpoint_io, redpan_inference/)
 │   └── magnitudes/                #   the released Mw and ML scales (+ the two vendored measurement packages)
@@ -276,8 +277,8 @@ RoSE/                              # ── the RoSE dataset + its Python API  (
     └── weights/                   #   regenerated artifacts (gitignored): <model>/rose.{pt,json}.v1
 ```
 
-(Everything under `data/` is gitignored *except* the compiled ROMPLUS
-catalog CSV; `outputs/`, `checkpoints/`, `phase_picking/benchmark/eval/`,
+(Everything under `data/` is gitignored. `outputs/`, `checkpoints/`,
+`phase_picking/benchmark/eval/`,
 `rose_split_index.*`, `seisbench_compat/weights/` are gitignored — see
 `.env.example` / `phase_picking/benchmark/config.json`.)
 
@@ -287,15 +288,15 @@ catalog CSV; `outputs/`, `checkpoints/`, `phase_picking/benchmark/eval/`,
 
 | Concern | Provenance |
 |---|---|
-| Event hypocenters | hypoDD3D relocations of the NIEP ROMPLUS catalog |
-| Origin time | inherited from ROMPLUS (`source_*_raw`) |
+| Event hypocenters | ROMPLUS 984–2022 or the current NIEP bulletin for 2023–2024, with hypoDD3D relocations stored separately |
+| Origin time | ROMPLUS 984–2022 or the current NIEP bulletin (`source_*_raw`) |
 | Magnitude | measured for this release (Mw, ML); see [`docs/DATASET.md`](docs/DATASET.md) |
-| Manual picks | NIEP ROMPLUS bulletins |
+| Analyst picks | supplied separately by Alexandru Mărmureanu for this study; not part of ROMPLUS and not distributed while permission is reviewed |
 | ML-assisted repicks | RED-PAN 60 s, 3 s / 5 s P / S consistency window vs. NLLoc theoretical |
 | Pick selection | higher-SNR among manual / RED-PAN; theoretical-only never used |
 | Sampling | resampled to 100 Hz on a uniform reference axis with median-pad fill |
 | Component order | **ZNE** on disk (canonical SeisBench order) |
-| Instrument response | StationXML covers **217 / 226 stations (96 %)**: 152 with full poles+zeros (FDSN-fetched), 65 with overall sensitivity only (NIEP-provided). 9 stations (1 SJ + 8 TU; 0.21 % of traces) have no public response — the metadata still carries `trace_sensitivity_{e,n,z}` for them. |
+| Instrument response | The restricted StationXML archive has files for **211 / 226 stations**. A full three-component response is available for 210,545 traces, 144 have a vertical response only, and 8,583 lack a full three-component response. |
 | Event coverage | **19 228 / 19 230** catalog events have waveforms (two excluded for missing all-three-component recordings: `2014_0001698`, `2020_0000816`). |
 
 ---
@@ -356,5 +357,9 @@ configs, and `SHA256SUMS` — is released under the **MIT License**
 
 The RoSE dataset is not included in this repository. Its Zenodo files are
 restricted while the rights holders and redistribution terms are confirmed.
-ROMPLUS is the source event catalog. It is not the source or license for the
-phase picks, waveforms, or StationXML files.
+The archived v0.1.0 and v0.3.0 code records are also restricted because their
+original source packages contained the event catalog. ROMPLUS is the source
+event catalog through 2022. It is not the source or license for the phase
+picks, waveforms, or StationXML files. Written permission should also state
+whether it covers distribution of the trained weights and numerical products
+derived from those files.

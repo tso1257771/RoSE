@@ -15,6 +15,12 @@ release. Check the archive before publication because every tracked file is
 included. Do not attach data files to the GitHub Release or the Zenodo software
 record.
 
+The archived v0.1.0 and v0.3.0 software records are temporarily restricted
+because their original source packages contained the compiled event catalog.
+The current GitHub branch and release tags no longer contain that file. Publish
+a corrected code-only Zenodo version only after checking the generated source
+archive.
+
 ## Data record
 
 The data record is restricted while the authors confirm the rights for the
