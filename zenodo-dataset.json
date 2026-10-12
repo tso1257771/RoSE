@@ -1,6 +1,6 @@
 {
   "title": "RoSE — Romanian SEismic Dataset (waveforms, picks and event catalog)",
-  "description": "Waveform dataset for machine learning and seismological work in Romania, in SeisBench format. 19,230 relocated events from 2014 to 2024, 219,272 three-component traces at 100 Hz in instrument counts, and 416,063 P and S picks that combine routine analyst picks with deep-learning repicks. The event catalog carries two magnitudes measured for this release, a moment magnitude from S-wave spectral inversion for 19,188 events and a local magnitude from Wood-Anderson amplitudes for 18,330 events, each with its uncertainty, station count and quality fields, alongside the NIEP bulletin magnitudes kept for continuity. Instrument responses are included, so the counts can be converted to ground motion. The waveforms derive from the ROMPLUS bulletin, a registered product of the National Institute for Earth Physics (NIEP), which should be cited separately. The companion toolkit, which loads these files and holds the magnitude calibration, is a separate record.",
+  "description": "This record is temporarily restricted while the authors review third-party redistribution rights. The review covers NIEP event fields for 2023 and 2024, analyst phase picks, waveform files, StationXML files, and response metadata. ROMPLUS 984-2022 is an event catalog released under CC BY 4.0. That license does not cover phase picks, waveforms, response metadata, or later NIEP products. The record will remain restricted until the applicable rights holders provide written terms and the files can be separated by license.",
   "upload_type": "dataset",
   "creators": [
     {
@@ -21,8 +21,8 @@
       "affiliation": "Department of Earth Sciences, National Cheng Kung University, Tainan, Taiwan"
     }
   ],
-  "license": "cc-by-4.0",
-  "access_right": "open",
+  "access_right": "restricted",
+  "access_conditions": "Access is not granted while third-party redistribution rights are under review.",
   "keywords": [
     "Romania",
     "Vrancea",
@@ -55,7 +55,7 @@
       "resource_type": "dataset"
     }
   ],
-  "notes": "The author list is provisional. The waveforms are a NIEP product and the relocations and magnitudes are this work, so the dataset authorship is not the toolkit author list. Settle it before publishing. The ROMPLUS bulletin behind the picks and the legacy hypocenters is CC BY 4.0 (doi:10.17632/tdfb4fgghy.2), so it is redistributed here with attribution. Funded by the European Union under the TRANSFORM² project, Grant Agreement No. 101188365 (HORIZON-INFRA-2024-DEV-01-01), and by the Seconds Matter project under SNSF-MAPS Grant Agreements No. IZ11Z0_230881 and F-RO-CH-2024-0263. ORCIDs are recorded only where known. Funding contact at the National Institute for Earth Physics: Elena-Florinela Manea, elena.manea@infp.ro.",
+  "notes": "Rights review started in October 2026. Do not reopen this record or apply a public license until the source and redistribution terms for every file have been documented. Funded by the European Union under the TRANSFORM² project, Grant Agreement No. 101188365 (HORIZON-INFRA-2024-DEV-01-01), and by the Seconds Matter project under SNSF-MAPS Grant Agreements No. IZ11Z0_230881 and F-RO-CH-2024-0263. ORCIDs are recorded only where known. Funding contact at the National Institute for Earth Physics: Elena-Florinela Manea, elena.manea@infp.ro.",
   "grants": [
     {
       "id": "10.13039/501100000780::101188365"

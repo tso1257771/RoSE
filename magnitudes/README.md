@@ -3,11 +3,11 @@
 The two magnitudes released with RoSE, the code that computed them, and the
 tables they were computed with.
 
-Using the released magnitudes needs nothing in this directory. They are
-columns of [`data/Enhanced_ROMPLUS_catalog.csv`](../data/Enhanced_ROMPLUS_catalog.csv),
-described in [`docs/MAGNITUDES.md`](../docs/MAGNITUDES.md). This directory is
-here so the values can be checked, and so the same scale can be applied to an
-earthquake the catalog does not contain.
+The magnitude fields are described in
+[`docs/MAGNITUDES.md`](../docs/MAGNITUDES.md). The combined event table is not
+distributed from this repository while its redistribution rights are reviewed.
+This directory contains the calibration tables and code needed to check the
+values and apply the same scales to another earthquake.
 
 | Path | Contents |
 |---|---|
@@ -46,7 +46,8 @@ unchanged from their own repositories, so a reader can see what was run. Their
 | `usgs_cross_validation.csv`, `Mw_validation.yaml` | comparison with USGS Mww/Mwr, reported and not fitted |
 | `fit_report.json`, `conversion_report.json`, `validation_extra.json` | the full run records, including the sensitivity tests |
 
-`tests/test_magnitudes.py` checks these tables against the released catalog.
+`tests/test_magnitudes.py` checks these tables against a local event table when
+that table is available.
 
 ## Rerunning the drivers
 
@@ -114,10 +115,9 @@ residual standard deviation within 3e-10, and the same `mw_from_ml_flag` for
 all 18,330 events. That is the level of the difference between SciPy builds
 above, and no converted magnitude changes at two decimals.
 
-The `release` stage does not reproduce
-[`data/Enhanced_ROMPLUS_catalog.csv`](../data/Enhanced_ROMPLUS_catalog.csv)
-byte for byte. It reads the working tree copy of the release catalog, whose
-latitude, longitude and depth are given to 4 decimals. The committed file keeps
-those columns from the earlier release, with latitude and longitude to 6
-decimals, and takes only the eight magnitude columns from the driver output.
-Those columns are identical in the two files.
+The release calculation does not reproduce the local combined event table byte
+for byte. It reads the working copy of the event table, whose latitude,
+longitude, and depth are given to 4 decimals. The final table keeps those
+columns from the earlier calculation, with latitude and longitude to 6
+decimals. It takes only the eight magnitude columns from the driver output.
+Those columns are identical in the two tables.

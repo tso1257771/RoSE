@@ -44,13 +44,12 @@ lines, so `run_sourcespec.py` now reads the shipped copies. `SS_CONFIG` and
 
 [`docs/MAGNITUDES.md`](../../docs/MAGNITUDES.md) is a copy of
 `MAGNITUDE_COLUMNS.md` edited by hand, not a driver output. No step reproduces
-the repository's [`data/Enhanced_ROMPLUS_catalog.csv`](../../data/Enhanced_ROMPLUS_catalog.csv)
-byte for byte either: the release driver reads the working tree copy of the
-release catalogue, whose latitude, longitude and depth are given to 4 decimals,
-and the committed file keeps those columns from the earlier release, with
-latitude and longitude to 6 decimals, and takes only the eight magnitude
-columns from the driver output. Those eight columns are identical in the two
-files.
+the local combined event table byte for byte. The release driver reads the
+working copy of the event table, whose latitude, longitude, and depth are given
+to 4 decimals. The final table keeps those columns from the earlier
+calculation, with latitude and longitude to 6 decimals, and takes only the
+eight magnitude columns from the driver output. Those eight columns are
+identical in the two tables.
 
 ## Method
 

@@ -13,26 +13,16 @@
 
 ## Source tables
 
-Two compiled CSV tables drive `convert_all`. Both are released under MIT
-along with the rest of the toolkit; the underlying ROMPLUS bulletin
-remains a registered NIEP product and should be cited separately
-(see the root `README.md`).
+`convert_all` requires an event table and a phase pick table. These tables are
+not distributed from this repository or as GitHub release assets while their
+redistribution rights are reviewed. Users must provide local copies that they
+are authorized to use. The published ROMPLUS 984--2022 release covers event
+catalog fields. It does not include phase picks, waveforms, or response files.
 
-| File | Size | Rows | Distribution |
-|---|---:|---:|---|
-| `data/Enhanced_ROMPLUS_catalog.csv` | 3.5 MB | 19 230 events | committed to the repo; supplies the released magnitudes to `rose.convert` (override with `--catalog-csv`) |
-| `data/Enhanced_ROMPLUS_picks.csv` | 77 MB | 416 063 picks | GitHub Release asset, attached to each tagged release |
-
-Fetch the picks file once per checkout (replace `vX.Y.Z` with the tag
-you cloned, or `latest` for the newest):
-
-```bash
-mkdir -p data
-curl -fL -o data/Enhanced_ROMPLUS_picks.csv \
-    https://github.com/tso1257771/RoSE/releases/download/vX.Y.Z/Enhanced_ROMPLUS_picks.csv
-```
-
-(The release page also lists a SHA256 to verify against.)
+By default, the code looks for the local files
+`data/Enhanced_ROMPLUS_catalog.csv` and
+`data/Enhanced_ROMPLUS_picks.csv`. Use `--catalog-csv` to give another event
+table path.
 
 ## Hierarchy
 

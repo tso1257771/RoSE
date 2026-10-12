@@ -1,6 +1,6 @@
-# Magnitudes in `data/Enhanced_ROMPLUS_catalog.csv`
+# Magnitude fields produced for the RoSE event table
 
-The catalogue is the RoSE release event list with two measured magnitudes added,
+The local event table contains two measured magnitudes,
 19,188 events with Mw and 18,330 with ML out of 19,230.
 The two scales are reported separately. ML is anchored to Mw at Mw 4.0, so at that
 magnitude the difference between them is zero by construction and is not a check.

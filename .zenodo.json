@@ -1,6 +1,6 @@
 {
   "title": "RoSE — Romanian SEismic Dataset Toolkit",
-  "description": "Python toolkit, three published phase pickers (EQT-RoSE, PhaseNet-RoSE, RED-PAN-60s), the benchmark pipeline that scores them, and the RoSE Romanian earthquake catalog. Since v0.3.0 the toolkit carries rose.magnitudes, the released magnitude scales with their calibration tables, and the catalog carries magnitudes measured for this release: a moment magnitude from S-wave spectral inversion for 19,188 events and a local magnitude from Wood-Anderson amplitudes for 18,330 events, each with its quality fields, alongside the NIEP bulletin magnitudes kept for continuity. The waveform archive itself is distributed separately, as a dataset record under doi:10.5281/zenodo.23153184.",
+  "description": "Python toolkit for the RoSE dataset, including three trained phase pickers (EQT-RoSE, PhaseNet-RoSE, and RED-PAN-60s), their benchmark code, and the magnitude calculation code and calibration tables. Catalog, pick, waveform, and StationXML files are not included. The related dataset record, doi:10.5281/zenodo.23153184, is restricted while third-party redistribution rights are reviewed.",
   "upload_type": "software",
   "creators": [
     {

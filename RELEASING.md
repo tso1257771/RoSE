@@ -4,7 +4,9 @@
 > with its own DOI, and [`docs/ZENODO.md`](docs/ZENODO.md) covers both, what
 > goes in each and the order they have to be published in.
 
-Each public release mints (a) a tagged git commit, (b) a GitHub Release with the 77 MB picks CSV attached, and (c) a Zenodo software DOI via the `tso1257771/RoSE` ↔ Zenodo integration. Steps:
+Each public release mints a tagged git commit, a GitHub Release, and a Zenodo
+software DOI through the `tso1257771/RoSE` to Zenodo integration. Data files
+must not be attached while third-party redistribution rights are under review.
 
 1. **Pre-flight gate**
    - `pytest tests/ -q` green; `python -m ruff check rose/ tests/ phase_picking/` clean.
@@ -24,7 +26,6 @@ Each public release mints (a) a tagged git commit, (b) a GitHub Release with the
 3. **GitHub Release**
    - Web UI → Releases → "Draft a new release" → pick the tag.
    - Title: `vX.Y.Z — <short description>`. Body: a few lines paraphrasing the changelog since the previous tag.
-   - Drag-and-drop `data/Enhanced_ROMPLUS_picks.csv` (77 MB) into the binary-asset area. Optionally add a `.sha256` sidecar.
    - Click "Publish release".
 
 4. **Zenodo software DOI** (auto, if GitHub→Zenodo integration is on at `zenodo.org/account/settings/github/`)
@@ -44,16 +45,9 @@ The toolkit can ship a software DOI before the data Zenodo record exists. The cr
 
 ## What the Zenodo record actually contains
 
-As of v0.1.0 the record holds exactly one file, the GitHub-generated source
-archive `tso1257771/RoSE-v0.1.0.zip` (8.88 MB). Nothing was uploaded by hand,
-so the automatic route reproduces the record faithfully. Two consequences:
-
-* **GitHub Release *assets* do not reach Zenodo.** The integration archives the
-  repository source only. The 77 MB `Enhanced_ROMPLUS_picks.csv` attached in
-  step 3 lives on GitHub alone. To give it a DOI, add it to the Zenodo draft by
-  hand in step 4 before publishing.
-* Everything committed to the repository, including
-  `data/Enhanced_ROMPLUS_catalog.csv`, is inside the archive automatically.
+The software record contains the GitHub source archive. Do not attach catalog,
+pick, waveform, or response files to the GitHub Release or the Zenodo software
+record unless the corresponding redistribution rights have been documented.
 
 ## Concept DOI vs version DOI
 
@@ -108,7 +102,6 @@ only superseded by a further version.
 
 ## Scope of this record
 
-This record is the **toolkit**: the code, the bundled pickers, and the event
-catalog. It is not the waveform dataset, and it is not the ROMPLUS bulletin.
-Keep the title and description saying so, so it is never mistaken for a
-competing release of the source catalog.
+This record is the **toolkit**: the code, bundled pickers, benchmark results,
+and calibration tables. It does not include the event catalog, phase pick
+tables, waveform files, StationXML files, or the ROMPLUS release.

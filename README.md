@@ -69,18 +69,10 @@ Optional extras: `.[bench]` adds `scikit-learn` for the benchmark scripts;
 `.[tf]` adds `tensorflow` for the RED-PAN-60s picker; `.[dev]` adds `pytest`
 and `ruff`.
 
-The 35 GB published waveform dataset (`data/rose/`) and the 80 MB StationXML
-response archive (`data/rose_stationxml/`) are distributed separately on
-Zenodo — **not** in this repo. Mount or symlink them at `./data/rose/` and
-`./data/rose_stationxml/` after cloning, or set the `ROSE_DATA_DIR` /
-`ROSE_STATIONXML_DIR` environment variables.
-
-The two compiled ROMPLUS source tables are versioned here:
-`data/Enhanced_ROMPLUS_catalog.csv` (3.5 MB, 19 230 events) is committed
-to the repo, and `data/Enhanced_ROMPLUS_picks.csv` (77 MB, 416 063 picks)
-ships as a GitHub Release asset on each tagged version. See
-[`docs/DATASET.md`](docs/DATASET.md) for the download recipe and the
-native HDF5 schema both files feed into.
+The waveform files, StationXML files, and compiled catalog and pick tables are
+not distributed from this repository while third-party redistribution rights
+are reviewed. The code can read local copies that the user is authorized to
+use. See [`docs/DATASET.md`](docs/DATASET.md) for the expected file formats.
 
 ---
 
@@ -228,8 +220,8 @@ and [`phase_picking/models/README.md`](phase_picking/models/README.md).
 ## Docker
 
 A reproducible CPU image is provided. The tutorials read the dataset path from
-`ROSE_DATA_DIR` (default `/data` inside the image). Mount the dataset and run
-any tutorial directly:
+`ROSE_DATA_DIR` (default `/data` inside the image). Mount a local copy that you
+are authorized to use and run any tutorial directly:
 
 ```bash
 docker build -t rose:cpu .
@@ -237,8 +229,8 @@ docker run --rm -it -v $(pwd)/data/rose:/data:ro \
     rose:cpu python 01_load_and_browse.py
 ```
 
-The 35 GB `data/` directory is excluded from the image (`.dockerignore`) —
-always mount it as a volume.
+The local `data/` directory is excluded from the image (`.dockerignore`). Mount
+it as a volume.
 
 ---
 
@@ -330,9 +322,12 @@ is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
 GitHub's "Cite this repository" sidebar renders the same info from
 [`CITATION.cff`](CITATION.cff).
 
-**Dataset** — the RoSE dataset bundle has its own Zenodo record
-(DOI to be added once the data deposit is published). Cite the
-**ROMPLUS** source bulletin (NIEP) alongside it.
+**Dataset.** The RoSE dataset record
+([`10.5281/zenodo.23153184`](https://doi.org/10.5281/zenodo.23153184)) is
+restricted while third-party redistribution rights are reviewed. The ROMPLUS
+984--2022 citation applies to the event catalog fields from that release. It
+does not apply to phase picks, waveforms, response metadata, or later NIEP
+products.
 
 **Model architectures** the bundled pickers extend: RED-PAN —
 Liao et al. 2022; SeisBench — Woollam et al. 2022; PhaseNet —
@@ -359,14 +354,7 @@ bundled model weights (`*.pt` / `*.hdf5`), the examples, tests, docs,
 configs, and `SHA256SUMS` — is released under the **MIT License**
 ([`LICENSE`](LICENSE)).
 
-The **RoSE dataset itself** — the SeisBench-format waveforms +
-per-trace metadata that the toolkit consumes — is distributed
-separately from this repo. Its licensing terms are set by the dataset's
-rights holders and stated in the dataset's own record (Zenodo, DOI to
-be added at release); see the [Citation](#citation) section below.
-Third-party StationXML responses under `data/rose_stationxml/` carry
-their providers' terms (FDSN data centres / NIEP).
-
-The dataset is derived from the NIEP **ROMPLUS** bulletin (a registered
-NIEP product). Cite ROMPLUS in addition to the dataset record when you
-use the data.
+The RoSE dataset is not included in this repository. Its Zenodo files are
+restricted while the rights holders and redistribution terms are confirmed.
+ROMPLUS is the source event catalog. It is not the source or license for the
+phase picks, waveforms, or StationXML files.
