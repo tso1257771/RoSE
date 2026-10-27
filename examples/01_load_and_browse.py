@@ -48,8 +48,11 @@ def main():
     print(meta["trace_name"], "shape", wf.shape)
 
     sr = float(meta["trace_sampling_rate_hz"])
-    p = int(meta["trace_p_arrival_sample"])
-    s = int(meta["trace_s_arrival_sample"])
+    p = meta["trace_p_arrival_sample"]
+    s = meta["trace_s_arrival_sample"]
+    # A missing pick is NaN (dataset version 2 on); -1 skips its marker below.
+    p = int(p) if np.isfinite(p) else -1
+    s = int(s) if np.isfinite(s) else -1
 
     t = np.arange(wf.shape[1]) / sr
     fig, axes = plt.subplots(3, 1, figsize=(11, 6), sharex=True)

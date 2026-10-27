@@ -43,7 +43,7 @@ unchanged from their own repositories, so a reader can see what was run. Their
 | `ml_minus_mw_by_bin.csv` | ML minus Mw in bins of Mw |
 | `conversion_residuals_by_ml_bin.csv` | conversion residuals in bins of ML, which is what the validated range is read from |
 | `clipped_fraction_by_magnitude.csv` | share of amplitudes clipped, against magnitude |
-| `usgs_cross_validation.csv`, `Mw_validation.yaml` | comparison with USGS Mww/Mwr, reported and not fitted |
+| `usgs_cross_validation.csv`, `Mw_validation.yaml` | comparison with USGS Mww/Mwr, reported and not fitted. The CSV holds the USGS values only; the catalog origin time, location and ML are left out while the redistribution rights are reviewed |
 | `fit_report.json`, `conversion_report.json`, `validation_extra.json` | the full run records, including the sensitivity tests |
 
 `tests/test_magnitudes.py` checks these tables against a local event table when

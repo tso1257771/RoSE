@@ -123,6 +123,10 @@ def _str_or_none(v):
     return None if (not s or s.lower() in ("nan", "none")) else s
 
 
+def _sample_or_minus1(v):
+    return int(v) if np.isfinite(v) else -1     # no pick is NaN from dataset version 2 on
+
+
 class StationXMLCache:
     def __init__(self, root):
         self.root = Path(root)
@@ -164,8 +168,8 @@ def load_event(data, event_id):
         info_list.append({
             "idx": int(idx), "network": net, "station": sta,
             "band": band, "sr": sr, "starttime": starttime,
-            "p_sample": int(meta["trace_p_arrival_sample"]),
-            "s_sample": int(meta["trace_s_arrival_sample"]),
+            "p_sample": _sample_or_minus1(meta["trace_p_arrival_sample"]),
+            "s_sample": _sample_or_minus1(meta["trace_s_arrival_sample"]),
             "p_utc": obspy.UTCDateTime(p_utc) if p_utc else None,
             "s_utc": obspy.UTCDateTime(s_utc) if s_utc else None,
             "p_status": _str_or_none(meta["trace_p_status"]),

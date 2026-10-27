@@ -103,8 +103,12 @@ def process(row: dict) -> dict:
                snr=np.nan, epoch_start="", status="", clipped=False,
                n_horizontals=2, stuck_e=False, stuck_n=False)
     try:
-        p_idx = int(row["trace_p_arrival_sample"])
-        s_idx = int(row["trace_s_arrival_sample"])
+        p_raw, s_raw = row["trace_p_arrival_sample"], row["trace_s_arrival_sample"]
+        if not (np.isfinite(p_raw) and np.isfinite(s_raw)):   # no pick: NaN from dataset version 2 on
+            out["status"] = "no_ps"
+            return out
+        p_idx = int(p_raw)
+        s_idx = int(s_raw)
         if p_idx < 0 or s_idx < 0 or s_idx - p_idx < 1:
             out["status"] = "no_ps"
             return out

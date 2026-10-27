@@ -38,6 +38,24 @@ NIEP products. Files received from a collaborator may be published only when
 the collaborator or the rights holder confirms the redistribution terms in
 writing.
 
+## Data record versions
+
+The concept DOI [`10.5281/zenodo.23153183`](https://doi.org/10.5281/zenodo.23153183)
+always resolves to the newest version. Zenodo lists the versions without
+version names:
+
+| Version | DOI | Published | Changes |
+|---|---|---|---|
+| 1 | [`10.5281/zenodo.23153184`](https://doi.org/10.5281/zenodo.23153184) | 2026-10-05 | earthquake traces (chunks `2014` … `2024`), event catalog, picks and StationXML |
+| 2 | [`10.5281/zenodo.23495039`](https://doi.org/10.5281/zenodo.23495039) | 2026-10-20 | adds the noise chunks `noise2014` … `noise2024`; the earthquake metadata leave missing picks empty instead of `-1` and give every time stamp fractional seconds. Its noise metadata do not match its noise waveforms, so do not use its noise chunks |
+| 3 | [`10.5281/zenodo.23681945`](https://doi.org/10.5281/zenodo.23681945) | 2026-10-27 | replaces the 11 noise metadata files, `waveformsnoise2014.hdf5` and `waveformsnoise2016.hdf5`, so the noise metadata match the noise waveforms; the other 36 files are those of version 2 |
+
+The `chunks` file of versions 2 and 3 lists the year chunks and the noise
+chunks. Toolkit v0.4.0 and later load only the earthquake traces unless
+`include_noise=True` is passed. Older toolkit versions load every chunk in the
+file; pass them `chunks=[str(y) for y in range(2014, 2025)]` to keep the noise
+out.
+
 ## Release check
 
 Before publishing or reopening a data record:

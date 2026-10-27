@@ -35,6 +35,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPO_ROOT))
 
 from rose.checkpoint_io import safe_torch_load  # noqa: E402
+from rose.dataset import RoSE  # noqa: E402
 
 import numpy as np
 import torch
@@ -89,7 +90,8 @@ class Config:
 
 
 def build_dataset(cfg: Config) -> tuple[sbd.WaveformDataset, sbd.WaveformDataset]:
-    data = sbd.WaveformDataset(
+    # RoSE leaves the noise chunks out and returns the published "val" split as dev.
+    data = RoSE(
         path=cfg.rose_dir,
         sampling_rate=cfg.sampling_rate,
         component_order=cfg.component_order,

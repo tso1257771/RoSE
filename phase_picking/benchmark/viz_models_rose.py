@@ -34,7 +34,6 @@ import numpy as np
 from obspy import UTCDateTime
 from scipy.signal import find_peaks
 
-import seisbench.data as sbd
 import seisbench.models as sbm
 
 _THIS_DIR = Path(__file__).resolve().parent          # phase_picking/benchmark/
@@ -42,6 +41,7 @@ REPO_ROOT = _THIS_DIR.parent.parent          # repo root (phase_picking/benchmar
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(_THIS_DIR))                    # sibling bench_* + redpan_inference
 from rose.checkpoint_io import safe_torch_load  # noqa: E402
+from rose.dataset import RoSE  # noqa: E402
 
 from bench_pickers_rose import trace_to_stream, parse_true_picks  # noqa: E402
 
@@ -270,7 +270,8 @@ def main() -> None:
     if args.bandpass_low <= 0 or args.bandpass_high <= 0:
         bandpass = None
 
-    data = sbd.WaveformDataset(
+    # RoSE leaves the noise chunks out of the test split.
+    data = RoSE(
         path=args.rose_dir, sampling_rate=100,
         component_order="ZNE", cache=None,
     )

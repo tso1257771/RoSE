@@ -1,24 +1,27 @@
 {
   "title": "RoSE — Romanian SEismic Dataset Toolkit",
-  "description": "Python toolkit for the RoSE dataset, including three trained phase pickers (EQT-RoSE, PhaseNet-RoSE, and RED-PAN-60s), their benchmark code, and the magnitude calculation code and calibration tables. Catalog, pick, waveform, and StationXML files are not included. The related dataset record, doi:10.5281/zenodo.23153184, is restricted while third-party redistribution rights are reviewed.",
+  "description": "Python toolkit for the RoSE dataset, including three trained phase pickers (EQT-RoSE, PhaseNet-RoSE, and RED-PAN-60s), their benchmark code, and the magnitude calculation code and calibration tables. Catalog, pick, waveform, and StationXML files are not included. The related dataset record, doi:10.5281/zenodo.23153183 (all versions), is restricted while third-party redistribution rights are reviewed.",
   "upload_type": "software",
   "creators": [
     {
       "name": "Liao, Wu-Yu",
-      "affiliation": "Department of Earth Sciences, National Cheng Kung University, Tainan, Taiwan",
+      "affiliation": "Institute of Earth Sciences, Academia Sinica, Taipei, Taiwan",
       "orcid": "0000-0003-2353-7006"
     },
     {
       "name": "Manea, Elena-Florinela",
-      "affiliation": "National Institute for Earth Physics, Măgurele, Romania"
+      "affiliation": "National Institute for Earth Physics, Măgurele, Romania",
+      "orcid": "0000-0002-0938-8617"
     },
     {
       "name": "Mărmureanu, Alexandru",
-      "affiliation": "National Institute for Earth Physics, Măgurele, Romania"
+      "affiliation": "National Institute for Earth Physics, Măgurele, Romania",
+      "orcid": "0000-0002-2181-4471"
     },
     {
       "name": "Lee, En-Jui",
-      "affiliation": "Department of Earth Sciences, National Cheng Kung University, Tainan, Taiwan"
+      "affiliation": "Department of Earth Sciences, National Cheng Kung University, Tainan, Taiwan",
+      "orcid": "0000-0003-1545-1640"
     }
   ],
   "license": "MIT",
@@ -57,7 +60,7 @@
       "resource_type": "dataset"
     },
     {
-      "identifier": "10.5281/zenodo.23153184",
+      "identifier": "10.5281/zenodo.23153183",
       "relation": "isSupplementTo",
       "scheme": "doi",
       "resource_type": "dataset"

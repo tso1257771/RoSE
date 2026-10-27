@@ -127,9 +127,10 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="report, write nothing")
     args = ap.parse_args()
 
-    metas = sorted(args.archive.glob("metadata*.csv"))
+    # the earthquake tables only: the noise tables (metadatanoise{YEAR}.csv) have no event to join
+    metas = sorted(args.archive.glob("metadata20??.csv"))
     if not metas:
-        print(f"no metadata*.csv under {args.archive}", file=sys.stderr)
+        print(f"no metadata{{YEAR}}.csv under {args.archive}", file=sys.stderr)
         return 2
 
     mag = magnitude_frame(load_catalog(args.catalog_csv))

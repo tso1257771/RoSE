@@ -14,21 +14,24 @@ authors:
   - family-names: "Liao"
     given-names: "Wu-Yu"
     orcid: "https://orcid.org/0000-0003-2353-7006"
-    affiliation: "Department of Earth Sciences, National Cheng Kung University, Tainan, Taiwan"
+    affiliation: "Institute of Earth Sciences, Academia Sinica, Taipei, Taiwan"
   - family-names: "Manea"
     given-names: "Elena-Florinela"
+    orcid: "https://orcid.org/0000-0002-0938-8617"
     affiliation: "National Institute for Earth Physics, Măgurele, Romania"
   - family-names: "Mărmureanu"
     given-names: "Alexandru"
+    orcid: "https://orcid.org/0000-0002-2181-4471"
     affiliation: "National Institute for Earth Physics, Măgurele, Romania"
   - family-names: "Lee"
     given-names: "En-Jui"
+    orcid: "https://orcid.org/0000-0003-1545-1640"
     affiliation: "Department of Earth Sciences, National Cheng Kung University, Tainan, Taiwan"
 repository-code: "https://github.com/tso1257771/RoSE"
 url: "https://github.com/tso1257771/RoSE"
 license: MIT
-version: v0.3.0
-date-released: 2026-10-05
+version: v0.4.0
+date-released: 2026-10-28
 # Concept DOI: always resolves to the newest version. Prefer it in prose.
 doi: "10.5281/zenodo.20250669"
 identifiers:
@@ -55,7 +58,9 @@ keywords:
 references:
   - type: data
     title: "RoSE — Romanian SEismic Dataset (waveforms, picks and event catalog)"
-    doi: "10.5281/zenodo.23153184"
+    # concept DOI (all versions); version 3, 10.5281/zenodo.23681945, is the
+    # first whose noise metadata match the noise waveforms
+    doi: "10.5281/zenodo.23153183"
     authors:
       - family-names: "Liao"
         given-names: "Wu-Yu"

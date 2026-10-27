@@ -82,6 +82,16 @@ def _int(value: Any, default: int = -1) -> int:
         return default
 
 
+def _pick_sample(value: Any) -> float:
+    """Sample index of a pick as float; NaN for the -1 "no pick" sentinel.
+
+    Other negative values are kept: they are picks shortly before the trace
+    start (``trace_*_in_window`` is False for them).
+    """
+    sample = _int(value, default=-1)
+    return np.nan if sample == -1 else float(sample)
+
+
 def _split_station_id(station_id: str) -> tuple[str, str, str, str]:
     """Split 'NET.STA.LOC.BAND' (BAND has 2 chars, channel = BAND + comp)."""
     parts = station_id.split(".")
@@ -125,12 +135,10 @@ def _build_metadata(
         "trace_component_order": COMPONENT_ORDER,
         "trace_units": "counts",
         # Picks (standard SeisBench names)
-        "trace_p_arrival_sample": _int(
-            _attr(station_attrs, "p_arrival_sample"), default=-1
-        ),
-        "trace_s_arrival_sample": _int(
-            _attr(station_attrs, "s_arrival_sample"), default=-1
-        ),
+        # NaN when there is no pick: SeisBench's labellers treat NaN as "no
+        # arrival", whereas -1 would be read as an onset at sample 0.
+        "trace_p_arrival_sample": _pick_sample(_attr(station_attrs, "p_arrival_sample")),
+        "trace_s_arrival_sample": _pick_sample(_attr(station_attrs, "s_arrival_sample")),
         "trace_p_arrival_time": _attr(station_attrs, "p_arrival_utc"),
         "trace_s_arrival_time": _attr(station_attrs, "s_arrival_utc"),
         "trace_p_status": _attr(station_attrs, "pick_source_p"),

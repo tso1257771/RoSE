@@ -154,3 +154,6 @@ credentials*.json
 # training output). Small enough to version with the code.
 !phase_picking/models/**/*.pt
 !phase_picking/models/**/*.hdf5
+
+# Zenodo API token. Never leaves this machine.
+zenodo/

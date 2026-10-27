@@ -13,9 +13,35 @@ waveforms{YEAR}.hdf5, plus a ``chunks`` index file).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from seisbench.data.base import WaveformDataset
+
+NOISE_PREFIX = "noise"        # noise chunks are noise2014 ... noise2024
+DEV_SPLITS = ("dev", "val")   # SeisBench's name for the validation split, and the published one
+
+
+def select_chunks(path: Union[str, Path], *, include_noise: bool = False) -> list[str]:
+    """Chunk names of the dataset in ``path``.
+
+    The names come from ``<path>/chunks`` or, without that file, from the
+    ``metadata{chunk}.csv`` and ``waveforms{chunk}.hdf5`` file names, as
+    SeisBench finds them. From dataset version 2 on there are also noise
+    chunks (``noise2014`` … ``noise2024``, ``trace_category == "noise"``).
+    They are left out unless ``include_noise`` is true, so a plain
+    ``RoSE(path)`` keeps returning the earthquake traces only. Raises
+    ``ValueError`` when that leaves no chunk.
+    """
+    names = WaveformDataset.available_chunks(path)
+    if include_noise:
+        return names
+    quakes = [name for name in names if not name.startswith(NOISE_PREFIX)]
+    if not quakes:
+        raise ValueError(
+            f"{path} has only noise chunks ({', '.join(names)}); "
+            "pass include_noise=True to load them."
+        )
+    return quakes
 
 
 class RoSE(WaveformDataset):
@@ -30,6 +56,19 @@ class RoSE(WaveformDataset):
         different one.
     sampling_rate : float, optional
         Resample on read to this rate (Hz). Defaults to native 100 Hz.
+    include_noise : bool, optional
+        Also load the noise chunks (``noise{YEAR}``, 100 s windows without
+        detected arrivals). Use dataset version 3 or later: the noise
+        metadata of version 2 do not match its noise waveforms. Off by
+        default, so the earthquake traces alone are returned, as with
+        dataset version 1. Select one class afterwards, in place, with
+        ``data.filter(data.metadata.trace_category == "noise")``.
+    chunks : list of str, optional
+        Explicit chunk names, e.g. ``[f"noise{y}" for y in range(2014, 2025)]``
+        for the noise alone; overrides ``include_noise``.
+
+    The published metadata call the validation split ``val``, SeisBench calls
+    it ``dev``; ``dev()`` and ``train_dev_test()`` take both.
     """
 
     def __init__(
@@ -37,6 +76,9 @@ class RoSE(WaveformDataset):
         path,
         component_order: Optional[str] = None,
         sampling_rate: Optional[float] = None,
+        *,
+        include_noise: bool = False,
+        chunks: Optional[list[str]] = None,
         **kwargs,
     ):
         path = Path(path)
@@ -45,13 +87,22 @@ class RoSE(WaveformDataset):
                 f"Dataset directory not found: {path}. "
                 "Run rose.convert.convert_all first."
             )
+        if chunks is None:
+            chunks = select_chunks(path, include_noise=include_noise)
         super().__init__(
             path=path,
             name="RoSE",
             component_order=component_order,
             sampling_rate=sampling_rate,
+            chunks=chunks,
             **kwargs,
         )
+
+    def dev(self):
+        """Validation split: the traces whose ``split`` is ``dev`` or ``val``."""
+        if "split" not in self.metadata.columns:
+            raise ValueError("Split requested but no split defined in metadata")
+        return self.filter(self.metadata["split"].isin(DEV_SPLITS).to_numpy(), inplace=False)
 
     def get_sample_physical(self, idx: int):
         """Return waveforms in physical units (M/S or M/S**2) for trace `idx`.

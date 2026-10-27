@@ -70,6 +70,11 @@ def _str_or_none(v):
     return s
 
 
+def _sample_or_minus1(v):
+    """Return a pick sample as int, or -1 if there is no pick (NaN)."""
+    return int(v) if np.isfinite(v) else -1
+
+
 def load_event_stream(data: RoSE, event_id: str):
     """Reconstruct an ObsPy Stream + per-station catalog meta for one event."""
     md = data.metadata
@@ -116,8 +121,8 @@ def load_event_stream(data: RoSE, event_id: str):
             "network": net,
             "ref_start": starttime,
             "sr": sr,
-            "p_sample": int(meta["trace_p_arrival_sample"]),
-            "s_sample": int(meta["trace_s_arrival_sample"]),
+            "p_sample": _sample_or_minus1(meta["trace_p_arrival_sample"]),
+            "s_sample": _sample_or_minus1(meta["trace_s_arrival_sample"]),
             "p_utc": _str_or_none(meta["trace_p_arrival_time"]),
             "s_utc": _str_or_none(meta["trace_s_arrival_time"]),
             "wf_z_idx": list(data.component_order).index("Z"),

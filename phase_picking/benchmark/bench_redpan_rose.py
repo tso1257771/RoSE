@@ -47,6 +47,7 @@ _THIS_DIR = Path(__file__).resolve().parent          # phase_picking/benchmark/
 REPO_ROOT = _THIS_DIR.parent.parent          # repo root (phase_picking/benchmark -> ..)
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(_THIS_DIR))                    # sibling bench_* + redpan_inference
+from rose.dataset import RoSE  # noqa: E402
 
 # Import metric helpers from the SeisBench bench script for parity.
 from bench_pickers_rose import (  # noqa: E402
@@ -487,7 +488,8 @@ def main() -> None:
 
     configure_tf_memory_growth(intra_threads=args.tf_threads or None)
 
-    data = sbd.WaveformDataset(
+    # RoSE leaves the noise chunks out of the test split.
+    data = RoSE(
         path=cfg.rose_dir, sampling_rate=cfg.sampling_rate,
         component_order=cfg.component_order, cache=None,
     )

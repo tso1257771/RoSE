@@ -3,7 +3,7 @@
 [![tests](https://github.com/tso1257771/RoSE/actions/workflows/tests.yml/badge.svg)](https://github.com/tso1257771/RoSE/actions/workflows/tests.yml)
 [![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://github.com/tso1257771/RoSE/blob/main/pyproject.toml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20250670.svg)](https://doi.org/10.5281/zenodo.20250670)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20250669.svg)](https://doi.org/10.5281/zenodo.20250669)
 
 > A Romanian seismic waveform toolkit with enhanced phase labels, three
 > trained phase pickers, and a fixed benchmark.
@@ -11,7 +11,10 @@
 This repository contains software for the **RoSE Romanian seismic dataset**
 (2014–2024) in [SeisBench](https://github.com/seisbench/seisbench) format. The
 dataset has about 19,230 events and 416,000 picks in yearly waveform chunks
-with per-trace metadata. Event parameters through 2022 come from the published
+with per-trace metadata, plus 89,693 noise windows of 100 s from the same
+stations in chunks `noise{YEAR}` (dataset version 3 and later; see
+[`docs/SEISBENCH_FORMAT.md`](docs/SEISBENCH_FORMAT.md#noise-chunks)). Event
+parameters through 2022 come from the published
 ROMPLUS catalog. The 2023–2024 event fields come from the current NIEP
 bulletin. The analyst picks, waveform windows, and response files were supplied
 separately for this study. They are not part of ROMPLUS. The data files are
@@ -89,6 +92,10 @@ wf_counts, meta = data.get_sample(0)            # raw counts, shape (3, npts)
 wf_phys,   meta = data.get_sample_physical(0)   # M/S or M/S**2; divides by per-trace
                                                 # sensitivity, raises on missing response
 ```
+
+`RoSE(path)` returns the earthquake traces. To load the noise windows as well,
+pass `include_noise=True` and select a class on `trace_category`; for the noise
+alone pass `chunks=[f"noise{y}" for y in range(2014, 2025)]`.
 
 Disk format: **counts**, ZNE, 100 Hz; physical units derive per trace from
 `trace_sensitivity_{e,n,z}` columns. ~4 % of traces have no usable response
@@ -241,7 +248,7 @@ The unit suite exercises the `rose` package directly (no large dataset needed):
 
 ```bash
 pip install -e ".[dev]"
-pytest tests/ -q          # 50 tests
+pytest tests/ -q          # 123 tests
 ```
 
 `tests/test_splits.py` pins the deterministic split partition bit-for-bit.
@@ -303,17 +310,18 @@ RoSE/                              # ── the RoSE software toolkit
 
 ## Citation
 
-**Toolkit (this repository) — v0.3.0.** Cite the concept DOI
+**Toolkit (this repository) — v0.4.0.** Cite the concept DOI
 [`10.5281/zenodo.20250669`](https://doi.org/10.5281/zenodo.20250669), which always
-resolves to the newest version, and name the version you used. The v0.1.0 record
-is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
+resolves to the newest version, and name the version you used. The v0.3.0 record
+is [`10.5281/zenodo.23157260`](https://doi.org/10.5281/zenodo.23157260), and the v0.1.0
+record is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
 
 ```bibtex
 @software{liao_rose_2026,
-  author    = {Liao, Wu-Yu},
+  author    = {Liao, Wu-Yu and Manea, Elena-Florinela and M{\u a}rmureanu, Alexandru and Lee, En-Jui},
   title     = {{RoSE — Romanian SEismic Dataset Toolkit}},
   year      = 2026,
-  version   = {v0.3.0},
+  version   = {v0.4.0},
   publisher = {Zenodo},
   doi       = {10.5281/zenodo.20250669},
   url       = {https://doi.org/10.5281/zenodo.20250669}
@@ -323,8 +331,10 @@ is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
 GitHub's "Cite this repository" sidebar renders the same info from
 [`CITATION.cff`](CITATION.cff).
 
-**Dataset.** The RoSE dataset record
-([`10.5281/zenodo.23153184`](https://doi.org/10.5281/zenodo.23153184)) is
+**Dataset.** The RoSE dataset record (concept DOI
+[`10.5281/zenodo.23153183`](https://doi.org/10.5281/zenodo.23153183), which
+resolves to the newest version; the versions are listed in
+[`docs/ZENODO.md`](docs/ZENODO.md#data-record-versions)) is
 restricted while third-party redistribution rights are reviewed. The ROMPLUS
 984--2022 citation applies to the event catalog fields from that release. It
 does not apply to phase picks, waveforms, response metadata, or later NIEP

@@ -7,7 +7,8 @@ asserts that:
   - per-trace values match the synthetic input,
   - sensitivity / unit / status fields round-trip from the physical HDF5,
   - the ZNE waveform stack is in the correct order on disk,
-  - the chunks manifest is updated.
+  - the chunks manifest is updated,
+  - a missing pick is written as NaN.
 """
 from __future__ import annotations
 
@@ -402,3 +403,41 @@ def test_convert_year_overwrite_guard(synthetic_year):
             bucket_size=1024,
             overwrite=False,
         )
+
+
+def test_pick_sample_turns_the_no_pick_sentinel_into_nan():
+    from rose.convert import _pick_sample
+
+    assert np.isnan(_pick_sample(-1))
+    assert np.isnan(_pick_sample(None))
+    assert _pick_sample(1500) == 1500.0
+    assert _pick_sample(-25) == -25.0      # a pick just before the trace start is kept
+
+
+def test_convert_year_writes_nan_for_missing_picks(synthetic_year):
+    """-1 and an absent attribute become NaN; a pick before the trace start keeps its value."""
+    from rose import convert_year
+
+    counts, physical, out_dir, catalog = synthetic_year
+    with h5py.File(counts, "r+") as h5:
+        h5["2099_0000001/waveforms/RO.MLR..BH"].attrs["p_arrival_sample"] = -1
+        del h5["2099_0000001/waveforms/RO.BZS..BH"].attrs["s_arrival_sample"]
+        early = h5["2099_0000002/waveforms/RO.MLR..BH"].attrs
+        early["p_arrival_sample"] = -25
+        early["p_arrival_in_trace"] = False
+    convert_year(
+        src_h5=str(counts),
+        out_dir=str(out_dir),
+        chunk_label="2099",
+        physical_h5=str(physical),
+        catalog_csv=str(catalog),
+        bucket_size=1024,
+        overwrite=True,
+    )
+    df = pd.read_csv(out_dir / "metadata2099.csv").set_index("trace_name_original")
+    p, s = df["trace_p_arrival_sample"], df["trace_s_arrival_sample"]
+    assert np.isnan(p["2099_0000001_RO.MLR..BH"])
+    assert np.isnan(s["2099_0000001_RO.BZS..BH"])
+    assert p["2099_0000002_RO.MLR..BH"] == -25.0
+    assert not df.loc["2099_0000002_RO.MLR..BH", "trace_p_in_window"]
+    assert p["2099_0000002_RO.BZS..BH"] == 1500.0 and s["2099_0000002_RO.BZS..BH"] == 3000.0

@@ -1,8 +1,10 @@
 """Count picks emitted on STEAD-noise per (model, phase, threshold).
 
-Designed to slot into the RoSE benchmark: RoSE has no native noise,
-so we use STEAD's 23,526 noise traces as the "no-event" set. For each
-model we run the same SeisBench-API inference path and tally:
+Designed to slot into the RoSE benchmark. RoSE had no noise of its own
+when the benchmark was run, so we use STEAD's 23,526 noise traces as the
+"no-event" set (the RoSE noise chunks, added in dataset version 2, are not
+read here). For each model we run the same SeisBench-API inference path
+and tally:
     n_traces_evaluated
     n_traces_with_any_pick          (T1 false positive rate at trace level)
     total_picks_emitted_above_thr   (per-phase, per-threshold)

@@ -13,8 +13,9 @@ Implementation notes
   metadata is dropped. Pick positions are recovered from the Gaussian
   ``y`` channels produced by ``ProbabilisticLabeller`` (argmax + max-height
   threshold).
-* RoSE has only ``trace_category == 'earthquake_local'``. T1 needs
-  negatives — synthesised here from the **post-event coda** window
+* Only the earthquake traces are read (``RoSE`` leaves out the noise
+  chunks, which this script does not use). T1 needs negatives —
+  synthesised here from the **post-event coda** window
   ``[s_arrival + post_event_margin, +model_window]``. Pure pre-event noise
   is not viable: typical P arrivals sit at sample ~3000, leaving < 6000
   samples of lead-in. Coda windows still contain seismic energy but
@@ -36,6 +37,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPO_ROOT))
 
 from rose.checkpoint_io import safe_torch_load  # noqa: E402
+from rose.dataset import RoSE  # noqa: E402
 
 import numpy as np
 import torch
@@ -43,7 +45,6 @@ from scipy.signal import find_peaks
 from sklearn.metrics import f1_score, matthews_corrcoef, roc_auc_score
 from torch.utils.data import DataLoader
 
-import seisbench.data as sbd
 import seisbench.generate as sbg
 import seisbench.models as sbm
 
@@ -288,7 +289,8 @@ def build_noise_array(
     For traces where (trace_npts - s_arrival) >= post_event_margin +
     model_window, slice [s_arrival + margin : s_arrival + margin + W].
     """
-    data = sbd.WaveformDataset(
+    # RoSE leaves the noise chunks out of the test split.
+    data = RoSE(
         path=rose_dir,
         sampling_rate=train_cfg["sampling_rate"],
         component_order=train_cfg["component_order"],
@@ -365,7 +367,8 @@ def compute_t1(det_event: np.ndarray, det_noise: np.ndarray,
             "n_noise": int(score_noise.size),
             "f1": float("nan"),
             "auc": float("nan"),
-            "note": "T1 not evaluated: RoSE has no noise traces. "
+            "note": "T1 not evaluated: no negative windows (this script does not "
+                    "read the RoSE noise chunks). "
                     "Post-event coda (within EQT's S+1.4*(S-P) detection-positive "
                     "label range) is not a valid negative; pure pre-event lead-in "
                     "is too short for a 60 s window. Pass --skip-t1 to suppress.",
@@ -396,7 +399,8 @@ def compute_t1(det_event: np.ndarray, det_noise: np.ndarray,
 
 def build_event_loader(rose_dir: str, train_cfg: dict, cfg: EvalConfig
                        ) -> DataLoader:
-    data = sbd.WaveformDataset(
+    # RoSE leaves the noise chunks out of the test split.
+    data = RoSE(
         path=rose_dir,
         sampling_rate=train_cfg["sampling_rate"],
         component_order=train_cfg["component_order"],
