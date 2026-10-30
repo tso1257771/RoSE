@@ -56,6 +56,15 @@ Both stage scripts also take `--config FILE` and overrides: `--rose-dir`,
 `--results-dir`, `--update-results` (build_leaderboard), `--skip-rose`,
 `--skip-stead` — see `--help`.
 
+A killed run can be started again with the same command: the three long
+passes resume (`--resume`; the RoSE PyTorch pass reuses every finished
+`<model>.json`, the two RED-PAN passes their `<model>.partial.json`). The RoSE
+passes also write one pick file per model, `<model>.preds.csv`, with every
+pick near each labelled phase, its pick provenance (`manual` or `repick`) and
+the source depth; `build_subset_tables.py --eval-dir eval` turns them into the
+manual-only and depth-stratified tables (`--out-csv` writes the manual-only
+table, published as `../results/rose_picking_manual_only.csv`).
+
 ## What's in here
 
 | file | role |
@@ -67,11 +76,37 @@ Both stage scripts also take `--config FILE` and overrides: `--rose-dir`,
 | `bench_pickers_rose.py` / `bench_redpan_rose.py` / `bench_noise_fp.py` / `bench_stead_test.py` | the inference *stage implementations* `run_inference.py` calls per (model, dataset) — not run directly |
 | `build_rose_final_benchmark.py` / `build_rose_residual_stats.py` / `build_stead_full_benchmark.py` | the aggregation *stage implementations* `build_leaderboard.py` calls (each also prints its threshold-0.30 leaderboard table to stdout) |
 | `_pipeline.py` | shared config-loading / subprocess helpers for the two stage scripts |
+| `_classify.py` | runs SeisBench `classify` on one shared event loop; `classify()` itself starts a new loop and worker threads per call, which on a GPU leaks about 0.5 MB of host memory per trace |
+| `build_subset_tables.py` | standalone: scores the manual-only labels and depth bins from the per-label pick files (`eval/*/<model>.preds.csv`, written by the RoSE passes with `--dump-predictions`) |
 | `build_test_indices.py` | regenerate the pinned `data/*_index.csv` |
 | `data/` | the pinned test-set index CSVs (which traces make up each test set) |
 | `eval_eqt_rose.py` | standalone: an EQT-only eval in the Münchmeyer-2022 / Section-3 "3 tasks" format (T1/T2/T3) — *not* part of the pipeline; the pipeline already produces equivalent T1/T2/T3 numbers for all 9 models |
 | `bench_joint_rose.py` | standalone: picking metrics under detector-*gated* operation vs the un-gated baseline |
+| `export_rose_noise.py` / `build_rose_noise_benchmark.py` | standalone: the RoSE-noise leg below — RoSE false positives counted on RoSE noise windows instead of STEAD noise |
 | `viz_models_rose.py` | standalone: record-section comparison plots |
+
+## RoSE-noise leg (standalone)
+
+The leaderboard counts RoSE false positives on STEAD noise, because RoSE had
+no noise set when it was made. Dataset version 3 adds 100-s noise windows, and
+three steps recount the false positives on the 13,317 test-split windows:
+
+```bash
+python phase_picking/benchmark/export_rose_noise.py --rose-dir "$ROSE_DATA_DIR" --out-dir /path/to/rose_noise_test_60s
+python phase_picking/benchmark/bench_noise_fp.py --noise-dir /path/to/rose_noise_test_60s \
+    --out-dir phase_picking/benchmark/eval/bench_noise_fp_rose
+python phase_picking/benchmark/build_rose_noise_benchmark.py --update-results
+```
+
+The export keeps the middle 60 s (20–80 s) of each window (`--window-s` to
+change it) in the STEAD noise layout. `bench_noise_fp.py` runs all nine models
+(`--models` for some of them); RED-PAN-60s needs TensorFlow, and
+`--device cuda` runs the eight PyTorch models on a GPU with TF32 off, so their
+probabilities match the CPU ones — run the two groups as separate calls into
+the same `--out-dir` if one environment lacks TensorFlow or CUDA. The last step
+takes the event side from `../results/rose_picking.csv` and `rose_detection.csv`
+and writes three CSVs, documented with the published numbers in
+[`../results/README.md`](../results/README.md).
 
 The five leaderboard CSVs and their human-readable tables are documented in
 [`../results/README.md`](../results/README.md). For just *using* a published

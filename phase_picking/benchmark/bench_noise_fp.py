@@ -1,10 +1,12 @@
-"""Count picks emitted on STEAD-noise per (model, phase, threshold).
+"""Count picks emitted on noise traces per (model, phase, threshold).
 
 Designed to slot into the RoSE benchmark. RoSE had no noise of its own
-when the benchmark was run, so we use STEAD's 23,526 noise traces as the
-"no-event" set (the RoSE noise chunks, added in dataset version 2, are not
-read here). For each model we run the same SeisBench-API inference path
-and tally:
+when the benchmark was run, so the published tables use STEAD's 23,526
+noise traces as the "no-event" set. The RoSE noise windows (dataset
+version 3 on) can be counted the same way: export_rose_noise.py writes
+them in the STEAD noise layout, pass that folder as --noise-dir, and
+build_rose_noise_benchmark.py rescores the leaderboard with them. For
+each model we run the same SeisBench-API inference path and tally:
     n_traces_evaluated
     n_traces_with_any_pick          (T1 false positive rate at trace level)
     total_picks_emitted_above_thr   (per-phase, per-threshold)
@@ -40,6 +42,7 @@ REPO_ROOT = _THIS_DIR.parent.parent          # repo root (phase_picking/benchmar
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(_THIS_DIR))                    # for `redpan_inference`
 from rose.checkpoint_io import safe_torch_load  # noqa: E402
+from _classify import classify  # noqa: E402  one event loop for every classify() call
 
 
 logger = logging.getLogger("bench_noise_fp")
@@ -82,8 +85,8 @@ def apply_bandpass(stream: Stream, low: float, high: float) -> Stream:
 
 
 def predict_seisbench(model, stream: Stream, base_thr: float):
-    out = model.classify(stream, P_threshold=base_thr,
-                         S_threshold=base_thr, detection_threshold=base_thr)
+    out = classify(model, stream, P_threshold=base_thr,
+                   S_threshold=base_thr, detection_threshold=base_thr)
     return [
         {"phase": str(getattr(p, "phase", "")).upper(),
          "peak_value": float(getattr(p, "peak_value", 0.0))}
@@ -107,7 +110,7 @@ def evaluate_noise(model, model_kind, components, noise_df, wf_dir,
                    per_sample_csv: Path | None = None,
                    model_name: str = "",
                    shard: int = 0, total_shards: int = 1):
-    """Evaluate one model on STEAD noise.
+    """Evaluate one model on the noise traces.
 
     If total_shards > 1, this process handles only indices where
     (i % total_shards) == shard. Per-sample CSV file is suffixed with
@@ -220,10 +223,14 @@ def evaluate_noise(model, model_kind, components, noise_df, wf_dir,
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--stead-dir", default=(str(STEAD_DEFAULT) if STEAD_DEFAULT else None))
+    ap.add_argument("--noise-dir", "--stead-dir", dest="noise_dir",
+                    default=(str(STEAD_DEFAULT) if STEAD_DEFAULT else None),
+                    help="folder with metadata_noise.csv + noise_waveforms/ "
+                         "(STEAD's test set, or export_rose_noise.py output); "
+                         "default $STEAD_DIR")
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--num-noise", type=int, default=0,
-                    help="0 = use full 23,526 noise traces.")
+                    help="0 = every noise trace in the folder.")
     ap.add_argument("--bandpass-low", type=float, default=1.0)
     ap.add_argument("--bandpass-high", type=float, default=45.0)
     ap.add_argument("--sweep-thresholds",
@@ -236,17 +243,25 @@ def main() -> None:
         "redpan",
     ])
     ap.add_argument("--eqt-rose-ckpt",
-        default=str(REPO_ROOT / "models" / "eqt_rose" / "eqt_rose.pt"))
+        default=str(REPO_ROOT / "phase_picking" / "models" / "eqt_rose" / "eqt_rose.pt"))
     ap.add_argument("--phasenet-rose-ckpt",
-        default=str(REPO_ROOT / "models" / "phasenet_rose" / "phasenet_rose.pt"))
+        default=str(REPO_ROOT / "phase_picking" / "models" / "phasenet_rose" / "phasenet_rose.pt"))
     ap.add_argument("--redpan-tf",
-        default=str(REPO_ROOT / "models" / "redpan_tf60" / "train.hdf5"))
+        default=str(REPO_ROOT / "phase_picking" / "models" / "redpan_tf60" / "train.hdf5"))
     ap.add_argument("--tf-threads", type=int, default=2)
+    ap.add_argument("--device", default="cpu",
+                    help="torch device for the eight PyTorch models (RED-PAN runs on "
+                         "the CPU); on CUDA, TF32 is switched off so the "
+                         "probabilities match the CPU ones")
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--total-shards", type=int, default=1)
     args = ap.parse_args()
-    if args.stead_dir is None:
-        ap.error("--stead-dir is required (or set the STEAD_DIR environment variable)")
+    if args.noise_dir is None:
+        ap.error("--noise-dir is required (or set the STEAD_DIR environment variable)")
+    if args.device.startswith("cuda"):
+        # cuDNN convolutions default to TF32, which moved EQT probabilities by up to 0.05
+        torch.backends.cudnn.allow_tf32 = False
+        torch.backends.cuda.matmul.allow_tf32 = False
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -265,12 +280,12 @@ def main() -> None:
                          for x in args.sweep_thresholds.split(",")
                          if x.strip()})
 
-    stead_dir = Path(args.stead_dir)
-    noise_df = pd.read_csv(stead_dir / "metadata_noise.csv", low_memory=False)
-    nz_wf_dir = stead_dir / "noise_waveforms"
+    noise_dir = Path(args.noise_dir)
+    noise_df = pd.read_csv(noise_dir / "metadata_noise.csv", low_memory=False)
+    nz_wf_dir = noise_dir / "noise_waveforms"
     n_noise = args.num_noise if args.num_noise > 0 else len(noise_df)
-    logger.info("STEAD noise: %d traces total, evaluating %d",
-                len(noise_df), min(n_noise, len(noise_df)))
+    logger.info("noise set %s: %d traces total, evaluating %d",
+                noise_dir, len(noise_df), min(n_noise, len(noise_df)))
 
     pretrained_map = {
         "eqt_ethz": (sbm.EQTransformer, "ethz"),
@@ -293,7 +308,7 @@ def main() -> None:
                     phases=["P", "S"], norm="peak")
                 m.load_state_dict(state["model"])
                 m.norm = "peak"
-                m.to("cpu").eval()
+                m.to(args.device).eval()
                 kind, comps = "seisbench", "ZNE"
             elif model_id == "phasenet_rose":
                 state = safe_torch_load(args.phasenet_rose_ckpt, map_location="cpu")
@@ -301,12 +316,12 @@ def main() -> None:
                                  default_args={"blinding": (200, 200)})
                 m.load_state_dict(state["model"])
                 m.norm = "peak"
-                m.to("cpu").eval()
+                m.to(args.device).eval()
                 kind, comps = "seisbench", "ZNE"
             elif model_id in pretrained_map:
                 cls, weight = pretrained_map[model_id]
                 m = cls.from_pretrained(weight)
-                m.to("cpu").eval()
+                m.to(args.device).eval()
                 kind, comps = "seisbench", "ZNE"
             elif model_id == "redpan":
                 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
