@@ -23,8 +23,10 @@ archive.
 
 ## Data record
 
-The data record is restricted while the authors confirm the rights for the
-following material:
+The data record's files are restricted until the RoSE data paper is
+accepted. The authors plan to release version 3 under CC BY 4.0 at that time,
+after NIEP confirms in writing that this license covers the following
+material:
 
 - NIEP event fields for 2023 and 2024
 - analyst phase picks

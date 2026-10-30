@@ -18,7 +18,8 @@ parameters through 2022 come from the published
 ROMPLUS catalog. The 2023–2024 event fields come from the current NIEP
 bulletin. The analyst picks, waveform windows, and response files were supplied
 separately for this study. They are not part of ROMPLUS. The data files are
-currently restricted while their redistribution terms are confirmed.
+restricted until the RoSE data paper is accepted. The authors plan to release
+them under CC BY 4.0 at that time.
 
 This repo also ships a small ML pipeline: deterministic train/dev/test split,
 training scripts that fine-tune `seisbench.models.EQTransformer` and `PhaseNet`
@@ -74,9 +75,10 @@ Optional extras: `.[bench]` adds `scikit-learn` for the benchmark scripts;
 and `ruff`.
 
 The waveform files, StationXML files, and compiled catalog and pick tables are
-not distributed from this repository while third-party redistribution rights
-are reviewed. The code can read local copies that the user is authorized to
-use. See [`docs/DATASET.md`](docs/DATASET.md) for the expected file formats.
+not part of this repository. They are in the RoSE data record
+([`10.5281/zenodo.23153183`](https://doi.org/10.5281/zenodo.23153183)), whose
+files are restricted until the RoSE data paper is accepted. The code can read
+local copies that the user is authorized to use. See [`docs/DATASET.md`](docs/DATASET.md) for the expected file formats.
 
 ---
 
@@ -309,14 +311,14 @@ RoSE/                              # ── the RoSE software toolkit
 | Pick selection | higher-SNR among manual / RED-PAN; theoretical-only never used |
 | Sampling | resampled to 100 Hz on a uniform reference axis with median-pad fill |
 | Component order | **ZNE** on disk (canonical SeisBench order) |
-| Instrument response | The restricted StationXML archive has files for **211 / 226 stations**. A full three-component response is available for 210,545 traces, 144 have a vertical response only, and 8,583 lack a full three-component response. |
+| Instrument response | The StationXML archive in the data record has files for **211 / 226 stations**. A full three-component response is available for 210,545 traces, 144 have a vertical response only, and 8,583 lack a full three-component response. |
 | Event coverage | **19 228 / 19 230** catalog events have waveforms (two excluded for missing all-three-component recordings: `2014_0001698`, `2020_0000816`). |
 
 ---
 
 ## Citation
 
-**Toolkit (this repository) — v0.4.1.** Cite the concept DOI
+**Toolkit (this repository) — v0.4.2.** Cite the concept DOI
 [`10.5281/zenodo.20250669`](https://doi.org/10.5281/zenodo.20250669), which always
 resolves to the newest version, and name the version you used. The v0.4.1 record
 is [`10.5281/zenodo.23786822`](https://doi.org/10.5281/zenodo.23786822), the v0.4.0 record
@@ -329,7 +331,7 @@ record is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
   author    = {Liao, Wu-Yu and Manea, Elena-Florinela and M{\u a}rmureanu, Alexandru and Lee, En-Jui},
   title     = {{RoSE — Romanian SEismic Dataset Toolkit}},
   year      = 2026,
-  version   = {v0.4.1},
+  version   = {v0.4.2},
   publisher = {Zenodo},
   doi       = {10.5281/zenodo.20250669},
   url       = {https://doi.org/10.5281/zenodo.20250669}
@@ -342,11 +344,12 @@ GitHub's "Cite this repository" sidebar renders the same info from
 **Dataset.** The RoSE dataset record (concept DOI
 [`10.5281/zenodo.23153183`](https://doi.org/10.5281/zenodo.23153183), which
 resolves to the newest version; the versions are listed in
-[`docs/ZENODO.md`](docs/ZENODO.md#data-record-versions)) is
-restricted while third-party redistribution rights are reviewed. The ROMPLUS
-984--2022 citation applies to the event catalog fields from that release. It
-does not apply to phase picks, waveforms, response metadata, or later NIEP
-products.
+[`docs/ZENODO.md`](docs/ZENODO.md#data-record-versions)) has its files
+restricted until the RoSE data paper is accepted. The authors plan to release
+them under CC BY 4.0 at that time. The ROMPLUS 984--2022 citation applies to
+the event catalog fields from that release. It does not apply to phase picks,
+waveforms, response metadata, or later NIEP products. Please also cite the
+networks that recorded the earthquake waveforms: RO ([`10.7914/SN/RO`](https://doi.org/10.7914/SN/RO)), GE ([`10.14470/TR560404`](https://doi.org/10.14470/TR560404)), BS ([`10.7914/SN/BS`](https://doi.org/10.7914/SN/BS)), MD ([`10.7914/SN/MD`](https://doi.org/10.7914/SN/MD)), SJ ([`10.7914/SN/SJ`](https://doi.org/10.7914/SN/SJ)), HU ([`10.14470/UH028726`](https://doi.org/10.14470/UH028726)), MN ([`10.13127/SD/fBBBtDtd6q`](https://doi.org/10.13127/SD/fBBBtDtd6q)), KO ([`10.7914/SN/KO`](https://doi.org/10.7914/SN/KO)), TU ([`10.7914/SN/TU`](https://doi.org/10.7914/SN/TU)) and CZ ([`10.7914/SN/CZ`](https://doi.org/10.7914/SN/CZ)).
 
 **Model architectures** the bundled pickers extend: RED-PAN —
 Liao et al. 2022; SeisBench — Woollam et al. 2022; PhaseNet —
@@ -374,7 +377,8 @@ configs, and `SHA256SUMS` — is released under the **MIT License**
 ([`LICENSE`](LICENSE)).
 
 The RoSE dataset is not included in this repository. Its Zenodo files are
-restricted while the rights holders and redistribution terms are confirmed.
+restricted until the RoSE data paper is accepted. The authors plan to release
+them under CC BY 4.0 at that time.
 The archived v0.1.0 and v0.3.0 code records are also restricted because their
 original source packages contained the event catalog. ROMPLUS is the source
 event catalog through 2022. It is not the source or license for the phase

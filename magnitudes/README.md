@@ -4,8 +4,9 @@ The two magnitudes released with RoSE, the code that computed them, and the
 tables they were computed with.
 
 The magnitude fields are described in
-[`docs/MAGNITUDES.md`](../docs/MAGNITUDES.md). The combined event table is not
-distributed from this repository while its redistribution rights are reviewed.
+[`docs/MAGNITUDES.md`](../docs/MAGNITUDES.md). The combined event table is in
+the RoSE data record on Zenodo, not in this repository. Its files are
+restricted until the RoSE data paper is accepted.
 This directory contains the calibration tables and code needed to check the
 values and apply the same scales to another earthquake.
 
@@ -43,7 +44,7 @@ unchanged from their own repositories, so a reader can see what was run. Their
 | `ml_minus_mw_by_bin.csv` | ML minus Mw in bins of Mw |
 | `conversion_residuals_by_ml_bin.csv` | conversion residuals in bins of ML, which is what the validated range is read from |
 | `clipped_fraction_by_magnitude.csv` | share of amplitudes clipped, against magnitude |
-| `usgs_cross_validation.csv`, `Mw_validation.yaml` | comparison with USGS Mww/Mwr, reported and not fitted. The CSV holds the USGS values only; the catalog origin time, location and ML are left out while the redistribution rights are reviewed |
+| `usgs_cross_validation.csv`, `Mw_validation.yaml` | comparison with USGS Mww/Mwr, reported and not fitted. The CSV holds the USGS values only; the catalog origin time, location and ML are in the RoSE event table |
 | `fit_report.json`, `conversion_report.json`, `validation_extra.json` | the full run records, including the sensitivity tests |
 
 `tests/test_magnitudes.py` checks these tables against a local event table when

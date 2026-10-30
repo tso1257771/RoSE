@@ -6,7 +6,7 @@
 
 Each public release mints a tagged git commit, a GitHub Release, and a Zenodo
 software DOI through the `tso1257771/RoSE` to Zenodo integration. Data files
-must not be attached while third-party redistribution rights are under review.
+belong in the separate dataset record and must not be attached here.
 
 1. **Pre-flight gate**
    - `pytest tests/ -q` green; `python -m ruff check rose/ tests/ phase_picking/` clean.

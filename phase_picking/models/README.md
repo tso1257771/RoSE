@@ -155,4 +155,5 @@ the Python loaders in `rose.pickers`, this README, the model cards
 above, and `SHA256SUMS` — is released under the repository-root **MIT**
 [`LICENSE`](../../LICENSE). The dataset the weights were trained on is
 distributed separately under its own terms; please cite the dataset
-record (DOI TBD) and the architecture paper for each model you use.
+record ([`10.5281/zenodo.23153183`](https://doi.org/10.5281/zenodo.23153183))
+and the architecture paper for each model you use.

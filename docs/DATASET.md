@@ -14,9 +14,10 @@
 ## Source tables
 
 `convert_all` requires an event table and a phase pick table. These tables are
-not distributed from this repository or as GitHub release assets while their
-redistribution rights are reviewed. Users must provide local copies that they
-are authorized to use. The published ROMPLUS 984--2022 release covers event
+not part of this repository or its GitHub releases. They are in the RoSE
+data record on Zenodo, whose files are restricted until the RoSE data paper is
+accepted. Until then, users must provide local copies that they are authorized
+to use. The published ROMPLUS 984--2022 release covers event
 catalog fields. It does not include phase picks, waveforms, or response files.
 
 By default, the code looks for the local files

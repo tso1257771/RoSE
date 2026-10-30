@@ -1,9 +1,8 @@
 # ---------------------------------------------------------------------------
 # Project data & generated artifacts
 # ---------------------------------------------------------------------------
-# Waveforms, response files, and compiled catalog and pick tables are not
-# distributed from this repository while third-party redistribution rights
-# are reviewed.
+# Waveforms, response files, and compiled catalog and pick tables are in the
+# Zenodo data record, not in this repository.
 data/*
 
 # Run outputs: figures, per-event tables, MiniSEED exports.
