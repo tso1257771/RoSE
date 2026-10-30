@@ -187,11 +187,17 @@ the raw CSVs are `phase_picking/results/*.csv`.
 
 | Pool  | Best phase-pick F1 (P / S)        | Best event-detection F1                  |
 |---|---|---|
-| **RoSE**  | **RED-PAN-60s** 0.822 / 0.782     | **EQT-RoSE** 0.977 (MCC 0.945)           |
-| **STEAD** | **RED-PAN-60s** 0.972 / 0.980     | **EQT-stead** 0.998; **EQT-RoSE** 0.991  |
+| **RoSE**  | **RED-PAN-60s** 0.826 / 0.827     | **EQT-RoSE** 0.973 (MCC 0.942)           |
+| **STEAD** | **RED-PAN-60s** 0.974 (P); **PhaseNet-stead** 0.983 (S) | **EQT-stead** 0.998; **EQT-RoSE** 0.991  |
 
 (Produced by `bash phase_picking/benchmark/regenerate_results.sh` →
 `phase_picking/results/*.csv`; see [`phase_picking/benchmark/README.md`](phase_picking/benchmark/README.md).)
+The RoSE false positives are counted on STEAD noise; `results/README.md`
+also counts them on RoSE noise, scores the analysts' picks alone (41% of the
+test labels are RED-PAN-60s repicks, and on the analysts' picks PhaseNet-RoSE
+and PhaseNet-stead lead), and describes the fix to RED-PAN-60s's padding of
+records longer than 60 s; its RoSE and STEAD rows come from the rerun with
+that fix.
 
 ---
 
@@ -248,7 +254,7 @@ The unit suite exercises the `rose` package directly (no large dataset needed):
 
 ```bash
 pip install -e ".[dev]"
-pytest tests/ -q          # 123 tests
+pytest tests/ -q          # 129 tests
 ```
 
 `tests/test_splits.py` pins the deterministic split partition bit-for-bit.

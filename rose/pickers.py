@@ -5,9 +5,10 @@ Identifiers (and the bundled checkpoints under ``phase_picking/models/``):
                     (``phase_picking/models/eqt_rose/eqt_rose.pt``)
     phasenet_rose — PyTorch / SeisBench PhaseNet fine-tuned on RoSE
                     (``phase_picking/models/phasenet_rose/phasenet_rose.pt``)
-    redpan_tf60   — TensorFlow / Keras RED-PAN-60s (MTAN R2U-Net): retrained
-                    outside SeisBench on Taiwan + STEAD + INSTANCE + RoSE,
-                    warm-started from the published RED-PAN-60s weights
+    redpan_tf60   — TensorFlow / Keras RED-PAN-60s (MTAN R2U-Net): the
+                    published checkpoint ``REDPAN_60s_240107``, trained outside
+                    SeisBench on Taiwan + STEAD + INSTANCE plus Romanian (RO)
+                    data whose events are not recorded
                     (``phase_picking/models/redpan_tf60/train.hdf5``). See ``phase_picking/models/README.md``
                     for the full recipe.
 

@@ -18,7 +18,7 @@ earthquakes) and on STEAD. The checkpoints live here (`eqt_rose/`,
 |---|---|---|---|---|---|---|
 | **EQT-RoSE**       | PyTorch / SeisBench `EQTransformer` | INSTANCE (Italy)            | RoSE train split                     | ZNE, 6000 @ 100 Hz (60 s) | P, S, detection                | `eqt_rose/eqt_rose.pt`           (1.6 MB) |
 | **PhaseNet-RoSE**  | PyTorch / SeisBench `PhaseNet`      | INSTANCE (Italy)            | RoSE train split                     | ZNE, 3001 @ 100 Hz (30 s) | P, S, Noise                    | `phasenet_rose/phasenet_rose.pt` (1.1 MB) |
-| **RED-PAN-60s**    | TensorFlow / Keras                  | published RED-PAN(60 s) ([RED-PAN-Motion](https://github.com/tso1257771/RED-PAN-Motion) `redpan_60s`) | Taiwan + STEAD + INSTANCE (**no RoSE data**) | ENZ, 6000 @ 100 Hz (60 s) | P / S / "Others" + event mask  | `redpan_tf60/train.hdf5`         (5.8 MB) |
+| **RED-PAN-60s**    | TensorFlow / Keras                  | published RED-PAN(60 s) ([RED-PAN-Motion](https://github.com/tso1257771/RED-PAN-Motion) `redpan_60s`) | Taiwan + STEAD + INSTANCE + Romanian (RO) data — which RO events is not recorded | ENZ, 6000 @ 100 Hz (60 s) | P / S / "Others" + event mask  | `redpan_tf60/train.hdf5`         (5.8 MB) |
 
 Each PyTorch checkpoint is a dict `{model: state_dict, config: {...}, epoch, dev_loss}`;
 `redpan_tf60/train.hdf5` is a full Keras model.
@@ -58,13 +58,16 @@ Each PyTorch checkpoint is a dict `{model: state_dict, config: {...}, epoch, dev
   softmax-normalised three-channel phase-picking map (P, S, "Others") plus a
   two-channel earthquake-detection mask. ~200 K parameters.
 * **Training** — none here. This is the **published** RED-PAN 60 s
-  checkpoint `REDPAN_60s_240107`, used exactly as released and trained on
-  Taiwan, STEAD and INSTANCE by Liao et al. (2022). **No RoSE data entered
-  its training set**, so its scores on the RoSE test set carry no risk of
-  train/test contamination. The bundled file is byte-identical to
+  checkpoint `REDPAN_60s_240107`, used exactly as released. The RED-PAN
+  model of Liao et al. (2022) was trained on Taiwan, STEAD and INSTANCE;
+  this checkpoint was added to the RED-PAN repository on 7 January 2024
+  (commit `d536907`) with the note "trained with RO data", and which
+  Romanian (RO) events it saw is not recorded. 18 364 of the 19 230 RoSE
+  events are older than the checkpoint, so its scores on the RoSE test set
+  are **not** a clean held-out test: some test events may have been in its
+  training data. The bundled file is byte-identical to
   `pretrained_model/REDPAN_60s_240107/train.hdf5` in the RED-PAN release
-  (`md5 1121f8421a85107b685e2c1344fbf8b7`), and its build tag `240107`
-  (7 January 2024) predates 866 events in the RoSE catalog.
+  (`md5 1121f8421a85107b685e2c1344fbf8b7`).
   Targets follow the original paper: truncated-Gaussian P/S phase-time
   functions (σ = 0.2 s / 0.3 s), `"Others" = 1 − target(P) − target(S)`, and a
   boxcar detection mask wrapping the P–S window with half-Gaussian edge
