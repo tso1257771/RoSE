@@ -154,6 +154,86 @@ data.metadata.loc[year == "2024", "split"] = "test"
   are derivable per trace from the `trace_sensitivity_{e,n,z}` columns and
   the `trace_unit_physical` column.
 
+## Known issues in the earthquake traces
+
+**One wrong sample at the end of 3,067 BH traces.** In dataset versions 1 to
+3, one or more components of 3,067 earthquake traces (1.4 %) have one wrong
+sample at their end. All are BH traces recorded at 20 or 50 Hz and resampled
+to 100 Hz. The noise windows were resampled by linear interpolation and are not
+affected.
+
+| End sample | Traces | train | val | test |
+|---|---|---|---|---|
+| infinite | 928 | 645 | 134 | 149 |
+| finite; its step from the previous sample is more than 1,000 times the largest step elsewhere in the trace | 1,982 | 1,382 | 298 | 302 |
+| finite; that step is 10 to 1,000 times the largest step | 157 | 112 | 19 | 26 |
+| total | 3,067 | 2,139 | 451 | 477 |
+
+These counts come from reading every trace on 2026-10-30. In a random sample
+of 3,300 other traces, 9 BH traces had a milder case of the same defect, so
+about 600 more traces may have one.
+
+*Cause.* The data build resampled these traces with ObsPy's
+`Trace.interpolate(100)`. Its default method, `weighted_average_slopes`, ends
+in a C routine that does not check array bounds. When rounding of the absolute
+time stamps puts the last output time a few millionths of a sample after the
+last input sample, the routine reads one value past the end of its input
+arrays. Whatever memory it reads sets the last output sample, which can be
+infinite, NaN, very large, or slightly wrong. The build then replaced
+non-finite samples with the trace's `np.nanmean`. That mean is itself infinite
+when the trace holds an infinity, so the infinities stayed, and NaN samples
+became the trace mean. The routine is unchanged in the current ObsPy version.
+
+*Where.* The wrong sample is the last sample of the component. In a few traces
+whose component ends in median padding, it is the last sample before the
+padding.
+
+*Effect.* Normalisation turns a trace with an infinite sample into NaN, so a
+model returns no picks on it. A very large finite sample dominates the
+amplitude near the end. After the 1-45 Hz band-pass used in the benchmark, the
+nine models find 18 to 44 % fewer of the labels on such traces. In the
+published benchmark tables, the 477 affected test traces lower recall by 0.003
+to 0.006 for every model, and the order of the models does not change. Training
+code that does not check for non-finite values can get a NaN loss when a window
+reaches the end of an affected trace.
+
+*Repair.* The function below replaces the wrong sample with the sample before
+it. On the 3,067 traces it changes one sample in each of 6,232 components and
+leaves no non-finite value. On 3,300 random other traces it changed only 10 BH
+components, all with the same end defect.
+
+```python
+import numpy as np
+
+
+def repair_trace_end(x, factor=10.0):
+    """Repair the end-sample defect of RoSE dataset versions 1-3 in one (3, npts) trace."""
+    x = np.array(x, dtype=np.float64)
+    for c in x:
+        n = len(c)
+        r = n - 1
+        while r > 0 and c[r - 1] == c[n - 1]:
+            r -= 1  # c[r:] is the constant run at the end
+        cand = sorted({i for i in (r - 1, n - 2, n - 1) if i >= 1})
+        body = c[:cand[0]]
+        body = body[np.isfinite(body)]
+        lim = factor * (np.max(np.abs(np.diff(body))) if body.size > 1 else 0.0)
+        for i in cand:
+            if not np.isfinite(c[i]) or abs(c[i] - c[i - 1]) > lim:
+                c[i] = c[i - 1]
+    return x
+```
+
+Apply it to the output of `dataset.get_waveforms(i)`, or register it as the
+first augmentation of a SeisBench generator, before any window is cut:
+
+```python
+@generator.augmentation
+def repair(state_dict):
+    x, meta = state_dict["X"]
+    state_dict["X"] = (repair_trace_end(x).astype(x.dtype), meta)
+```
+
 ## Noise chunks
 
 Dataset version 3 (10.5281/zenodo.23681945) carries 89,693 noise windows in
@@ -223,7 +303,7 @@ sensitivities from the StationXML archive. `trace_name_original` is
 Load the noise alone with `RoSE(path, chunks=[f"noise{y}" for y in range(2014, 2025)])`,
 both classes with `RoSE(path, include_noise=True)`, and select on `trace_category`.
 
-Known issues in version 3:
+Known issues in the noise windows of version 3:
 
 * `station_location_code` is `0.0` instead of `00` in the two IU.ANTO windows
   `2016_0000415_IU.ANTO.00.BH_pre100` and `2022_0000708_IU.ANTO.00.BH_pre100`.

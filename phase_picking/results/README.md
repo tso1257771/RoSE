@@ -104,20 +104,25 @@ these labels, but RED-PAN-60s loses most, 0.06 (P) and 0.08 (S) of F1 against
 | EQT-stead           | 0.991 | 0.475 | 0.642 | 0.087 | 0.983 | 0.509 | 0.671 | 0.195 |
 | PhaseNet-stead      | 0.989 | 0.334 | 0.499 | 0.079 | 0.978 | 0.620 | **0.759** | 0.207 |
 
-**149 test traces cannot be picked.** Their last sample is +inf or -inf on
-one to three channels. All are BH traces resampled from 20 or 40 Hz. The
-value appeared in the MiniSEED-to-SAC step of the data build (ObsPy `merge`
-and `interpolate(100)`, before the HDF5 files were made): the MiniSEED is
-finite, the SAC files already hold it, and ObsPy 1.4.2 and 1.5.1 do not
-reproduce it on the same input. The whole dataset has 926
-such traces (643 train, 134 val, 149 test; none in the noise set), found by
-reading the last sample of every trace on 2026-10-29. Any normalisation turns
-such a trace into NaN, so every model misses every label on them: 122 of
-the 27 309 traces with both labels (60 P and 70 S labels manual), so recall
-cannot exceed 0.996 for either phase and 0.9955 for detection, and the
-tables above count them as misses for every model; EQT-RoSE misses only one
-other trace in detection. A corrected dataset version would change only that
-one sample of those traces.
+**149 test traces cannot be picked, and 328 more are picked less well.** In
+149 test traces the last sample of one to three components is +inf or -inf,
+and in 328 more it is finite but far too large. All are BH traces resampled
+from 20 or 50 Hz with ObsPy's `Trace.interpolate(100)`, whose default method
+can read one value past the end of its input. The cause, the counts and a
+repair function are in
+[`docs/SEISBENCH_FORMAT.md`](../../docs/SEISBENCH_FORMAT.md#known-issues-in-the-earthquake-traces).
+The whole dataset has 928 traces with an infinite end sample (645 train, 134
+val, 149 test) and 2,139 with a finite one that is too large; the noise set
+has none. Any normalisation turns a trace with an infinite sample into NaN, so
+every model misses every label on them: 122 of the 27 309 traces with both
+labels (60 P and 70 S labels manual), so recall cannot exceed 0.996 for either
+phase and 0.9955 for detection, and the tables above count them as misses for
+every model; EQT-RoSE misses only one other trace in detection. On the 328
+traces with a large finite end sample, the models find 18 to 44 % fewer labels
+than on clean traces. Together, the 477 traces lower recall in
+`rose_picking.csv` at threshold 0.30 by 0.003 to 0.006 for every model, and
+they do not change the order of the models. A corrected dataset version would
+change only one sample in each affected component.
 
 Onset-time residuals over matched (true-positive) picks — MAE, MAD (≈ IQR/2),
 RMSE, IQR in seconds (`rose_residual_stats.csv`; baselines omitted here):

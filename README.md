@@ -309,7 +309,7 @@ RoSE/                              # ── the RoSE software toolkit
 | Analyst picks | supplied separately by Alexandru Mărmureanu for this study; not part of ROMPLUS and not distributed while permission is reviewed |
 | ML-assisted repicks | RED-PAN 60 s, 3 s / 5 s P / S consistency window vs. NLLoc theoretical |
 | Pick selection | higher-SNR among manual / RED-PAN; theoretical-only never used |
-| Sampling | resampled to 100 Hz on a uniform reference axis with median-pad fill |
+| Sampling | resampled to 100 Hz on a uniform reference axis with median-pad fill. Known issue: 3,067 BH traces resampled from 20 or 50 Hz have one wrong sample at their end; see [`docs/SEISBENCH_FORMAT.md`](docs/SEISBENCH_FORMAT.md#known-issues-in-the-earthquake-traces) for the cause and a repair function |
 | Component order | **ZNE** on disk (canonical SeisBench order) |
 | Instrument response | The StationXML archive in the data record has files for **211 / 226 stations**. A full three-component response is available for 210,545 traces, 144 have a vertical response only, and 8,583 lack a full three-component response. |
 | Event coverage | **19 228 / 19 230** catalog events have waveforms (two excluded for missing all-three-component recordings: `2014_0001698`, `2020_0000816`). |
