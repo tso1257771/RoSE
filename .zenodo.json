@@ -1,6 +1,6 @@
 {
   "title": "RoSE — Romanian SEismic Dataset Toolkit",
-  "description": "Python toolkit for the RoSE dataset, including three trained phase pickers (EQT-RoSE, PhaseNet-RoSE, and RED-PAN-60s), their benchmark code, and the magnitude calculation code and calibration tables. Catalog, pick, waveform, and StationXML files are not included. The related dataset record, doi:10.5281/zenodo.23153183 (all versions), has its files restricted until the RoSE data paper is accepted. The authors plan to release them under CC BY 4.0 at that time.",
+  "description": "Python toolkit for the RoSE dataset, including three trained phase pickers (EQT-RoSE, PhaseNet-RoSE, and RED-PAN-60s), their benchmark code, and the magnitude calculation code and calibration tables. Catalog, pick, waveform, and StationXML files are not included. The related dataset record, doi:10.5281/zenodo.23153183, has its files restricted until the RoSE data paper is accepted. The authors plan to release version 3 under CC BY 4.0 at that time; versions 1 and 2 stay restricted.",
   "upload_type": "software",
   "creators": [
     {
