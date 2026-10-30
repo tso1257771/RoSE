@@ -95,8 +95,8 @@ def main() -> None:
     redpan_tasks: list[tuple[str, list[str], dict | None]] = []
     cheap_tasks: list[tuple[str, list[str], dict | None]] = []
     # The two long-pole TF scripts get --resume so a killed run picks up
-    # from <out_dir>/<model>.partial.json instead of restarting. PyTorch
-    # passes are short enough to restart from scratch.
+    # from <out_dir>/<model>.partial.json instead of restarting; the RoSE
+    # PyTorch pass reuses the per-model files it has already written.
     if not args.skip_stead:
         redpan_tasks.append((
             "stead redpan (long pole)",
@@ -134,6 +134,8 @@ def main() -> None:
                 # This is what the published Tables 2-3 use; the default is 0.5 s uniform.
                 "--pick-tol-p", "0.5", "--pick-tol-s-phase", "1.0",
                 "--custom-eqt", ck["eqt_rose"], "--custom-phasenet", ck["phasenet_rose"],
+                # Per-label pick files (<model>.preds.csv) for build_subset_tables.py.
+                "--dump-predictions", "--resume",
             ], env))
     if not args.skip_stead:
         for mid in pt_models:

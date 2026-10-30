@@ -54,6 +54,8 @@ from sklearn.metrics import matthews_corrcoef
 import seisbench.data as sbd
 import seisbench.models as sbm
 
+from _classify import classify  # one event loop for every classify() call
+
 
 logger = logging.getLogger("bench_pickers_rose")
 
@@ -404,7 +406,7 @@ def evaluate_model(
             bandpass=cfg.bandpass,
         )
         try:
-            output = model.classify(stream, **classify_kwargs)
+            output = classify(model, stream, **classify_kwargs)
         except Exception as exc:
             logger.debug("classify failed on idx %d: %s", idx, exc)
             n_failed += 1
@@ -506,7 +508,7 @@ def evaluate_model_sweep(
             bandpass=cfg.bandpass,
         )
         try:
-            output = model.classify(stream, **classify_kwargs)
+            output = classify(model, stream, **classify_kwargs)
         except Exception as exc:
             logger.debug("classify failed on idx %d: %s", idx, exc)
             n_failed += 1
@@ -528,6 +530,7 @@ def evaluate_model_sweep(
                 ]
                 dump_sink.append({
                     "model": model_name,
+                    "trace_name": str(meta.get("trace_name", "")),
                     "source_id": str(meta.get("source_id", "")),
                     "depth_km": float(meta.get("source_depth_km", float("nan"))),
                     "phase": phase,
@@ -712,9 +715,14 @@ def main() -> None:
                          "per-threshold PR table is produced instead.")
     ap.add_argument("--dump-predictions", action="store_true",
                     help="Also write <out_dir>/<model>.preds.csv with per-(trace,phase) "
-                         "nearest-prediction records (residual, peak_value) tagged with "
-                         "pick provenance and source depth, for offline manual-only / "
-                         "depth-stratified re-aggregation. Off by default (no behavior change).")
+                         "records of every same-phase pick (residual, peak_value) tagged "
+                         "with trace name, pick provenance and source depth, for offline "
+                         "manual-only / depth-stratified re-aggregation. Off by default "
+                         "(no behavior change).")
+    ap.add_argument("--resume", action="store_true",
+                    help="Reuse <out_dir>/<model>.json (and <model>.preds.csv with "
+                         "--dump-predictions) from an earlier run instead of evaluating "
+                         "that model again; the comparison CSV still covers every model.")
     args = ap.parse_args()
     if args.rose_dir is None:
         ap.error("--rose-dir is required (or set the ROSE_DATA_DIR environment variable)")
@@ -798,6 +806,13 @@ def main() -> None:
     all_results: dict = {}
     for name, klass, weight, ckpt in lineup:
         logger.info("=== %s ===", name)
+        done_json = out_dir / f"{name}.json"
+        if args.resume and done_json.is_file() and (
+                not args.dump_predictions or (out_dir / f"{name}.preds.csv").is_file()):
+            with done_json.open() as fh:
+                all_results[name] = json.load(fh)
+            logger.info("resume: reusing %s", done_json)
+            continue
         try:
             if ckpt is not None:
                 if klass == "PhaseNet":
@@ -832,8 +847,8 @@ def main() -> None:
                 import csv as _csv
                 with (out_dir / f"{name}.preds.csv").open("w", newline="") as fh:
                     w = _csv.DictWriter(
-                        fh, fieldnames=["model", "source_id", "depth_km",
-                                        "phase", "status", "preds"])
+                        fh, fieldnames=["model", "trace_name", "source_id",
+                                        "depth_km", "phase", "status", "preds"])
                     w.writeheader()
                     w.writerows(dump_sink)
         else:

@@ -48,6 +48,7 @@ REPO_ROOT = _THIS_DIR.parent.parent          # repo root (phase_picking/benchmar
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(_THIS_DIR))                    # sibling bench_* + redpan_inference
 from rose.checkpoint_io import safe_torch_load  # noqa: E402
+from _classify import classify  # noqa: E402  one event loop for every classify() call
 from rose.dataset import RoSE  # noqa: E402
 
 from bench_pickers_rose import (  # noqa: E402
@@ -221,8 +222,8 @@ def make_eqt_predict_fn(model: sbm.EQTransformer, cfg: BenchConfig):
         )
         # classify at very low thresholds so we capture everything,
         # then filter post-hoc per pick / detection threshold.
-        out = model.classify(stream, P_threshold=0.05, S_threshold=0.05,
-                              detection_threshold=0.05)
+        out = classify(model, stream, P_threshold=0.05, S_threshold=0.05,
+                       detection_threshold=0.05)
         picks_eqt = []
         for p in (getattr(out, "picks", []) or []):
             picks_eqt.append(SimplePick(

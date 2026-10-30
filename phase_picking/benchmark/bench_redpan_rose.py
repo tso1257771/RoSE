@@ -337,6 +337,7 @@ def evaluate_redpan_sweep(
                 ]
                 dump_sink.append({
                     "model": model_name,
+                    "trace_name": str(meta.get("trace_name", "")),
                     "source_id": str(meta.get("source_id", "")),
                     "depth_km": float(meta.get("source_depth_km", float("nan"))),
                     "phase": phase,
@@ -451,8 +452,9 @@ def main() -> None:
                          "(0 = never). Only meaningful with --resume.")
     ap.add_argument("--dump-predictions", action="store_true",
                     help="Also write <out_dir>/<model>.preds.csv with per-(trace,phase) "
-                         "nearest-prediction records for offline manual-only / "
-                         "depth-stratified re-aggregation. Off by default.")
+                         "records of every same-phase pick (residual, peak_value) tagged "
+                         "with trace name, pick provenance and source depth, for offline "
+                         "manual-only / depth-stratified re-aggregation. Off by default.")
     args = ap.parse_args()
     if args.rose_dir is None:
         ap.error("--rose-dir is required (or set the ROSE_DATA_DIR environment variable)")
@@ -536,8 +538,8 @@ def main() -> None:
         import csv as _csv
         with (out_dir / f"{args.model_name}.preds.csv").open("w", newline="") as fh:
             w = _csv.DictWriter(
-                fh, fieldnames=["model", "source_id", "depth_km",
-                                "phase", "status", "preds"])
+                fh, fieldnames=["model", "trace_name", "source_id",
+                                "depth_km", "phase", "status", "preds"])
             w.writeheader()
             w.writerows(dump_sink)
 

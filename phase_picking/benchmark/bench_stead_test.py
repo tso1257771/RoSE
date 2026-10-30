@@ -59,6 +59,7 @@ REPO_ROOT = _THIS_DIR.parent.parent          # repo root (phase_picking/benchmar
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(_THIS_DIR))                    # sibling bench_* + redpan_inference
 from rose.checkpoint_io import safe_torch_load  # noqa: E402
+from _classify import classify  # noqa: E402  one event loop for every classify() call
 
 from bench_pickers_rose import (  # noqa: E402
     _aggregate_summary, evaluate_trace_detections,
@@ -170,8 +171,8 @@ def apply_bandpass(stream: Stream, low: float, high: float) -> Stream:
 # ---------- model wrappers ---------------------------------------------------
 
 def predict_seisbench(model, stream: Stream):
-    out = model.classify(stream, P_threshold=0.05, S_threshold=0.05,
-                         detection_threshold=0.05)
+    out = classify(model, stream, P_threshold=0.05, S_threshold=0.05,
+                   detection_threshold=0.05)
     picks = []
     for p in (getattr(out, "picks", []) or []):
         picks.append(SimplePick(

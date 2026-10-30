@@ -30,8 +30,12 @@ and reproducible; only the waveform arrays themselves need to be fetched.
 ## RoSE waveforms
 
 * **Format**: SeisBench `WaveformDataset` — yearly `waveforms{YEAR}.hdf5` +
-  `metadata{YEAR}.csv` + `metadata.csv` manifest (channels Z, N, E at 100 Hz,
-  60 s / 6000-sample windows).
+  `metadata{YEAR}.csv` and a `chunks` list (channels Z, N, E at 100 Hz). The
+  test-split earthquake traces are 90–178 s long (median 128 s; one trace of
+  45 s), with the P arrival about 30 s after the start, so RED-PAN-60s runs on
+  them in sliding windows. Dataset version 3 adds 100-s noise windows in
+  `noise{YEAR}` chunks; `../export_rose_noise.py` writes the test-split ones in
+  the STEAD noise layout below.
 * **Source**: published RoSE bundle (TRANSFORM² consortium release / Zenodo).
 * **Build the split column yourself**: after downloading, run
   `python phase_picking/training/build_rose_split_index.py --rose-dir /path/to/rose`. It
@@ -53,7 +57,8 @@ and reproducible; only the waveform arrays themselves need to be fetched.
   ```
 
   (The two CSVs in `<stead-dir>/` are byte-identical to the ones shipped here —
-  copy them in, or symlink.)
+  copy them in, or symlink.) Each event array has its P arrival at sample
+  9000 (90 s); each noise array holds 60 s of data followed by 210 s of zeros.
 * **Source**: STEAD original release — <https://github.com/smousavi05/STEAD>.
   Convert the upstream HDF5 to the flat `.npy` layout above (one array per
   `trace_name`, resampled to 100 Hz, channel order E, N, Z).
