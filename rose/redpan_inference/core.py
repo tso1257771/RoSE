@@ -5,7 +5,9 @@ Core REDPAN Implementation
 
 REDPAN class for continuous seismic phase picking. SeisBench-style
 direct array accumulation over sliding windows, with spectrum-matched
-noise padding for time alignment at the trace boundaries.
+noise padding for time alignment at the trace boundaries. Each pad is
+matched to its own end of the record and drawn from a seeded generator,
+so the same record always gives the same output.
 
 Vendored (minimal subset) from https://github.com/tso1257771/RED-PAN
 under its MIT license; relicensed under the RoSE repo's MIT LICENSE.
@@ -48,7 +50,7 @@ class REDPAN:
                  use_compiled_infer: bool = True,
                  jit_compile: bool = False,
                  accumulation_mode: str = "loop",
-                 seed: int | None = None):
+                 seed: int | None = 0):
         """
         Initialize the RED-PAN picker
 
@@ -58,10 +60,11 @@ class REDPAN:
             dt: Sample interval (seconds)
             pred_interval_sec: Sliding window step (seconds)
             batch_size: Batch size for prediction
-            seed: Optional integer seed for the spectrum-matched padding
-                noise generator. When None, a fresh `np.random.default_rng()`
-                is used per call, decoupled from the global `np.random`
-                state. Set this for bitwise-reproducible predictions.
+            seed: Seed for the spectrum-matched padding noise of records
+                longer than one window. The generator is re-seeded on every
+                call, so repeat calls on the same record give the same
+                output. None draws fresh noise on every call, and the
+                predictions then change slightly from run to run.
         """
         self.model = model
         self.pred_npts = pred_npts
@@ -73,9 +76,7 @@ class REDPAN:
         self.accumulation_mode = str(accumulation_mode).lower()
         if self.accumulation_mode not in {"loop", "addat"}:
             raise ValueError("accumulation_mode must be one of: loop, addat")
-        self._noise_rng = (
-            np.random.default_rng(seed) if seed is not None else None
-        )
+        self.seed = seed
         
         # Calculate prediction interval in samples
         self.pred_interval_pt = int(round(pred_interval_sec / dt))
@@ -116,7 +117,13 @@ class REDPAN:
     def _pad_stream_with_noise(self, wf: Stream, pad_npts: int) -> Stream:
         """
         Pad stream with spectrum-matched noise at both ends.
-        
+
+        The front pad matches the first non-flat 5 s of each trace and the
+        back pad the last, so neither end of the record has a step in
+        amplitude that the model could take for an onset. (A back pad
+        matched to the start of the record made spurious P picks in the
+        last second of the predictions.)
+
         Args:
             wf: Input ObsPy stream
             pad_npts: Number of samples to pad at each end
@@ -125,13 +132,13 @@ class REDPAN:
             Padded stream
         """
         wf_padded = wf.copy()
-        
+        rng = np.random.default_rng(self.seed)
+
         for trace in wf_padded:
-            ref_signal = find_reference_signal(trace.data)
-            front_noise = generate_matching_noise(
-                ref_signal, pad_npts, rng=self._noise_rng)
-            back_noise = generate_matching_noise(
-                ref_signal, pad_npts, rng=self._noise_rng)
+            front_ref = find_reference_signal(trace.data)
+            back_ref = find_reference_signal(trace.data[::-1])[::-1]
+            front_noise = generate_matching_noise(front_ref, pad_npts, rng=rng)
+            back_noise = generate_matching_noise(back_ref, pad_npts, rng=rng)
             trace.data = np.concatenate([front_noise, trace.data, back_noise])
             trace.stats.starttime -= pad_npts * self.dt
         
@@ -613,7 +620,9 @@ class REDPAN:
         Strategy:
         - If waveform <= model receptive field: Direct single-window prediction
         - If waveform > model receptive field: 
-          1. Pad waveform with spectrum-matched noise (pred_npts at each end)
+          1. Pad waveform with spectrum-matched noise (pred_npts at each end,
+             each pad matched to its own end of the record; seeded, so repeat
+             calls give the same output)
           2. Run sliding window accumulation
           3. Truncate padding from predictions
         
