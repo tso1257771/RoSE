@@ -28,6 +28,6 @@ The three pickers: **EQT-RoSE** / **PhaseNet-RoSE** (SeisBench EQTransformer /
 PhaseNet fine-tuned on the RoSE training split from INSTANCE init) and
 **RED-PAN-60s** (the published RED-PAN MTAN R2U-Net 60 s checkpoint
 `REDPAN_60s_240107`, used as released; trained on Taiwan + STEAD + INSTANCE plus
-Romanian (RO) data whose events are not recorded, so its RoSE scores are not a
-clean held-out test). Cards + references:
+Romanian (RO) events with the same development and test split as RoSE, so the
+RoSE test events were not in its training data). Cards + references:
 `models/README.md`; the leaderboard tables: `results/README.md`.

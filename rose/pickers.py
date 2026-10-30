@@ -8,7 +8,7 @@ Identifiers (and the bundled checkpoints under ``phase_picking/models/``):
     redpan_tf60   — TensorFlow / Keras RED-PAN-60s (MTAN R2U-Net): the
                     published checkpoint ``REDPAN_60s_240107``, trained outside
                     SeisBench on Taiwan + STEAD + INSTANCE plus Romanian (RO)
-                    data whose events are not recorded
+                    events, with the same dev/test split as RoSE
                     (``phase_picking/models/redpan_tf60/train.hdf5``). See ``phase_picking/models/README.md``
                     for the full recipe.
 
