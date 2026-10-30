@@ -318,7 +318,8 @@ RoSE/                              # ── the RoSE software toolkit
 
 **Toolkit (this repository) — v0.4.1.** Cite the concept DOI
 [`10.5281/zenodo.20250669`](https://doi.org/10.5281/zenodo.20250669), which always
-resolves to the newest version, and name the version you used. The v0.4.0 record
+resolves to the newest version, and name the version you used. The v0.4.1 record
+is [`10.5281/zenodo.23786822`](https://doi.org/10.5281/zenodo.23786822), the v0.4.0 record
 is [`10.5281/zenodo.23717128`](https://doi.org/10.5281/zenodo.23717128), the v0.3.0 record
 is [`10.5281/zenodo.23157260`](https://doi.org/10.5281/zenodo.23157260), and the v0.1.0
 record is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
