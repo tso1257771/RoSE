@@ -8,9 +8,10 @@ archive, and a couple of small algorithms (`rose.qc`, Arias intensity)
 to answer four questions about the event:
 
     Q1. What does the data look like — is any of it broken?
-        →  ``fig_qc_summary.png``  (per-station waveform quality control:
-                                    clipping, dead channels, gaps, spikes,
-                                    plus SNR distribution and SNR-vs-distance)
+        →  ``fig_qc_summary.png``  (waveform quality control on all three
+                                    components of every station: clipping,
+                                    dead channels, gaps, spikes, plus SNR
+                                    distribution and SNR-vs-distance)
 
     Q2. When did the seismic energy actually arrive at each station?
         →  ``fig_record_section.png``  (waveforms stacked by hypocentral
@@ -22,18 +23,20 @@ to answer four questions about the event:
         →  ``ground_motion.csv``        (per-station peak ground acceleration
                                          / velocity / displacement, plus
                                          Arias intensity, computed inside
-                                         the coda window from each station)
+                                         the coda window from each station,
+                                         and whether the station passed Q1)
         →  ``fig_ground_motion.png``    (PGA / PGV vs distance + a Husid
                                          "energy build-up" demo plot)
 
     Q4. Is our coda-window definition robust if a station picks up a
         random non-earthquake glitch?
         →  ``fig_coda_robustness.png``  (a stress test that injects three
-                                         synthetic 12× spikes into one
-                                         station's record and re-measures
-                                         the D5-95 window — the Arias-based
-                                         method should barely move; an
-                                         envelope-decay method moves a lot)
+                                         synthetic 12× spikes into the
+                                         closest QC-clean station's record,
+                                         re-measures the D5-95 and the
+                                         envelope-decay windows, and reports
+                                         how far each window's start and
+                                         end move)
 
 What's a *coda window*? After an earthquake's S-wave arrives, the
 ground keeps shaking for tens of seconds as energy bounces around the
@@ -41,7 +44,9 @@ crust — this trailing tail is the "coda". To measure peak ground
 motion fairly, you need to integrate / search over a defined window.
 We use **Arias-intensity D5-95**: the time interval that contains 5 %
 to 95 % of the cumulative seismic energy. It's standard in earthquake
-engineering and is robust to outliers (spikes barely move it).
+engineering. Arias intensity squares the acceleration, so one large
+glitch can dominate it and drag the window — Q4 measures by how much,
+and it is why Q1's quality control comes first.
 
 What's *PGA / PGV / PGD*? Peak Ground Acceleration / Velocity /
 Displacement — the largest absolute value of each kinematic field
@@ -108,6 +113,7 @@ def _rel(p: str | Path) -> str:
 HIGHPASS_HZ = 0.1
 PRE_FILT = (0.05, 0.1, 40.0, 45.0)
 GRAVITY = 9.81
+ROBUST_TOL_S = 2.0   # Q4: a window edge that moves less than this counts as stable
 
 
 # ========================================================================
@@ -421,8 +427,12 @@ def plot_ground_motion(gm_table, event_id, event_attrs, husid_demo, out_png):
         for src in ["catalog"]:
             sub = gm_table[gm_table["pick_source"] == src]
             if sub.empty: continue
-            ax.scatter(sub["hyp_dist_km"], sub[col_y], s=40,
+            ok, bad = sub[sub["qc_pass"]], sub[~sub["qc_pass"]]
+            ax.scatter(ok["hyp_dist_km"], ok[col_y], s=40,
                        marker=markers[src], color=colors_gm[src], label=src, alpha=0.8)
+            if not bad.empty:
+                ax.scatter(bad["hyp_dist_km"], bad[col_y], s=40, marker=markers[src],
+                           facecolors="none", edgecolors="gray", label=f"{src}, failed QC")
         ax.set_xscale("log"); ax.set_yscale("log")
         ax.set_xlabel("Hypocentral distance (km)", fontsize=12)
         ax.set_ylabel(ylabel, fontsize=12)
@@ -465,37 +475,48 @@ def plot_qc_summary(stream, station_info, out_png):
     reports = []
     for info in station_info:
         sta = info["station"]
-        st_z = stream.select(station=sta, component="Z")
-        if not st_z: continue
-        tr = st_z[0]
+        st_sta = stream.select(station=sta, channel=f"{info['band']}?")
+        if not st_sta: continue
+        # A station passes only if all three components pass: a clipped
+        # horizontal ruins Q3's PGA/PGV even when Z looks fine.
+        comps = {tr.stats.channel: qc.quality_report(tr.data, tr.stats.sampling_rate)
+                 for tr in st_sta}
+        r = {"idx": info["idx"], "station": sta, "network": info["network"],
+             "hyp_dist": info["hyp_dist"], "components": comps,
+             "pass": all(c["pass"] for c in comps.values())}
         p_samp = info["p_sample"] if info["p_sample"] > 0 else None
-        r = qc.quality_report(tr.data, tr.stats.sampling_rate, p_samp)
-        r["station"] = sta; r["network"] = info["network"]
-        r["hyp_dist"] = info["hyp_dist"]
-        if p_samp:
-            r["snr"] = qc.compute_snr(tr.data, tr.stats.sampling_rate, p_samp)
+        st_z = st_sta.select(component="Z")
+        if p_samp and st_z:
+            r["snr"] = qc.compute_snr(st_z[0].data, st_z[0].stats.sampling_rate, p_samp)
         reports.append(r)
+
+    def failing(r, check, flag):
+        return [ch for ch, c in r["components"].items() if c[check][flag]]
 
     n_pass = sum(r["pass"] for r in reports)
     n_fail = len(reports) - n_pass
-    print(f"\n  QC: {n_pass} pass, {n_fail} fail ({100 * n_pass / len(reports):.0f}%)")
+    print(f"\n  QC (all three components): {n_pass} pass, {n_fail} fail "
+          f"({100 * n_pass / len(reports):.0f}%)")
     for r in reports:
         if not r["pass"]:
-            reasons = []
-            if r["clipping"]["clipped"]: reasons.append(f"clip({r['clipping']['clip_fraction']*100:.1f}%)")
-            if r["dead"]["dead"]: reasons.append("dead")
-            if r["gaps"]["has_gaps"]: reasons.append(f"gaps({r['gaps']['n_gap_samples']})")
-            if r["spikes"]["has_spikes"]: reasons.append(f"spikes({r['spikes']['n_spikes']})")
+            c = r["components"]
+            reasons = [f"clip {ch} ({c[ch]['clipping']['n_clipped_samples']} samples)"
+                       for ch in failing(r, "clipping", "clipped")]
+            reasons += [f"dead {ch}" for ch in failing(r, "dead", "dead")]
+            reasons += [f"gaps {ch} ({c[ch]['gaps']['n_gap_samples']})"
+                        for ch in failing(r, "gaps", "has_gaps")]
+            reasons += [f"spikes {ch} ({c[ch]['spikes']['n_spikes']})"
+                        for ch in failing(r, "spikes", "has_spikes")]
             print(f"    FAIL {r['network']}.{r['station']}: {', '.join(reasons)}")
 
     fig, axes = plt.subplots(1, 3, figsize=(16, 5.5))
 
     labels = ["pass", "clip", "dead", "gaps", "spikes"]
     counts = [n_pass,
-              sum(r["clipping"]["clipped"] for r in reports),
-              sum(r["dead"]["dead"] for r in reports),
-              sum(r["gaps"]["has_gaps"] for r in reports),
-              sum(r["spikes"]["has_spikes"] for r in reports)]
+              sum(bool(failing(r, "clipping", "clipped")) for r in reports),
+              sum(bool(failing(r, "dead", "dead")) for r in reports),
+              sum(bool(failing(r, "gaps", "has_gaps")) for r in reports),
+              sum(bool(failing(r, "spikes", "has_spikes")) for r in reports)]
     colors = ["tab:green", "tab:red", "gray", "tab:orange", "tab:purple"]
     axes[0].bar(labels, counts, color=colors)
     axes[0].set_ylabel("Number of stations", fontsize=13)
@@ -537,10 +558,16 @@ def plot_qc_summary(stream, station_info, out_png):
 # Figure 3: Coda robustness test
 # ========================================================================
 
-def plot_coda_robustness(stream, station_info, inv_cache, data, out_png):
+def _verdict(*shifts_s):
+    """'stable' when every window edge moved less than ROBUST_TOL_S, else 'moved'."""
+    return "stable" if max(abs(s) for s in shifts_s) < ROBUST_TOL_S else "moved"
+
+
+def plot_coda_robustness(stream, station_info, inv_cache, data, qc_pass, out_png):
     """Figure 4: Coda robustness — 2x2 layout (clean/contaminated + Husid + envelope)."""
     plt.rcParams.update({"font.size": 13})
-    good = [i for i in station_info if i["s_sample"] > 0 and i["hyp_dist"] < 300]
+    good = [i for i in station_info
+            if i["s_sample"] > 0 and i["hyp_dist"] < 300 and qc_pass.get(i["idx"], False)]
     good.sort(key=lambda x: x["hyp_dist"])
     vel_st = test_info = None
     for c in good:
@@ -548,11 +575,11 @@ def plot_coda_robustness(stream, station_info, inv_cache, data, out_png):
         if vel_st is not None:
             test_info = c; break
     if vel_st is None:
-        print("  no station for robustness test — skip"); return
+        print("  no QC-clean station with an S pick for the robustness test — skip"); return
 
     sta = test_info["station"]
     print(f"\n  robustness test station: {test_info['network']}.{sta} "
-          f"(dist={test_info['hyp_dist']:.1f} km)")
+          f"(dist={test_info['hyp_dist']:.1f} km, the closest that passed QC)")
 
     horiz = [tr for tr in vel_st if tr.stats.channel[-1] in ("E", "N")]
     tr = max(horiz, key=lambda t: np.max(np.abs(t.data))) if horiz else vel_st[0]
@@ -569,14 +596,23 @@ def plot_coda_robustness(stream, station_info, inv_cache, data, out_png):
         i5, i95, husid = husid_d5_95(acc, dt)
         ce = envelope_coda_end(wf, sr, s_sample)
         results[label] = {"wf": wf, "husid": husid, "i5": i5, "i95": i95, "ce": ce}
-        d595 = (i95 - i5) / sr; env_dur = (ce - s_sample) / sr
-        print(f"  {label:14s}  D5-95={d595:.1f}s  envelope={env_dur:.1f}s")
+        print(f"  {label:14s}  D5-95 window {i5 / sr:6.1f}-{i95 / sr:6.1f} s   "
+              f"envelope window {s_sample / sr:6.1f}-{ce / sr:6.1f} s")
+
+    # Score each window by how far its edges move. The envelope window
+    # starts at the catalog S, so only its end can move.
+    r, r2 = results["clean"], results["contaminated"]
+    d5_shift, d95_shift = (r2["i5"] - r["i5"]) / sr, (r2["i95"] - r["i95"]) / sr
+    env_shift = (r2["ce"] - r["ce"]) / sr
+    d595_verdict, env_verdict = _verdict(d5_shift, d95_shift), _verdict(env_shift)
+    print(f"  D5-95 window:    start {d5_shift:+.1f} s, end {d95_shift:+.1f} s  -> {d595_verdict}")
+    print(f"  envelope window: start fixed at S, end {env_shift:+.1f} s  -> {env_verdict}")
+    print(f"  (an edge that moves less than {ROBUST_TOL_S:.0f} s counts as stable)")
 
     t = np.arange(len(clean)) / sr
     fig, axes = plt.subplots(2, 2, figsize=(15, 10))
 
     # (a) Clean waveform
-    r = results["clean"]
     axes[0, 0].plot(t, clean * 1e6, color="black", lw=0.6)
     t5, t95 = r["i5"] / sr, r["i95"] / sr
     axes[0, 0].axvspan(t5, t95, color="gold", alpha=0.25, label=f"D5-95 = {t95-t5:.1f} s")
@@ -590,7 +626,6 @@ def plot_coda_robustness(stream, station_info, inv_cache, data, out_png):
     axes[0, 0].tick_params(labelsize=11)
 
     # (b) Contaminated waveform
-    r2 = results["contaminated"]
     axes[0, 1].plot(t, contaminated * 1e6, color="black", lw=0.6)
     for p in pulses:
         axes[0, 1].axvspan(p["i0"] / sr, p["i1"] / sr, color="red", alpha=0.2)
@@ -604,11 +639,11 @@ def plot_coda_robustness(stream, station_info, inv_cache, data, out_png):
     axes[0, 1].tick_params(labelsize=11)
 
     # (c) Husid comparison
-    d595_shift = abs((r2["i95"] - r2["i5"]) - (r["i95"] - r["i5"])) / sr
     axes[1, 0].plot(t, r["husid"], color="tab:blue", lw=2, label="clean")
     axes[1, 0].plot(t, r2["husid"], color="tab:red", lw=2, ls="--", label="contaminated")
     axes[1, 0].axhline(0.05, color="gray", ls=":", lw=1); axes[1, 0].axhline(0.95, color="gray", ls=":", lw=1)
-    axes[1, 0].set_title(f"(c) Husid plot — D5-95 shift = {d595_shift:.1f} s (robust)", fontsize=13)
+    axes[1, 0].set_title(f"(c) Husid — D5-95 start {d5_shift:+.1f} s, end {d95_shift:+.1f} s "
+                         f"({d595_verdict})", fontsize=13)
     axes[1, 0].set_ylim(-0.02, 1.05)
     axes[1, 0].set_xlabel("Time (s)", fontsize=12); axes[1, 0].set_ylabel("Normalized Arias intensity", fontsize=12)
     axes[1, 0].legend(fontsize=11); axes[1, 0].grid(alpha=0.25, ls=":")
@@ -621,8 +656,7 @@ def plot_coda_robustness(stream, station_info, inv_cache, data, out_png):
     axes[1, 1].plot(t, env_x * 1e6, color="tab:red", lw=1.5, ls="--", label="contaminated")
     axes[1, 1].axvline(r["ce"] / sr, color="tab:blue", lw=1.5, label=f"clean end = {r['ce']/sr:.1f} s")
     axes[1, 1].axvline(r2["ce"] / sr, color="tab:red", lw=1.5, label=f"contam end = {r2['ce']/sr:.1f} s")
-    env_shift = abs(r2["ce"] - r["ce"]) / sr
-    axes[1, 1].set_title(f"(d) Envelope — coda end shift = {env_shift:.1f} s (fragile)", fontsize=13)
+    axes[1, 1].set_title(f"(d) Envelope — coda end {env_shift:+.1f} s ({env_verdict})", fontsize=13)
     axes[1, 1].set_xlabel("Time (s)", fontsize=12); axes[1, 1].set_ylabel("envelope (µm/s)", fontsize=12)
     axes[1, 1].legend(fontsize=10); axes[1, 1].grid(alpha=0.25, ls=":")
     axes[1, 1].tick_params(labelsize=11)
@@ -698,13 +732,15 @@ def main():
     # ────────────────────────────────────────────────────────────
     _section(
         "Step 2/4: waveform quality control (Q1)",
-        "rose.qc runs five cheap checks per channel — clipping, dead-channel, "
-        "gaps, isolated spikes, and signal-to-noise ratio in the P-pick window. "
-        "Stations that fail any check are flagged in the figure with a coloured "
-        "marker; the first panel is a scoreboard, the second a P-SNR histogram, "
-        "the third SNR vs hypocentral distance.",
+        "rose.qc runs four cheap checks on each of the three components — "
+        "clipping, dead channel, gaps, isolated spikes — plus the signal-to-noise "
+        "ratio around the P pick on Z. A station fails if any component fails; "
+        "failed stations are marked in Q3 and skipped in Q4. The first panel is a "
+        "scoreboard, the second a P-SNR histogram, the third SNR vs hypocentral "
+        "distance (failed stations in red).",
     )
-    plot_qc_summary(stream, station_info, str(out_dir / "fig_qc_summary.png"))
+    qc_reports = plot_qc_summary(stream, station_info, str(out_dir / "fig_qc_summary.png"))
+    qc_pass = {r["idx"]: r["pass"] for r in qc_reports}
 
     # ────────────────────────────────────────────────────────────
     # Step 3 / 4   Coda window + ground-motion measurements
@@ -723,6 +759,7 @@ def main():
         sta = info["station"]
         vel_st = get_velocity_stream(stream, sta, inv_cache, data, info)
         if vel_st is None: continue
+        qc_ok = qc_pass.get(info["idx"], False)
         pick_sources = {"catalog": (info["p_utc"], info["s_utc"])}
         for src, (p_t, s_t) in pick_sources.items():
             t0, t1, diag = get_coda_window(vel_st, p_t, s_t, method=args.coda_method)
@@ -734,10 +771,11 @@ def main():
                             "coda_t0_s": round(t0, 3), "coda_t1_s": round(t1, 3),
                             "d595_s": round(t1 - t0, 3),
                             "pga_cms2": gm["pga"] * 100, "pgv_cms": gm["pgv"] * 100,
-                            "pgd_cm": gm["pgd"] * 100, "arias_ms": gm["arias"]})
+                            "pgd_cm": gm["pgd"] * 100, "arias_ms": gm["arias"],
+                            "qc_pass": qc_ok})
             if src == "catalog" and sta not in coda_windows:
                 coda_windows[sta] = (t0, t1)
-            if husid_demo is None and src == "catalog" and "husid" in diag:
+            if husid_demo is None and src == "catalog" and qc_ok and "husid" in diag:
                 horiz = [tr for tr in vel_st if tr.stats.channel[-1] in ("E", "N")]
                 demo_tr = max(horiz, key=lambda t: np.max(np.abs(t.data))) if horiz else vel_st[0]
                 s_samp = int((s_t - demo_tr.stats.starttime) * demo_tr.stats.sampling_rate) if s_t else 0
@@ -756,9 +794,9 @@ def main():
     gm_table.to_csv(csv_path, index=False)
     print(f"  wrote {_rel(csv_path)} ({len(gm_table)} rows)")
     for src in ["catalog"]:
-        sub = gm_table[gm_table["pick_source"] == src]
+        sub = gm_table[(gm_table["pick_source"] == src) & gm_table["qc_pass"]]
         if sub.empty: continue
-        print(f"  median across {len(sub)} stations:  "
+        print(f"  median across {len(sub)} QC-clean stations:  "
               f"PGA = {sub['pga_cms2'].median():.2g} cm/s²    "
               f"PGV = {sub['pgv_cms'].median():.2g} cm/s    "
               f"shake duration (D5-95) = {sub['d595_s'].median():.1f} s")
@@ -783,14 +821,15 @@ def main():
     else:
         _section(
             "Step 4/4: synthetic-pulse coda-window robustness test (Q4)",
-            "Pick the cleanest-looking horizontal-component station, inject 3 "
-            "synthetic 12× spikes at random times after the catalog S, and "
-            "remeasure the D5-95 window. The Arias method should barely move "
-            "(it's an integral — outliers are dampened); an envelope-decay "
-            "method jumps because a spike pushes the envelope's 'last 5 %' "
-            "tail far away. The figure overlays both methods side-by-side.",
+            "Take the closest station that passed QC on all three components, "
+            "inject 3 synthetic 12× spikes at random times after the catalog S "
+            "into its largest horizontal, and re-measure both coda windows. "
+            f"A window edge that moves less than {ROBUST_TOL_S:.0f} s counts as "
+            "stable. Arias intensity squares the amplitude, so large spikes can "
+            "drag both D5-95 edges; the envelope end moves when a spike keeps the "
+            "envelope above its 5 % level. The figure shows both methods side by side.",
         )
-        plot_coda_robustness(stream, station_info, inv_cache, data,
+        plot_coda_robustness(stream, station_info, inv_cache, data, qc_pass,
                              str(out_dir / "fig_coda_robustness.png"))
 
     # ────────────────────────────────────────────────────────────
@@ -803,7 +842,7 @@ def main():
         ("mseed/",                     "one MiniSEED file per channel — open in any obspy/SAC pipeline"),
         ("fig_qc_summary.png",         "Q1: which stations are clean? P-SNR distribution + SNR vs distance"),
         ("fig_record_section.png",     "Q2: waveforms vs distance, with catalog picks + coda windows"),
-        ("ground_motion.csv",          "Q3: per-station PGA/PGV/PGD + coda-window times + Arias intensity"),
+        ("ground_motion.csv",          "Q3: per-station PGA/PGV/PGD + coda-window times + Arias intensity + QC flag"),
         ("fig_ground_motion.png",      "Q3: same numbers, plotted vs distance + Husid energy demo"),
     ]
     if not args.quick:

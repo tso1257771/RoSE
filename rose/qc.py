@@ -134,15 +134,21 @@ def detect_gaps(
 
 
 def detect_spikes(
-    data: np.ndarray, mad_threshold: float = 50.0, max_width_samples: int = 3
+    data: np.ndarray,
+    mad_threshold: float = 50.0,
+    max_width_samples: int = 3,
+    context_samples: int = 10,
 ) -> dict:
     """Detect anomalous instrument spikes via MAD + isolation check.
 
     A sample is a candidate spike if |x - median| > mad_threshold * MAD.
-    Candidates are then filtered: only **isolated** transients (width <=
-    ``max_width_samples``) are counted as spikes. This avoids flagging the
-    earthquake signal itself (which is wide and coherent) while catching
-    single-sample or few-sample digitizer glitches.
+    Candidates are then filtered: only **isolated** transients count as
+    spikes — runs no wider than ``max_width_samples`` whose neighbours
+    (``context_samples`` on each side) all stay below half the threshold.
+    The width test alone is not enough: the peaks of an oscillating
+    earthquake signal also cross the threshold in short runs, but their
+    neighbours are large too. This avoids flagging the earthquake signal
+    itself while catching single-sample or few-sample digitizer glitches.
 
     Parameters
     ----------
@@ -152,6 +158,9 @@ def detect_spikes(
     max_width_samples : int
         Maximum contiguous run of outlier samples to be considered a spike.
         Longer runs are earthquake energy, not instrument artefacts.
+    context_samples : int
+        Neighbours checked on each side of a run; any of them above half the
+        threshold makes the run part of the signal, not a spike.
     """
     if len(data) == 0:
         return {
@@ -181,7 +190,10 @@ def detect_spikes(
             j = i
             while j < len(outlier_mask) and outlier_mask[j]:
                 j += 1
-            if (j - i) <= max_width_samples:
+            neighbours = np.concatenate(
+                [deviation[max(0, i - context_samples):i], deviation[j:j + context_samples]]
+            )
+            if (j - i) <= max_width_samples and not np.any(neighbours >= 0.5 * mad_threshold):
                 spike_indices.extend(range(i, j))
             i = j
         else:

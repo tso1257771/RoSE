@@ -90,6 +90,22 @@ def test_detect_spikes_ignores_wide_earthquake_signal():
     assert not result["has_spikes"]
 
 
+def test_detect_spikes_ignores_oscillating_earthquake_signal():
+    """The peaks of an oscillating arrival cross the threshold in short runs;
+    they are signal, not spikes. A glitch in the quiet part is still found."""
+    rng = np.random.default_rng(7)
+    sr = 100.0
+    data = rng.standard_normal(6000) * 0.5
+    t = np.arange(800) / sr
+    data[2000:2800] += 30.0 * np.sin(2 * np.pi * 7.0 * t) * np.exp(-t / 3.0)
+    result = qc.detect_spikes(data, mad_threshold=50.0)
+    assert not result["has_spikes"]
+
+    data[4500] = 500.0
+    result = qc.detect_spikes(data, mad_threshold=50.0)
+    assert result["spike_indices"].tolist() == [4500]
+
+
 def test_compute_snr_known_ratio():
     sr = 100.0
     n_pre = int(5 * sr)
