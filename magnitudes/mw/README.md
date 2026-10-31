@@ -121,7 +121,7 @@ default fixed window (`win_length` = the floor, 5 s for most events), Mw is lowe
 release by a median of 0.05, and by 0.18 for crustal events of Mw 3–4, and USGS − Mw becomes
 0.16 ± 0.17 (release 0.12 ± 0.14). With SourceSpec's travel time window
 (`variable_win_length_factor` = 0.64, about 1.5·(S−P)), the median difference is at most
-0.02 in every class from Mw 2 upward and USGS − Mw is 0.12 ± 0.15. Only intermediate depth
+0.02 in every class from Mw 2 upward and USGS − Mw is 0.12 ± 0.14. Only intermediate depth
 events below Mw 2 differ, by +0.13 at the median. For these weak records the release window
 ends where the coda stops decaying, while the travel time window can run on into noise.
 `window_test.py run --variant fixed|var` makes the runs (hours, resumable). Stage
@@ -153,7 +153,7 @@ ones (from the `fc_Hz` column, which is `fc_mean` restricted to Mw ≥ 3.5), aga
 constant stress drop.
 
 **Known systematic, not corrected.** Within an event, station Mw falls with hypocentral
-distance (−0.47 per decade for slab events and −0.24 for crustal ones, and crustal stations
+distance (−0.46 per decade for slab events and −0.24 for crustal ones, and crustal stations
 within 25 km read +0.10 high at the median). An empirical distance term shifts event Mw by only −0.05
 (crustal) to +0.05 (slab) and makes the USGS comparison worse, so it is not applied. Its
 size is included in `sigma_sys`, and it has one sign for small crustal events.

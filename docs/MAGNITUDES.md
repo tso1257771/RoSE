@@ -114,4 +114,5 @@ needs. `tests/test_magnitudes.py` checks the tables against this catalog.
 Full method, uncertainties and validity ranges:
 [`magnitudes/ml/README.md`](../magnitudes/ml/README.md) and
 [`magnitudes/mw/README.md`](../magnitudes/mw/README.md). Stress drop and t* per
-event are in `Mw_catalog.csv` in the data archive.
+event are in the driver output `Mw_catalog.csv`, which is not published; the
+released catalog gives the corner frequency as `Mw_fc_Hz`.

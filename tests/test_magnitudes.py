@@ -669,13 +669,13 @@ def catalog() -> pd.DataFrame:
 def test_released_mw_sigma_is_reproducible():
     """Mw_sigma and Mw_sigma_sys of the released Mw catalog follow from mw_sigma.
 
-    The inputs, Mw_station_std and Mw_nsta, are columns of Mw_catalog.csv in
-    the data archive, not of the catalog in this repository, so the check
-    runs where the working tree is present.
+    The inputs, Mw_station_std and Mw_nsta, are columns of the driver output
+    Mw_catalog.csv, which is not published, not of the released catalog, so
+    the check runs where the working tree is present.
     """
     path = _work_outputs() / "romania_mw" / "outputs" / "Mw_catalog.csv"
     if not path.is_file():
-        pytest.skip("Mw_catalog.csv is in the data archive")
+        pytest.skip("Mw_catalog.csv not found under ROMANIA_ROOT")
     df = pd.read_csv(path).dropna(subset=["Mw"])
     assert len(df) == 19_188
     sigma, sig_sys = mw_sigma(df.Mw, df.Mw_station_std, df.Mw_nsta)
@@ -684,10 +684,10 @@ def test_released_mw_sigma_is_reproducible():
 
 
 def _work_outputs():
-    """The driver outputs, which the data archive holds and the repo does not."""
+    """The working tree with the driver outputs, which are not published."""
     root = os.environ.get("ROMANIA_ROOT")
     if not root:
-        pytest.skip("set ROMANIA_ROOT to check the released values against the archive")
+        pytest.skip("set ROMANIA_ROOT to check the released values against the driver outputs")
     return pathlib.Path(root)
 
 
@@ -702,7 +702,7 @@ def test_released_mw_quality_is_reproducible(cal):
     mwc = root / "romania_mw/outputs/Mw_catalog.csv"
     ssp = root / "romania_mw/outputs/sourcespec_mw.csv"
     if not (mwc.is_file() and ssp.is_file()):
-        pytest.skip("Mw_catalog.csv and sourcespec_mw.csv are in the data archive")
+        pytest.skip("Mw_catalog.csv and sourcespec_mw.csv not found under ROMANIA_ROOT")
 
     d = pd.read_csv(mwc).merge(
         pd.read_csv(ssp, usecols=["event_index", "fc_wmean"]), on="event_index", how="left")
@@ -716,7 +716,7 @@ def test_released_conversion_flags_are_reproducible(cal):
     root = _work_outputs()
     ev_csv = root / "romania_ml/outputs/fit/event_ml.csv"
     if not ev_csv.is_file():
-        pytest.skip("event_ml.csv is in the data archive")
+        pytest.skip("event_ml.csv not found under ROMANIA_ROOT")
 
     ev = pd.read_csv(ev_csv)
     warned = ev.ml_saturation_risk.fillna(False).astype(bool)

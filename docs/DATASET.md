@@ -76,7 +76,7 @@ catalog SAC archive.
 stands for the size of the source, including ground-motion work and ML labels:
 it is proportional to moment wherever the corner frequency is resolved and does
 not saturate over this catalog's range. `ML` is provided for continuity with the
-NIEP bulletin. The two scales are **not interchangeable** — ML rises about 1.33
+NIEP bulletin. The two scales are **not interchangeable** — ML rises about 1.32
 (crustal) and 1.41 (intermediate-depth) magnitude units per unit of Mw, so their
 completeness and b-values differ. Do not put both into one
 frequency-magnitude distribution. ML's absolute level is anchored to Mw at

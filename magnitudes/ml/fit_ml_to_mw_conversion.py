@@ -229,7 +229,7 @@ def main():
         "set is bounded in ML only, because bounding it in Mw truncates the sample at low ML and "
         "produces curvature that is not in the scales")
     rep["slope_discussion"] = (
-        "dML/dMw is 1/b, about 1.33 (crustal) and 1.41 (intermediate), close to the Deichmann-type "
+        "dML/dMw is 1/b, about 1.32 (crustal) and 1.41 (intermediate), close to the Deichmann-type "
         "expectation that ML grows up to 1.5 times faster than Mw for small earthquakes, because "
         "the Wood-Anderson band lies above the corner frequency. The difference between the two "
         "scales is therefore a slope, not an offset, and the anchor fixes only the point Mw 4.0")

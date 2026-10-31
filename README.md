@@ -43,7 +43,7 @@ produces them (`phase_picking/benchmark/`).
 | Build the SeisBench bundle from the native HDF5    | [`docs/DATASET.md`](docs/DATASET.md) + `rose.convert.convert_all` |
 | **Pick which magnitude to use, Mw or ML**          | [`docs/MAGNITUDES.md`](docs/MAGNITUDES.md) |
 | Apply the released magnitude scale to another earthquake | `rose.magnitudes` — see [`magnitudes/README.md`](magnitudes/README.md) |
-| Reproduce the magnitude calibration tables         | `ROMANIA_ROOT=… bash magnitudes/regenerate_magnitudes.sh` (needs the data archive) |
+| Reproduce the magnitude calibration tables         | `ROMANIA_ROOT=… bash magnitudes/regenerate_magnitudes.sh` (needs the driver inputs, which are not published; see [`magnitudes/README.md`](magnitudes/README.md#rerunning-the-drivers)) |
 | Deposit or update the Zenodo records                | [`docs/ZENODO.md`](docs/ZENODO.md) |
 | Load RoSE weights via `seisbench.models.X.from_pretrained("rose")` | [`seisbench_compat/README.md`](seisbench_compat/README.md) — converter + smoke test + the upstream-submission procedure |
 
@@ -318,7 +318,7 @@ RoSE/                              # ── the RoSE software toolkit
 
 ## Citation
 
-**Toolkit (this repository) — v0.4.2.** Cite the concept DOI
+**Toolkit (this repository) — v0.4.3.** Cite the concept DOI
 [`10.5281/zenodo.20250669`](https://doi.org/10.5281/zenodo.20250669), which always
 resolves to the newest version, and name the version you used. The v0.4.2 record
 is [`10.5281/zenodo.23790328`](https://doi.org/10.5281/zenodo.23790328), the v0.4.1 record
@@ -332,7 +332,7 @@ record is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
   author    = {Liao, Wu-Yu and Manea, Elena-Florinela and M{\u a}rmureanu, Alexandru and Lee, En-Jui},
   title     = {{RoSE — Romanian SEismic Dataset Toolkit}},
   year      = 2026,
-  version   = {v0.4.2},
+  version   = {v0.4.3},
   publisher = {Zenodo},
   doi       = {10.5281/zenodo.20250669},
   url       = {https://doi.org/10.5281/zenodo.20250669}

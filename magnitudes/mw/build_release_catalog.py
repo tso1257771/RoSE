@@ -135,7 +135,7 @@ over the whole range, it does not saturate, and it is measured for
 {n_no_bulletin:,} where the NIEP bulletin gives no magnitude at all.
 
 `ML` is reported for continuity with the bulletin and for comparison with other
-local-magnitude studies. It runs about 1.33 magnitude units per unit of Mw for
+local-magnitude studies. It runs about 1.32 magnitude units per unit of Mw for
 crustal events and 1.41 for intermediate-depth ones, because the corner
 frequency of a small earthquake lies above the Wood-Anderson band and the
 instrument then reads the flat part of the displacement spectrum. Completeness and b-value therefore differ between the

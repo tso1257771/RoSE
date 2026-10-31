@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Compile the two released tables that go in the data archive.
 
-The event table is the authoritative copy in this repository, which carries
-the released magnitudes. The pick table is the merged analyst and RED-PAN
+The event table is the released ``Enhanced_ROMPLUS_catalog.csv`` of the data
+record, which carries the released magnitudes; pass it with ``--catalog-csv``. The pick table is the merged analyst and RED-PAN
 pick set, with the two magnitudes measured for this release joined on so that
 a user working pick by pick has them without merging the event table first.
 
@@ -53,8 +53,8 @@ def load_catalog(path: Path | None) -> tuple[pd.DataFrame, Path]:
             if missing:
                 raise ValueError(
                     f"{p} has no {missing} column. This is the catalog from "
-                    "before the magnitudes were released. Use the copy in "
-                    "data/ of this repository."
+                    "before the magnitudes were released. Use the catalog of "
+                    "the data record."
                 )
             print(f"catalog: {p}")
             return df, Path(p)

@@ -91,11 +91,12 @@ $ROMANIA_ROOT/
     sac/                         the waveform archive
 ```
 
-Of these, the two that are published are `Mw_catalog.csv` and the contents of
-`romania_ml/outputs/fit/`. The data archive listed in the repository root
-`README.md` contains them, along with `station_fits.csv.gz` and the collected
-spectral fits, which is enough to rerun the `mw`, `anchor` and `conversion`
-stages without the waveforms.
+None of these files is in the RoSE data record. The released magnitudes are
+the `Mw` and `ML` columns of `Enhanced_ROMPLUS_catalog.csv` and the `source_mw`
+and `source_ml` fields of the trace metadata in the data record, and the tables
+in `magnitudes/calibration/` are copies of files in `romania_ml/outputs/` and
+`romania_mw/outputs/`. The amplitudes, spectral fits and SAC files that the
+drivers read are not published.
 
 ## What the drivers will not reproduce exactly
 

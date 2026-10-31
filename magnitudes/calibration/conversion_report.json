@@ -816,7 +816,7 @@
     "do_not_convert": "above the extrapolation range, or the event carries an amplitude quality warning: take Mw from the Mw catalogue"
   },
   "method_notes": "Two choices carry the fit. The ML error on the x axis is the error of the event mean, sigma_within / sqrt(n_sta) with a median of 0.05, not the station-level scatter of 0.209: the larger value over-corrects attenuation and raises the crustal slope to 0.87. The fit set is bounded in ML only, because bounding it in Mw truncates the sample at low ML and produces curvature that is not in the scales",
-  "slope_discussion": "dML/dMw is 1/b, about 1.33 (crustal) and 1.41 (intermediate), close to the Deichmann-type expectation that ML grows up to 1.5 times faster than Mw for small earthquakes, because the Wood-Anderson band lies above the corner frequency. The difference between the two scales is therefore a slope, not an offset, and the anchor fixes only the point Mw 4.0",
+  "slope_discussion": "dML/dMw is 1/b, about 1.32 (crustal) and 1.41 (intermediate), close to the Deichmann-type expectation that ML grows up to 1.5 times faster than Mw for small earthquakes, because the Wood-Anderson band lies above the corner frequency. The difference between the two scales is therefore a slope, not an offset, and the anchor fixes only the point Mw 4.0",
   "limits": "Consistency between crustal ML and Mw above ML 4.5 cannot be tested with 2014-2024 data: no crustal event free of an amplitude quality warning exceeds ML 4.9. Above the validated range every such event has a SourceSpec Mw, which should be used directly",
   "software": {
     "python": "3.11.16",

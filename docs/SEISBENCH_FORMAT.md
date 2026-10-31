@@ -49,7 +49,7 @@ which SeisBench uses to slice the right window out of the bucket array.
 ### Picks
 | Column | Description |
 |---|---|
-| `trace_p_arrival_sample`, `trace_s_arrival_sample` | sample index on the trace axis; empty (NaN) when there is no pick (SeisBench reads NaN as "no arrival"; dataset version 1 wrote `-1`, which its labellers read as an onset at sample 0); a negative value is a pick shortly before the trace start |
+| `trace_p_arrival_sample`, `trace_s_arrival_sample` | sample index on the trace axis; empty (NaN) when there is no pick (SeisBench reads NaN as "no arrival"; dataset version 1 wrote `-1`, which its labellers read as an onset at sample 0); a negative value is a pick shortly before the trace start. 51 P picks lie 5 to 15 ms before the trace start, where the sample would be `-1`; the converter reads `-1` as no pick, so their sample is empty while their time is kept and `trace_p_in_window` is False |
 | `trace_p_arrival_time`, `trace_s_arrival_time` | UTC ISO |
 | `trace_p_status`, `trace_s_status` | `manual` or `repick` |
 | `trace_p_snr_db`, `trace_s_snr_db` | SNR of the chosen pick |
@@ -264,7 +264,8 @@ the attenuation model is fitted again. The tables in
 [`magnitudes/calibration/`](../magnitudes/calibration/) are those of the
 version 4 fit. In `Enhanced_ROMPLUS_catalog.csv` the
 columns `Mw`, `Mw_sigma`, `Mw_quality`, `Mw_nstations`, `Mw_fc_Hz`, `ML`,
-`ML_nstations` and `ML_warning` change; in the metadata files `source_mw`,
+`ML_nstations` and `ML_warning` change; in `Enhanced_ROMPLUS_picks.csv`, `Mw` and
+`ML`; in the metadata files `source_mw`,
 `source_mw_sigma`, `source_mw_quality`, `source_mw_nstations`,
 `source_mw_fc_hz`, `source_ml`, `source_ml_nstations`, `source_ml_warning`,
 `source_magnitude` and `source_magnitude_uncertainty`. The splits and all other

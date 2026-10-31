@@ -7,18 +7,18 @@
   "fixed": {
    "all": {
     "n": 302,
-    "median": -0.052,
-    "mean": -0.08,
-    "std": 0.131,
+    "median": -0.051,
+    "mean": -0.075,
+    "std": 0.122,
     "frac_abs_gt_0.1": 0.34
    },
    "classes": {
     "<2 crustal": {
-     "n": 40,
-     "median": -0.041,
-     "mean": -0.053,
-     "std": 0.113,
-     "frac_abs_gt_0.1": 0.28
+     "n": 41,
+     "median": -0.04,
+     "mean": -0.045,
+     "std": 0.125,
+     "frac_abs_gt_0.1": 0.29
     },
     "<2 slab": {
      "n": 40,
@@ -30,9 +30,9 @@
     "2-3 crustal": {
      "n": 40,
      "median": -0.078,
-     "mean": -0.138,
+     "mean": -0.137,
      "std": 0.182,
-     "frac_abs_gt_0.1": 0.45
+     "frac_abs_gt_0.1": 0.42
     },
     "2-3 slab": {
      "n": 40,
@@ -42,10 +42,10 @@
      "frac_abs_gt_0.1": 0.35
     },
     "3-4 crustal": {
-     "n": 40,
-     "median": -0.18,
-     "mean": -0.19,
-     "std": 0.153,
+     "n": 39,
+     "median": -0.179,
+     "mean": -0.17,
+     "std": 0.082,
      "frac_abs_gt_0.1": 0.82
     },
     "3-4 slab": {
@@ -64,9 +64,9 @@
     },
     ">=4 slab": {
      "n": 47,
-     "median": -0.021,
-     "mean": -0.023,
-     "std": 0.035,
+     "median": -0.022,
+     "mean": -0.024,
+     "std": 0.036,
      "frac_abs_gt_0.1": 0.02
     }
    }
@@ -75,30 +75,30 @@
    "all": {
     "n": 301,
     "median": 0.006,
-    "mean": 0.013,
-    "std": 0.155,
+    "mean": 0.019,
+    "std": 0.12,
     "frac_abs_gt_0.1": 0.2
    },
    "classes": {
     "<2 crustal": {
-     "n": 40,
-     "median": 0.023,
-     "mean": 0.037,
+     "n": 41,
+     "median": 0.019,
+     "mean": 0.033,
      "std": 0.131,
-     "frac_abs_gt_0.1": 0.33
+     "frac_abs_gt_0.1": 0.34
     },
     "<2 slab": {
      "n": 39,
-     "median": 0.128,
-     "mean": 0.142,
-     "std": 0.154,
+     "median": 0.127,
+     "mean": 0.143,
+     "std": 0.153,
      "frac_abs_gt_0.1": 0.62
     },
     "2-3 crustal": {
      "n": 40,
      "median": -0.003,
-     "mean": -0.014,
-     "std": 0.125,
+     "mean": -0.012,
+     "std": 0.122,
      "frac_abs_gt_0.1": 0.28
     },
     "2-3 slab": {
@@ -109,11 +109,11 @@
      "frac_abs_gt_0.1": 0.17
     },
     "3-4 crustal": {
-     "n": 40,
-     "median": 0.007,
-     "mean": -0.058,
-     "std": 0.313,
-     "frac_abs_gt_0.1": 0.07
+     "n": 39,
+     "median": 0.009,
+     "mean": -0.016,
+     "std": 0.172,
+     "frac_abs_gt_0.1": 0.05
     },
     "3-4 slab": {
      "n": 40,
@@ -131,8 +131,8 @@
     },
     ">=4 slab": {
      "n": 47,
-     "median": -0.001,
-     "mean": 0.0,
+     "median": -0.002,
+     "mean": -0.0,
      "std": 0.021,
      "frac_abs_gt_0.1": 0.0
     }
@@ -150,7 +150,7 @@
   "fixed": {
    "n": 17,
    "mean": 0.162,
-   "std": 0.17,
+   "std": 0.169,
    "crustal": 0.268,
    "slab": 0.104
   },
