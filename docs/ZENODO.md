@@ -24,7 +24,7 @@ archive.
 ## Data record
 
 The data record's files are restricted until the RoSE data paper is
-accepted. The authors plan to release version 3 under CC BY 4.0 at that time,
+accepted. The authors plan to release version 4 under CC BY 4.0 at that time,
 after NIEP confirms in writing that this license covers the following
 material:
 
@@ -51,8 +51,9 @@ version names:
 | 1 | [`10.5281/zenodo.23153184`](https://doi.org/10.5281/zenodo.23153184) | 2026-10-05 | earthquake traces (chunks `2014` … `2024`), event catalog, picks and StationXML |
 | 2 | [`10.5281/zenodo.23495039`](https://doi.org/10.5281/zenodo.23495039) | 2026-10-20 | adds the noise chunks `noise2014` … `noise2024`; the earthquake metadata leave missing picks empty instead of `-1` and give every time stamp fractional seconds. Its noise metadata do not match its noise waveforms, so do not use its noise chunks |
 | 3 | [`10.5281/zenodo.23681945`](https://doi.org/10.5281/zenodo.23681945) | 2026-10-27 | replaces the 11 noise metadata files, `waveformsnoise2014.hdf5` and `waveformsnoise2016.hdf5`, so the noise metadata match the noise waveforms; the other 36 files are those of version 2 |
+| 4 | [`10.5281/zenodo.23809729`](https://doi.org/10.5281/zenodo.23809729) | 2026-10-30 | repairs one wrong end sample in 3,537 BH earthquake traces (`waveforms2014.hdf5` … `waveforms2024.hdf5`) and recomputes Mw and ML (`Enhanced_ROMPLUS_catalog.csv` and the 11 earthquake metadata files), with a new `SHA256SUMS`; see `docs/SEISBENCH_FORMAT.md`, "Known issues in the earthquake traces". The other 25 files are those of version 3 |
 
-The `chunks` file of versions 2 and 3 lists the year chunks and the noise
+The `chunks` file of versions 2 to 4 lists the year chunks and the noise
 chunks. Toolkit v0.4.0 and later load only the earthquake traces unless
 `include_noise=True` is passed. Older toolkit versions load every chunk in the
 file; pass them `chunks=[str(y) for y in range(2014, 2025)]` to keep the noise

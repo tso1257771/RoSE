@@ -66,15 +66,15 @@ detection (only meaningful for models with a detection head):
 
 | Model | P prec | P rec | **P F1** | S prec | S rec | **S F1** | det F1 | det MCC |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|
-| **EQT-RoSE**        | 0.978 | 0.688 | 0.808 | 0.945 | 0.598 | 0.733 | **0.973** | **0.942** |
-| **PhaseNet-RoSE**   | 0.945 | 0.714 | 0.813 | 0.918 | 0.716 | 0.804 | — | — |
-| **RED-PAN-60s**     | 0.986 | 0.711 | **0.826** | 0.983 | 0.714 | **0.827** | 0.928 | 0.859 |
-| EQT-instance        | 0.971 | 0.669 | 0.792 | 0.977 | 0.366 | 0.533 | 0.756 | 0.621 |
-| PhaseNet-instance   | 0.970 | 0.673 | 0.795 | 0.983 | 0.370 | 0.538 | — | — |
-| EQT-ethz            | 0.860 | 0.606 | 0.711 | 0.885 | 0.406 | 0.557 | 0.618 | 0.365 |
-| PhaseNet-ethz       | 0.930 | 0.561 | 0.700 | 0.926 | 0.306 | 0.460 | — | — |
-| EQT-stead           | 0.992 | 0.522 | 0.684 | 0.985 | 0.571 | 0.723 | 0.846 | 0.740 |
-| PhaseNet-stead      | 0.991 | 0.379 | 0.548 | 0.980 | 0.690 | 0.810 | — | — |
+| **EQT-RoSE**        | 0.978 | 0.692 | 0.810 | 0.946 | 0.601 | 0.735 | **0.976** | **0.947** |
+| **PhaseNet-RoSE**   | 0.945 | 0.717 | 0.816 | 0.918 | 0.719 | 0.807 | — | — |
+| **RED-PAN-60s**     | 0.986 | 0.715 | **0.829** | 0.983 | 0.717 | **0.829** | 0.930 | 0.862 |
+| EQT-instance        | 0.971 | 0.673 | 0.795 | 0.977 | 0.367 | 0.534 | 0.758 | 0.623 |
+| PhaseNet-instance   | 0.970 | 0.676 | 0.797 | 0.983 | 0.372 | 0.539 | — | — |
+| EQT-ethz            | 0.861 | 0.609 | 0.713 | 0.886 | 0.408 | 0.559 | 0.620 | 0.367 |
+| PhaseNet-ethz       | 0.930 | 0.564 | 0.702 | 0.926 | 0.307 | 0.461 | — | — |
+| EQT-stead           | 0.992 | 0.525 | 0.687 | 0.985 | 0.574 | 0.725 | 0.848 | 0.743 |
+| PhaseNet-stead      | 0.991 | 0.381 | 0.550 | 0.980 | 0.695 | 0.813 | — | — |
 
 RED-PAN-60s is partly scored against its own picks. The RoSE labels have two
 sources (`trace_p_status`, `trace_s_status`): analysts' picks, and repicks made
@@ -94,44 +94,40 @@ these labels, but RED-PAN-60s loses most, 0.06 (P) and 0.08 (S) of F1 against
 
 | Model | P prec | P rec | **P F1** | P MAE | S prec | S rec | **S F1** | S MAE |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|
-| **EQT-RoSE**        | 0.976 | 0.646 | 0.777 | 0.093 | 0.941 | 0.547 | 0.692 | 0.182 |
-| **PhaseNet-RoSE**   | 0.942 | 0.670 | **0.783** | 0.089 | 0.910 | 0.647 | 0.756 | 0.212 |
-| **RED-PAN-60s**     | 0.984 | 0.629 | 0.767 | 0.097 | 0.980 | 0.609 | 0.751 | 0.233 |
-| EQT-instance        | 0.969 | 0.625 | 0.760 | 0.109 | 0.976 | 0.351 | 0.516 | 0.169 |
-| PhaseNet-instance   | 0.968 | 0.636 | 0.767 | 0.106 | 0.982 | 0.351 | 0.517 | 0.162 |
-| EQT-ethz            | 0.850 | 0.560 | 0.675 | 0.106 | 0.878 | 0.379 | 0.529 | 0.189 |
-| PhaseNet-ethz       | 0.924 | 0.518 | 0.663 | 0.086 | 0.921 | 0.284 | 0.435 | 0.153 |
-| EQT-stead           | 0.991 | 0.475 | 0.642 | 0.087 | 0.983 | 0.509 | 0.671 | 0.195 |
-| PhaseNet-stead      | 0.989 | 0.334 | 0.499 | 0.079 | 0.978 | 0.620 | **0.759** | 0.207 |
+| **EQT-RoSE**        | 0.977 | 0.648 | 0.779 | 0.093 | 0.941 | 0.549 | 0.693 | 0.182 |
+| **PhaseNet-RoSE**   | 0.942 | 0.673 | **0.785** | 0.089 | 0.910 | 0.650 | 0.759 | 0.212 |
+| **RED-PAN-60s**     | 0.984 | 0.632 | 0.770 | 0.097 | 0.980 | 0.612 | 0.753 | 0.234 |
+| EQT-instance        | 0.969 | 0.628 | 0.762 | 0.109 | 0.976 | 0.352 | 0.517 | 0.169 |
+| PhaseNet-instance   | 0.968 | 0.638 | 0.769 | 0.107 | 0.982 | 0.352 | 0.519 | 0.162 |
+| EQT-ethz            | 0.851 | 0.562 | 0.677 | 0.106 | 0.879 | 0.381 | 0.531 | 0.189 |
+| PhaseNet-ethz       | 0.924 | 0.519 | 0.665 | 0.086 | 0.921 | 0.286 | 0.436 | 0.152 |
+| EQT-stead           | 0.991 | 0.477 | 0.644 | 0.087 | 0.983 | 0.512 | 0.673 | 0.195 |
+| PhaseNet-stead      | 0.989 | 0.335 | 0.501 | 0.079 | 0.978 | 0.624 | **0.762** | 0.207 |
 
-**149 test traces cannot be picked, and 328 more are picked less well.** In
-149 test traces the last sample of one to three components is +inf or -inf,
-and in 328 more it is finite but far too large. All are BH traces resampled
-from 20 or 50 Hz with ObsPy's `Trace.interpolate(100)`, whose default method
-can read one value past the end of its input. The cause, the counts and a
-repair function are in
+**These tables use dataset version 4.** In dataset versions 1 to 3, the last
+sample of one or more components of 3,537 BH traces (544 of them in the test
+split) is wrong: in 149 test traces it is +inf or -inf, so every model misses
+every label on them, and in the others it is finite but far too large. The
+traces were resampled from 20 or 50 Hz with ObsPy's `Trace.interpolate(100)`,
+whose default method can read one value past the end of its input. Version 4
+([`10.5281/zenodo.23809729`](https://doi.org/10.5281/zenodo.23809729)) replaces each wrong sample with the sample before it; the cause, the
+counts and the repair are in
 [`docs/SEISBENCH_FORMAT.md`](../../docs/SEISBENCH_FORMAT.md#known-issues-in-the-earthquake-traces).
-The whole dataset has 928 traces with an infinite end sample (645 train, 134
-val, 149 test) and 2,139 with a finite one that is too large; the noise set
-has none. Any normalisation turns a trace with an infinite sample into NaN, so
-every model misses every label on them: 122 of the 27 309 traces with both
-labels (60 P and 70 S labels manual), so recall cannot exceed 0.996 for either
-phase and 0.9955 for detection, and the tables above count them as misses for
-every model; EQT-RoSE misses only one other trace in detection. On the 328
-traces with a large finite end sample, the models find 18 to 44 % fewer labels
-than on clean traces. Together, the 477 traces lower recall in
-`rose_picking.csv` at threshold 0.30 by 0.003 to 0.006 for every model, and
-they do not change the order of the models. A corrected dataset version would
-change only one sample in each affected component.
+The benchmark was rerun on version 4 on 2026-10-30 with the same models and
+settings. On the 31 830 test traces that the repair does not touch, all nine
+models give the same picks as on version 3. Against the tables of toolkit
+v0.4.2 and earlier, which used version 3, recall at threshold 0.30 rises by
+0.001 to 0.005 and F1 by at most 0.003 for every model, and the order of the
+models does not change.
 
 Onset-time residuals over matched (true-positive) picks — MAE, MAD (≈ IQR/2),
 RMSE, IQR in seconds (`rose_residual_stats.csv`; baselines omitted here):
 
 | Model | P n | P MAE | P MAD | P RMSE | P IQR | S n | S MAE | S MAD | S RMSE | S IQR |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
-| EQT-RoSE       | 19 882 | 0.085 | 0.045 | 0.123 | 0.089 | 18 410 | 0.137 | 0.081 | 0.221 | 0.161 |
-| PhaseNet-RoSE  | 20 623 | 0.074 | 0.036 | 0.120 | 0.072 | 22 029 | 0.151 | 0.074 | 0.257 | 0.148 |
-| RED-PAN-60s    | 20 541 | 0.071 | 0.035 | 0.122 | 0.069 | 21 965 | 0.141 | 0.073 | 0.256 | 0.147 |
+| EQT-RoSE       | 19 991 | 0.085 | 0.045 | 0.123 | 0.089 | 18 503 | 0.137 | 0.080 | 0.221 | 0.161 |
+| PhaseNet-RoSE  | 20 728 | 0.074 | 0.036 | 0.120 | 0.072 | 22 151 | 0.151 | 0.074 | 0.257 | 0.147 |
+| RED-PAN-60s    | 20 663 | 0.071 | 0.034 | 0.122 | 0.069 | 22 076 | 0.141 | 0.073 | 0.256 | 0.147 |
 
 The counts are the true positives of the leaderboard (S within 1.0 s). Up to
 toolkit v0.4.0 this table and the four diagnostic columns of
@@ -151,15 +147,15 @@ STEAD noise (in brackets) only in where the noise comes from:
 
 | Model | RoSE noise with a pick | STEAD noise with a pick | P F1 | S F1 | det F1 | det MCC |
 |---|--:|--:|--:|--:|--:|--:|
-| **EQT-RoSE**        | 1.4%  | 5.8%  | 0.814 (0.808) | 0.744 (0.733) | 0.992 (0.973) | 0.982 (0.942) |
-| **PhaseNet-RoSE**   | 2.9%  | 11.3% | 0.826 (0.813) | 0.829 (0.804) | — | — |
-| **RED-PAN-60s**     | 0.3%  | 2.0%  | 0.830 (0.826) | 0.833 (0.827) | 0.935 (0.928) | 0.876 (0.859) |
-| EQT-instance        | 0.2%  | 3.0%  | 0.802 (0.792) | 0.536 (0.533) | 0.767 (0.756) | 0.656 (0.621) |
-| PhaseNet-instance   | 0.7%  | 3.0%  | 0.802 (0.795) | 0.540 (0.538) | — | — |
-| EQT-ethz            | 4.1%  | 16.0% | 0.742 (0.711) | 0.576 (0.557) | 0.658 (0.618) | 0.512 (0.365) |
-| PhaseNet-ethz       | 0.6%  | 5.8%  | 0.718 (0.700) | 0.468 (0.460) | — | — |
-| EQT-stead           | 0.02% | 1.3%  | 0.686 (0.684) | 0.726 (0.723) | 0.851 (0.846) | 0.755 (0.740) |
-| PhaseNet-stead      | 0.2%  | 2.0%  | 0.549 (0.548) | 0.816 (0.810) | — | — |
+| **EQT-RoSE**        | 1.4%  | 5.8%  | 0.817 (0.810) | 0.746 (0.735) | 0.994 (0.976) | 0.987 (0.947) |
+| **PhaseNet-RoSE**   | 2.9%  | 11.3% | 0.829 (0.816) | 0.832 (0.807) | — | — |
+| **RED-PAN-60s**     | 0.3%  | 2.0%  | 0.833 (0.829) | 0.835 (0.829) | 0.937 (0.930) | 0.880 (0.862) |
+| EQT-instance        | 0.2%  | 3.0%  | 0.804 (0.795) | 0.537 (0.534) | 0.769 (0.758) | 0.658 (0.623) |
+| PhaseNet-instance   | 0.7%  | 3.0%  | 0.805 (0.797) | 0.542 (0.539) | — | — |
+| EQT-ethz            | 4.1%  | 16.0% | 0.744 (0.713) | 0.578 (0.559) | 0.661 (0.620) | 0.515 (0.367) |
+| PhaseNet-ethz       | 0.6%  | 5.8%  | 0.720 (0.702) | 0.469 (0.461) | — | — |
+| EQT-stead           | 0.02% | 1.3%  | 0.689 (0.687) | 0.729 (0.725) | 0.853 (0.848) | 0.757 (0.743) |
+| PhaseNet-stead      | 0.2%  | 2.0%  | 0.552 (0.550) | 0.819 (0.813) | — | — |
 
 Every model picks less often on this RoSE noise than on STEAD noise, so
 precision and F1 rise, and the order of the models barely changes. Three
@@ -199,10 +195,10 @@ event-vs-noise (T1):
 ¹ PhaseNet has no detection head, so T1 is just "did it emit any pick at the
 threshold" — there's no per-trace probability score, hence no ROC-AUC.
 
-**TL;DR:** on RoSE, **RED-PAN-60s** has the best phase-pick F1 (P 0.826 /
-S 0.827; on the analysts' picks alone PhaseNet-RoSE leads P with 0.783 and
-PhaseNet-stead S with 0.759) and **EQT-RoSE** the best event-detection F1
-(0.973, MCC 0.942);
+**TL;DR:** on RoSE, **RED-PAN-60s** has the best phase-pick F1 (P 0.829 /
+S 0.829; on the analysts' picks alone PhaseNet-RoSE leads P with 0.785 and
+PhaseNet-stead S with 0.762) and **EQT-RoSE** the best event-detection F1
+(0.976, MCC 0.947);
 on STEAD, **RED-PAN-60s** has the best P F1 (0.974) and PhaseNet-stead the
 best S F1 (0.983; RED-PAN-60s 0.980), and the STEAD-fine-tuned EQT-stead leads
 T1 (0.998), with EQT-RoSE close behind (0.991).
@@ -232,8 +228,8 @@ one lost. On the 300 STEAD event traces nothing changed: the pads reach only
 the first and last 60 s of a record, and the STEAD labels lie between them (P
 at 90 s, S at 90–124 s in this sample).
 
-The RoSE-pool rows above were recomputed with the fixed wrapper on
-2026-10-29 (all nine models; the eight PyTorch models reproduce their earlier
+On dataset version 3, the RoSE-pool rows were recomputed with the fixed
+wrapper on 2026-10-29 (all nine models; the eight PyTorch models reproduce their earlier
 rows within four picks). For RED-PAN-60s at threshold 0.30 the P picks on the
 23 526 STEAD noise traces fell from 551 to 295 and the noise traces with any
 pick from 713 to 474, so P precision rose from 0.974 to 0.986 and P F1 from
@@ -256,7 +252,7 @@ does not concern them.
 ## EQT-RoSE — Münchmeyer-2022 / Section-3 protocol
 
 Produced by `phase_picking/benchmark/eval_eqt_rose.py --ckpt ../models/eqt_rose/eqt_rose.pt
---rose-dir <rose>` on the full 32 374-trace RoSE test split (a *different*
+--rose-dir <rose>` on the full 32 374-trace RoSE test split of dataset version 3 (a *different*
 evaluation protocol from the pipeline above — SeisBench fixed-window generator,
 picks recovered from the Gaussian label channels, and a synthesised post-event
 **coda** window as the T1 negative since RoSE has no dedicated noise traces):
@@ -272,7 +268,7 @@ picks recovered from the Gaussian label channels, and a synthesised post-event
 marks samples up to `S + 1.4·(S−P)` as event-positive, so the first half of
 each coda-window "negative" is still in-event by EQT's own definition — treat
 T1 here as advisory only (use `--skip-t1` to suppress). The pipeline's
-STEAD-noise-based T1 for EQT-RoSE is F1 0.973 / MCC 0.942 (`rose_detection.csv`);
+STEAD-noise-based T1 for EQT-RoSE is F1 0.976 / MCC 0.947 (`rose_detection.csv`, version 4);
 T2/T3 above are robust.
 
 ## Regenerating

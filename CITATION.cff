@@ -68,7 +68,8 @@ references:
   - type: data
     title: "RoSE — Romanian SEismic Dataset (waveforms, picks and event catalog)"
     # concept DOI (all versions); version 3, 10.5281/zenodo.23681945, is the
-    # first whose noise metadata match the noise waveforms
+    # first whose noise metadata match the noise waveforms; version 4,
+    # 10.5281/zenodo.23809729, repairs one end sample in 3,537 earthquake traces
     doi: "10.5281/zenodo.23153183"
     authors:
       - family-names: "Liao"

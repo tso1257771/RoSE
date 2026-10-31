@@ -11,7 +11,7 @@ can be checked and so the same scale can be applied to a new earthquake:
 >>> from rose.magnitudes import load_calibration, neg_log_a0
 >>> cal = load_calibration()
 >>> round(float(neg_log_a0([100.0], [10.0], cal.atten, cal.anchor)[0]), 6)
-2.516415
+2.517528
 
 Pass ``cal.anchor`` whenever the result is meant to be a magnitude. Left out,
 ``neg_log_a0`` returns the unanchored curve the shape was fitted in, which is

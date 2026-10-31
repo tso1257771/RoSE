@@ -61,9 +61,9 @@ catalog SAC archive.
 | `Mw_quality` | str | `A` (>=5 sites, std. err. < 0.15), `B` (>=3 sites), `C` (1-2 sites) |
 | `Mw_nstations` | int (float64 when empty) | Distinct sites used |
 | `Mw_fc_Hz` | float | Corner frequency. Reported only for Mw >= 3.5 (192 events); empty means not reported |
-| `ML` | float | Local magnitude from Wood-Anderson amplitudes with per-station corrections. 18,330 events |
+| `ML` | float | Local magnitude from Wood-Anderson amplitudes with per-station corrections. 18,361 events |
 | `ML_nstations` | int (float64 when empty) | Stations used (minimum 3) |
-| `ML_warning` | int (float64 when empty) | `0` normal, `1` amplitude quality warning (48 events) |
+| `ML_warning` | int (float64 when empty) | `0` normal, `1` amplitude quality warning (33 events) |
 | `source` | str | Hypocenter solution: `hypoDD_3D`, `SSST`, `ROMPLUS` |
 | `raw_time`, `raw_lat`, `raw_lon`, `raw_depth` | str/float | Original ROMPLUS solution |
 | `Nsta`, `Npha` | int | Stations / phases used by the relocation |

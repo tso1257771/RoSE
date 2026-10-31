@@ -1,7 +1,7 @@
 # Magnitude fields produced for the RoSE event table
 
 The local event table contains two measured magnitudes,
-19,188 events with Mw and 18,330 with ML out of 19,230.
+19,188 events with Mw and 18,361 with ML out of 19,230.
 The two scales are reported separately. ML is anchored to Mw at Mw 4.0, so at that
 magnitude the difference between them is zero by construction and is not a check.
 
@@ -19,24 +19,24 @@ SourceSpec 1.8 S wave spectral inversion (Brune omega-square, t* per station, 1/
 
 ## ML
 
-Local magnitude from Wood-Anderson amplitudes (mean of the two horizontals) with a correction for each station. The distance correction is separate for crustal events (depth < 60 km, three segments) and intermediate depth ones. The baseline constant is anchored to SourceSpec Mw at Mw 4.0 in each regime, giving C = -0.48 crustal and -0.35 intermediate depth, so that -log A0 at 100 km is 2.516 and 2.652. ML minus Mw is zero at Mw 4.0 by construction. Attenuation shape, station terms and b-value are independent of Mw. The absolute level of ML has a common uncertainty of about 0.10 from the anchor.
+Local magnitude from Wood-Anderson amplitudes (mean of the two horizontals) with a correction for each station. The distance correction is separate for crustal events (depth < 60 km, three segments) and intermediate depth ones. The baseline constant is anchored to SourceSpec Mw at Mw 4.0 in each regime, giving C = -0.48 crustal and -0.35 intermediate depth, so that -log A0 at 100 km is 2.518 and 2.651. ML minus Mw is zero at Mw 4.0 by construction. Attenuation shape, station terms and b-value are independent of Mw. The absolute level of ML has a common uncertainty of about 0.10 from the anchor.
 
 | Column | Meaning |
 |---|---|
 | `ML` | local magnitude, Wood-Anderson amplitudes with station corrections |
 | `ML_nstations` | stations used, at least 3 |
-| `ML_warning` | `0` normal, `1` amplitude quality warning (48 events): amplitudes clipped or rejected at more than 20 per cent of the stations, or corner frequency below 1.25 Hz |
+| `ML_warning` | `0` normal, `1` amplitude quality warning (33 events): amplitudes clipped or rejected at more than 20 per cent of the stations, or corner frequency below 1.25 Hz |
 
 ## Which magnitude to use
 
 Use `Mw` wherever the magnitude stands for the size of the source, including
 ground motion work and machine learning labels. It is proportional to moment
 over the whole range, it does not saturate, and it is measured for
-19,188 events, 886 of them where no local magnitude could be measured and
+19,188 events, 855 of them where no local magnitude could be measured and
 4,089 where the NIEP bulletin gives no magnitude at all.
 
 `ML` is reported for continuity with the bulletin and for comparison with other
-local magnitude studies. It runs about 1.33 magnitude units per unit of Mw for
+local magnitude studies. It runs about 1.32 magnitude units per unit of Mw for
 crustal events and 1.41 for intermediate depth ones, because the corner
 frequency of a small earthquake lies above the Wood-Anderson band and the
 instrument then reads the flat part of the displacement spectrum. Completeness
@@ -67,13 +67,13 @@ moment magnitude. Neither column enters `Mw` or `ML`.
 
 | Selection | Expression | Events |
 |---|---|---|
-| usable Mw | `Mw_quality in ("A", "B")` | 17,937 |
-| best Mw | `Mw_quality == "A"` | 11,656 |
-| usable ML | `ML_warning == 0` | 18,282 |
+| usable Mw | `Mw_quality in ("A", "B")` | 17,956 |
+| best Mw | `Mw_quality == "A"` | 11,713 |
+| usable ML | `ML_warning == 0` | 18,328 |
 | events with a corner frequency | `Mw_fc_Hz` not empty | 192 |
 
 An empty magnitude column means the event was not measured on that scale:
-886 events have Mw only, 28 have ML only and 14 have neither.
+855 events have Mw only, 28 have ML only and 14 have neither.
 The counting columns and `ML_warning` are read back as floating point when a row
 is empty.
 

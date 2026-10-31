@@ -2,28 +2,28 @@
   "anchor_centred_bin": {
     "crustal": {
       "n": 17,
-      "median_ML_minus_Mw": 0.021842895063317158
+      "median_ML_minus_Mw": 0.02397307064710752
     },
     "intermediate": {
       "n": 66,
-      "median_ML_minus_Mw": -0.021280569297519092
+      "median_ML_minus_Mw": -0.020712227417830187
     }
   },
   "b_value_invariance": {
     "crustal": {
       "mc_unanchored": 1.9,
-      "mc_anchored": 1.4164147594015248,
-      "b_unanchored": 1.2668395396997207,
-      "b_anchored": 1.2668395396997223,
-      "n": 4317,
+      "mc_anchored": 1.4175282655670698,
+      "b_unanchored": 1.2665388053561435,
+      "b_anchored": 1.2665388053561435,
+      "n": 4325,
       "same_event_set": true
     },
     "intermediate": {
       "mc_unanchored": 2.1,
-      "mc_anchored": 1.7519052651780882,
-      "b_unanchored": 0.616759131768914,
-      "b_anchored": 0.6167591317689142,
-      "n": 1341,
+      "mc_anchored": 1.751270521851918,
+      "b_unanchored": 0.6173167300334823,
+      "b_anchored": 0.6173167300334821,
+      "n": 1342,
       "same_event_set": true
     }
   }

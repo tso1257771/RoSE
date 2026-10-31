@@ -56,12 +56,12 @@ and response epoch, with the terms summing to zero. Event ML is the median over 
 
 | Parameter | Crustal | Intermediate |
 |---|---|---|
-| slope, R ≤ 70 km | 1.585 ± 0.025 | — |
+| slope, R ≤ 70 km | 1.583 ± 0.025 | — |
 | slope, 70–190 km | 0 (flat) | — |
-| slope, R > 190 km | 1.777 ± 0.133 | — |
-| slope (single segment) | — | 0.801 ± 0.127 |
-| K (per km) | 0.00256 | 0.00306 |
-| −log A0 at 100 km | 2.516 | 2.652 |
+| slope, R > 190 km | 1.776 ± 0.128 | — |
+| slope (single segment) | — | 0.794 ± 0.129 |
+| K (per km) | 0.00257 | 0.00308 |
+| −log A0 at 100 km | 2.518 | 2.651 |
 
 **Anchor.** C is the intercept of a Huber fit of (Mw − ML) on (Mw − 4.0), over
 events with Mw in [3.5, 4.5], Mw quality A/B, no saturation risk, fc ≥ 1.25 Hz (or unknown)
@@ -69,12 +69,12 @@ and at least five stations. A median is not used: the window's mean Mw is about 
 (ML − Mw) has a slope of about 0.35 per magnitude unit there, so a median would absorb that
 trend.
 
-    C_crustal      = −0.484 ± 0.10   (year jackknife, n = 37. The event bootstrap gives 0.038 and understates it)
-    C_intermediate = −0.348 ± 0.011  (event bootstrap, n = 135)
+    C_crustal      = −0.482 ± 0.09   (year jackknife, n = 37. The event bootstrap gives 0.037 and understates it)
+    C_intermediate = −0.349 ± 0.011  (event bootstrap, n = 135)
 
 The crustal constant depends on one sequence: 2023 supplies 14 of the 37 crustal anchor
-events and lies about 0.36 lower in Mw − ML than the other years, so dropping it gives −0.386
-while dropping any other year gives −0.482 to −0.506. The systematic uncertainty of the anchor
+events and lies about 0.33 lower in Mw − ML than the other years, so dropping it gives −0.389
+while dropping any other year gives −0.480 to −0.505. The systematic uncertainty of the anchor
 events' Mw adds a shift common to every event of about ±0.10 (crustal) and ±0.10
 (intermediate) to absolute ML. The validity bounds and the flag thresholds are fixed numbers in anchored ML and do not
 move with C. The conversion intercept does move with it, by about −0.074 per +0.1 in C.
@@ -87,10 +87,10 @@ intercept depend on it.
 
 ## Quality and validity
 
-The residual standard deviation is 0.258, and 0.209 within events (0.367 without station
-terms). There are 371 terms for station, channel and epoch, with standard deviation 0.380.
+The residual standard deviation is 0.258, and 0.208 within events (0.367 without station
+terms). There are 371 terms for station, channel and epoch, with standard deviation 0.379.
 With one year left out, the scatter within the events of that year falls from 0.361 without
-corrections to 0.233 with the corrections fitted on the other years. 18,330 events have an
+corrections to 0.232 with the corrections fitted on the other years. 18,361 events have an
 ML.
 
 Amplitude quality control: clipped observations (a flat top in raw counts at 24 bit full
@@ -112,20 +112,20 @@ itself biased high, so ML must not be converted there.
 
 Columns per event in `romania_ml/outputs/fit/event_ml.csv`: `n_sta`, `n_clipped`, `frac_clipped`,
 `n_blowup_rejected`, `n_truncated`, `fc_Hz`, `ml_saturation_risk` (fc < 1.25 Hz, or
-frac_clipped > 0.2, or clipped + rejected > 0.2·n_sta, 48 events), `ml_unanchored`,
+frac_clipped > 0.2, or clipped + rejected > 0.2·n_sta, 33 events), `ml_unanchored`,
 `anchor_C`, `mw_from_ml` and `mw_from_ml_flag`, which says whether that conversion is usable
-for the event: 1,551 in range, 5 extrapolated, 16,726 below the range and 48 not to be
+for the event: 1,553 in range, 5 extrapolated, 16,770 below the range and 33 not to be
 converted.
 
 ## Saturation
 
 No saturation is detectable within the catalogue, though the largest bins are thin: on the
-anchored scale the median ML − Mw is +0.04 at Mw 4.0–4.5 crustal (n = 8) and +0.18 at
-Mw 4.5–5.0 intermediate (n = 8), with +0.32 in the highest intermediate bin (n = 2). The
+anchored scale the median ML − Mw is +0.05 at Mw 4.0–4.5 crustal (n = 8) and +0.18 at
+Mw 4.5–5.0 intermediate (n = 8), with +0.35 in the highest intermediate bin (n = 2). The
 trend is still upward at the top of the range, but rests on 2–8 events per bin. From the catalogue's own scaling of fc with
 Mw, the corner frequency crosses the Wood-Anderson natural frequency (1.25 Hz) at
 Mw 4.6 crustal and 5.3 intermediate, and the expected onset of saturation is above Mw ≈ 5
-and ≈ 5.5 respectively, reaching slope 0.5 near M 7. Below the anchor dML/dMw is about 1.33
+and ≈ 5.5 respectively, reaching slope 0.5 near M 7. Below the anchor dML/dMw is about 1.32
 (crustal) and 1.41 (intermediate), the inverse of the conversion slope, close to the
 expectation of Deichmann for small earthquakes.
 
@@ -139,11 +139,11 @@ must **not** be converted to Mw with the relations here.
 
 | Regime | a | b | σ | fitted over ML | validated to ML | n |
 |---|---|---|---|---|---|---|
-| Crustal | 3.170 ± 0.072 | 0.754 ± 0.015 | 0.206 | 2.00–4.87 | 4.5 | 663 |
+| Crustal | 3.170 ± 0.071 | 0.756 ± 0.015 | 0.205 | 2.00–4.87 | 4.5 | 665 |
 | Intermediate | 3.290 ± 0.007 | 0.711 ± 0.004 | 0.083 | 2.00–5.43 | 5.0 | 889 |
 
-Orthogonal distance regression with the error of the event mean ML, 0.209/√n_sta, on one axis
-and the σ(Mw) of each event on the other. The scatter between stations, 0.209, is not the
+Orthogonal distance regression with the error of the event mean ML, 0.208/√n_sta, on one axis
+and the σ(Mw) of each event on the other. The scatter between stations, 0.208, is not the
 error of an event mean: used as such it over-corrects attenuation and raises the crustal slope to 0.87.
 The fit set is quality A/B events with at least three stations, ML ≥ 2.0 and no amplitude
 quality warning, with no cut on Mw. Bounding the fit set in Mw truncates it at low ML and
@@ -151,14 +151,14 @@ produces curvature that is not in the scales.
 
 Uncertainties are from a bootstrap of 2000 replicates that resamples whole years. The
 event bootstrap gives ± 0.012 on a and ± 0.016 on b for the crustal relation and understates
-them, because 318 of the 663 crustal events belong to the 2023 Gorj sequence. The year
-jackknife gives ± 0.036 and ± 0.019.
+them, because 320 of the 665 crustal events belong to the 2023 Gorj sequence. The year
+jackknife gives ± 0.035 and ± 0.018.
 
 Residual bin means stay within 0.06 of zero from ML 1.5 to 4.5 crustal and within 0.03 to
-ML 5.0 intermediate. A quadratic term is not resolved in either regime (c = −0.018 ± 0.030
+ML 5.0 intermediate. A quadratic term is not resolved in either regime (c = −0.019 ± 0.030
 crustal, +0.007 ± 0.007 intermediate) and a hinge is not identifiable, so one linear form is
 published for both. A separate fit above ML 3 agrees with it: it predicts Mw 3.91 at ML 4
-against 3.92 from the published line.
+against 3.93 from the published line.
 
 Between ML 4.5 and 5.0 crustal, and 5.0 and 5.5 intermediate, the relation is an extrapolation
 supported by three and two events. Above those bounds, and for any event with an amplitude

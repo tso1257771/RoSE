@@ -151,7 +151,7 @@ def neg_log_a0(R, h, co, anchor=None):
     >>> round(float(neg_log_a0([100.0], [10.0], cal.atten)[0]), 6)        # fitted form
     3.0
     >>> round(float(neg_log_a0([100.0], [10.0], cal.atten, cal.anchor)[0]), 6)
-    2.516415
+    2.517528
     """
     v = FIXED + columns(R, h) @ np.array([co[n] for n in NAMES])
     if anchor is None:

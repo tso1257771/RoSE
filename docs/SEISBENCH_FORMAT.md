@@ -156,11 +156,12 @@ data.metadata.loc[year == "2024", "split"] = "test"
 
 ## Known issues in the earthquake traces
 
-**One wrong sample at the end of 3,067 BH traces.** In dataset versions 1 to
-3, one or more components of 3,067 earthquake traces (1.4 %) have one wrong
-sample at their end. All are BH traces recorded at 20 or 50 Hz and resampled
-to 100 Hz. The noise windows were resampled by linear interpolation and are not
-affected.
+**One wrong sample at the end of 3,067 BH traces (repaired in version 4).** In
+dataset versions 1 to 3, one or more components of 3,067 earthquake traces
+(1.4 %) have one wrong sample at their end. All are BH traces recorded at 20 or
+50 Hz and resampled to 100 Hz. The noise windows were resampled by linear
+interpolation and are not affected. Version 4 repairs these traces and
+recomputes the magnitudes; see *Version 4* below.
 
 | End sample | Traces | train | val | test |
 |---|---|---|---|---|
@@ -186,14 +187,21 @@ became the trace mean. The routine is unchanged in the current ObsPy version.
 
 *Where.* The wrong sample is the last sample of the component. In a few traces
 whose component ends in median padding, it is the last sample before the
-padding.
+padding. A second, rarer case has a different source: when the HDF5 files were
+built, the three components were put on one time axis, and a component one
+sample shorter than the others got its median value as its last sample. The
+repair below treats that sample the same way; it accounts for 436 of the
+components changed in version 4 (377 traces). Only 25 of the 3,067 traces in
+the table have this case alone, all in the 10 to 1,000 times class (20 train,
+4 val, 1 test).
 
 *Effect.* Normalisation turns a trace with an infinite sample into NaN, so a
 model returns no picks on it. A very large finite sample dominates the
 amplitude near the end. After the 1-45 Hz band-pass used in the benchmark, the
-nine models find 18 to 44 % fewer of the labels on such traces. In the
-published benchmark tables, the 477 affected test traces lower recall by 0.003
-to 0.006 for every model, and the order of the models does not change. Training
+nine models find 18 to 44 % fewer of the labels on such traces. On version 3,
+the 544 affected test traces lower recall at threshold 0.30 by 0.001 to 0.005
+for every model, and the order of the models does not change (measured by
+rerunning the benchmark on version 4). Training
 code that does not check for non-finite values can get a NaN loss when a window
 reaches the end of an affected trace.
 
@@ -233,6 +241,34 @@ def repair(state_dict):
     x, meta = state_dict["X"]
     state_dict["X"] = (repair_trace_end(x).astype(x.dtype), meta)
 ```
+
+*Version 4.* Dataset version 4
+([`10.5281/zenodo.23809729`](https://doi.org/10.5281/zenodo.23809729)) applies
+`repair_trace_end` to every earthquake trace. It changes 6,773 samples in 6,771
+components of 3,537 BH traces (2,475 train, 518 val, 544 test): the 3,067
+traces above and 470 with a milder case. No other sample differs from version 3,
+and no earthquake trace holds a non-finite sample. The repair is needed only for
+versions 1 to 3.
+
+Both magnitudes come from data with this defect: ML from these waveforms, and
+Mw from SourceSpec fits of the SAC files the waveforms were made from, which hold
+the same wrong samples (8,639 files of 3,385 events). Version 4 recomputes both.
+Of the 19,188 events with Mw, Mw changes by more than 0.1 in 53 and by more than
+0.2 in 11 (largest 1.57, event `2014_0001304`, whose version 3 Mw came from one
+station). The cause is repaired channels that SourceSpec could not use before:
+they now enter the fits and change its choice of outlier stations. On average
+the changed values are no closer to and no farther from the ROMPLUS Mw. Quality
+A rises from 11,656 to 11,713 events. 31 events gain an ML; ML changes by more
+than 0.1 in 71 events (largest 0.61) and by about 0.002 in the others, because
+the attenuation model is fitted again. The tables in
+[`magnitudes/calibration/`](../magnitudes/calibration/) are those of the
+version 4 fit. In `Enhanced_ROMPLUS_catalog.csv` the
+columns `Mw`, `Mw_sigma`, `Mw_quality`, `Mw_nstations`, `Mw_fc_Hz`, `ML`,
+`ML_nstations` and `ML_warning` change; in the metadata files `source_mw`,
+`source_mw_sigma`, `source_mw_quality`, `source_mw_nstations`,
+`source_mw_fc_hz`, `source_ml`, `source_ml_nstations`, `source_ml_warning`,
+`source_magnitude` and `source_magnitude_uncertainty`. The splits and all other
+columns are those of version 3.
 
 ## Noise chunks
 
@@ -303,7 +339,7 @@ sensitivities from the StationXML archive. `trace_name_original` is
 Load the noise alone with `RoSE(path, chunks=[f"noise{y}" for y in range(2014, 2025)])`,
 both classes with `RoSE(path, include_noise=True)`, and select on `trace_category`.
 
-Known issues in the noise windows of version 3:
+Known issues in the noise windows of versions 3 and 4 (the same noise files):
 
 * `station_location_code` is `0.0` instead of `00` in the two IU.ANTO windows
   `2016_0000415_IU.ANTO.00.BH_pre100` and `2022_0000708_IU.ANTO.00.BH_pre100`.

@@ -81,7 +81,7 @@ def test_magnitudes_imports_without_seisbench():
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
                          cwd=str(pathlib.Path(__file__).resolve().parent.parent))
     assert out.returncode == 0, out.stderr
-    assert out.stdout.strip() == "2.516415", out.stdout
+    assert out.stdout.strip() == "2.517528", out.stdout
 
 
 def _run_without(blocked, body):
@@ -362,7 +362,7 @@ def test_the_user_surface_needs_no_regression_backend():
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
                          cwd=str(pathlib.Path(__file__).resolve().parent.parent))
     assert out.returncode == 0, out.stderr
-    assert out.stdout.strip() == "2.516415", out.stdout
+    assert out.stdout.strip() == "2.517528", out.stdout
 
 
 def test_correction_increases_with_distance(cal):

@@ -112,7 +112,7 @@ Four runnable examples, each end-to-end against the published dataset:
 
 1. **`01_load_and_browse.py`** — open the bundle, filter on
    `trace_p_snr_db` / `source_magnitude`, plot a random pick.
-2. **`02_eqt_instance_vrancea.py`** — full demo on the *M*<sub>w</sub> 5.56
+2. **`02_eqt_instance_vrancea.py`** — full demo on the *M*<sub>w</sub> 5.55
    Vrancea slab event (2018-10-28, 153 km depth, 68 stations): rebuild an
    ObsPy `Stream` from SeisBench, run `EQTransformer.from_pretrained("instance")`
    for an off-the-shelf-picker comparison, plot a record section with catalog
@@ -181,7 +181,7 @@ everyone.
 
 ## Benchmark headlines
 
-Threshold 0.30, on the RoSE (Romanian local-earthquake) and STEAD test sets.
+Threshold 0.30, on the RoSE (Romanian local-earthquake; dataset version 4) and STEAD test sets.
 Full tables — all 9 models (the 3 bundled checkpoints + off-the-shelf EQT /
 PhaseNet baselines), all 6 thresholds, onset residuals, plus the EQT-RoSE
 Münchmeyer-Section-3 numbers — are in [`results/README.md`](phase_picking/results/README.md);
@@ -189,7 +189,7 @@ the raw CSVs are `phase_picking/results/*.csv`.
 
 | Pool  | Best phase-pick F1 (P / S)        | Best event-detection F1                  |
 |---|---|---|
-| **RoSE**  | **RED-PAN-60s** 0.826 / 0.827     | **EQT-RoSE** 0.973 (MCC 0.942)           |
+| **RoSE**  | **RED-PAN-60s** 0.829 / 0.829     | **EQT-RoSE** 0.976 (MCC 0.947)           |
 | **STEAD** | **RED-PAN-60s** 0.974 (P); **PhaseNet-stead** 0.983 (S) | **EQT-stead** 0.998; **EQT-RoSE** 0.991  |
 
 (Produced by `bash phase_picking/benchmark/regenerate_results.sh` →
@@ -309,7 +309,7 @@ RoSE/                              # ── the RoSE software toolkit
 | Analyst picks | supplied separately by Alexandru Mărmureanu for this study; not part of ROMPLUS and not distributed while permission is reviewed |
 | ML-assisted repicks | RED-PAN 60 s, 3 s / 5 s P / S consistency window vs. NLLoc theoretical |
 | Pick selection | higher-SNR among manual / RED-PAN; theoretical-only never used |
-| Sampling | resampled to 100 Hz on a uniform reference axis with median-pad fill. Known issue: 3,067 BH traces resampled from 20 or 50 Hz have one wrong sample at their end; see [`docs/SEISBENCH_FORMAT.md`](docs/SEISBENCH_FORMAT.md#known-issues-in-the-earthquake-traces) for the cause and a repair function |
+| Sampling | resampled to 100 Hz on a uniform reference axis with median-pad fill. In dataset versions 1 to 3, 3,067 BH traces resampled from 20 or 50 Hz have one wrong sample at their end; version 4 repairs them; see [`docs/SEISBENCH_FORMAT.md`](docs/SEISBENCH_FORMAT.md#known-issues-in-the-earthquake-traces) for the cause and the repair |
 | Component order | **ZNE** on disk (canonical SeisBench order) |
 | Instrument response | The StationXML archive in the data record has files for **211 / 226 stations**. A full three-component response is available for 210,545 traces, 144 have a vertical response only, and 8,583 lack a full three-component response. |
 | Event coverage | **19 228 / 19 230** catalog events have waveforms (two excluded for missing all-three-component recordings: `2014_0001698`, `2020_0000816`). |

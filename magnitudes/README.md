@@ -25,7 +25,7 @@ The importable code is `rose.magnitudes`, not this directory. It reads
 from rose.magnitudes import load_calibration, mw_from_ml, neg_log_a0
 
 cal = load_calibration()
-neg_log_a0([100.0], [10.0], cal.atten, cal.anchor)   # 2.516, the released scale
+neg_log_a0([100.0], [10.0], cal.atten, cal.anchor)   # 2.518, the released scale
 mw_from_ml([3.4], "crustal", cal.conversion)          # (Mw, validity flag)
 ```
 
@@ -113,7 +113,7 @@ back to `scipy.odr` only where `odrpack` is not installed. Under one
 interpreter the two wrappers give `a` and `b` within 4e-8 of each other, the
 bootstrap standard errors within 3e-9 (1 part in 4 x 10^6 at most), the
 residual standard deviation within 3e-10, and the same `mw_from_ml_flag` for
-all 18,330 events. That is the level of the difference between SciPy builds
+all 18,330 events of dataset version 3. That is the level of the difference between SciPy builds
 above, and no converted magnitude changes at two decimals.
 
 The release calculation does not reproduce the local combined event table byte

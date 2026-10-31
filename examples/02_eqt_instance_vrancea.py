@@ -7,7 +7,7 @@ downstream tomography. See RED-PAN/ for the supported picker.
 End-to-end workflow using the published SeisBench-format dataset:
 
     1. Open `data/rose` with `RoSE`.
-    2. Pick out event 2018_0000140 (Mw 5.56, ~153 km depth, ~68 stations).
+    2. Pick out event 2018_0000140 (Mw 5.55, ~153 km depth, ~68 stations).
        The bulletin ML for this event is 5.8; the released Mw is 5.5569.
        Note it carries ML_warning = 1 (corner frequency 0.74 Hz < 1.25 Hz).
     3. Reconstruct an ObsPy Stream from the bucketed waveforms.

@@ -75,7 +75,7 @@ window matches the signal length and is scaled rather than truncating the signal
 `romania_mw/outputs/Mw_catalog.csv`: 19,188 of 19,230 events. The column
 `ML_catalog_window_design` is the hypoDD3D catalogue magnitude, kept only because the
 spectral windows were designed from it (its `ML_type` is `mw` for 118 events). It is not a
-magnitude of this product and nothing downstream reads it. Quality A 11,656, B 6,281, C 1,251
+magnitude of this product and nothing downstream reads it. Quality A 11,713, B 6,243, C 1,232
 (A: ≥ 5 distinct recording sites, few t* at the lower t* bound, fc inside the search range, standard
 error < 0.15. B: ≥ 3 sites). A site is counted once even when two of its instruments are
 fitted separately, which `Mw_nfits` records.
