@@ -19,7 +19,7 @@ To rebuild *without* overwriting these files, run the two stages directly and
 drop `--update-results` from the second — it then writes only under
 `benchmark/config.json`'s `eval_dir` (default `eval/`, gitignored).
 
-## RoSE pool (32 374 events + 23 526 STEAD noise)
+## RoSE pool (32 374 event traces + 23 526 STEAD noise)
 
 * `rose_picking.csv`        — phase-pick TP/FP/FN, precision, recall, F1, MAE,
   median, std, MAD, RMSE, IQR per phase × threshold per model.
@@ -40,7 +40,7 @@ drop `--update-results` from the second — it then writes only under
   STEAD labels are clean.
 * `stead_detection.csv`   — trace-level T1 + detection-box quality on STEAD.
 
-## RoSE pool with RoSE noise (32 374 events + 13 317 RoSE noise windows)
+## RoSE pool with RoSE noise (32 374 event traces + 13 317 RoSE noise windows)
 
 * `rose_noise_false_picks.csv`    — per model × threshold, the noise traces with
   a pick and the picks per hour, RoSE noise next to STEAD noise.
@@ -105,9 +105,10 @@ these labels, but RED-PAN-60s loses most, 0.06 (P) and 0.08 (S) of F1 against
 | PhaseNet-stead      | 0.989 | 0.335 | 0.501 | 0.079 | 0.978 | 0.624 | **0.762** | 0.207 |
 
 **These tables use dataset version 4.** In dataset versions 1 to 3, the last
-sample of one or more components of 3,537 BH traces (544 of them in the test
+sample of one or more components of 3,067 BH traces (477 of them in the test
 split) is wrong: in 149 test traces it is +inf or -inf, so every model misses
-every label on them, and in the others it is finite but far too large. The
+every label on them, and in the others it is finite but far too large. Version 4
+also repairs 470 traces with a milder case, 3,537 in all (544 in the test split). The
 traces were resampled from 20 or 50 Hz with ObsPy's `Trace.interpolate(100)`,
 whose default method can read one value past the end of its input. Version 4
 ([`10.5281/zenodo.23809729`](https://doi.org/10.5281/zenodo.23809729)) replaces each wrong sample with the sample before it; the cause, the
@@ -264,9 +265,10 @@ picks recovered from the Gaussian label channels, and a synthesised post-event
 | T3 — onset time, **P** | MAE / RMSE / IQR (n = 11 918) | 0.072 s / 0.111 s / 0.08 s |
 | T3 — onset time, **S** | MAE / RMSE / IQR (n = 16 984) | 0.162 s / 0.209 s / 0.25 s |
 
-⚠️ The T1 AUC (~0.57) is artificially depressed because EQT's training label
-marks samples up to `S + 1.4·(S−P)` as event-positive, so the first half of
-each coda-window "negative" is still in-event by EQT's own definition — treat
+⚠️ The T1 AUC (~0.57) is artificially depressed because EQT-RoSE's training label
+marks samples up to `S + 0.7·(S−P)` as event-positive (`detection_factor` 0.7 in
+the checkpoint), and each coda-window "negative" starts 2 s after S, so its
+start is still in-event by EQT's own definition whenever S−P exceeds about 3 s — treat
 T1 here as advisory only (use `--skip-t1` to suppress). The pipeline's
 STEAD-noise-based T1 for EQT-RoSE is F1 0.976 / MCC 0.947 (`rose_detection.csv`, version 4);
 T2/T3 above are robust.

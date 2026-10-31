@@ -52,7 +52,7 @@ catalog SAC archive.
 | Attribute | Type | Description |
 |---|---|---|
 | `event_index` | str | `YYYY_NNNNNNN` |
-| `time` | str | Catalog origin time (relocated, hypoDD3D) |
+| `time` | str | Catalog origin time of the solution named in `source` |
 | `event_time_utc` | str | Same, kept as ISO string |
 | `latitude`, `longitude`, `depth` | float | Hypocenter (deg, deg, km) |
 | `ML_ROMPLUS`, `Mw_ROMPLUS` | float | NIEP bulletin magnitudes, kept for continuity. Not used to calibrate the measured magnitudes below |
@@ -119,9 +119,11 @@ The `p_*` / `s_*` long-form attributes preserve the entire pick row from
 
 ## Alignment & resampling
 
-For each station, all three SAC components are trimmed to their common union
-window with the per-component median padded into gaps, then linearly
-interpolated onto a uniform 100 Hz time axis. This gives a single
+For each station, the three SAC components (gaps already filled by linear
+interpolation when the SAC files were made) are placed on one time axis from
+the earliest start to the latest end of the three, each padded with its own
+median where it has no data, then linearly interpolated onto a uniform 100 Hz
+time axis. This gives a single
 `(npts,)` length per station with the same reference start across components,
 which is the invariant the SeisBench converter relies on to stack ENZ.
 

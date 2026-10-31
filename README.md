@@ -303,11 +303,11 @@ RoSE/                              # ── the RoSE software toolkit
 
 | Concern | Provenance |
 |---|---|
-| Event hypocenters | ROMPLUS 984–2022 or the current NIEP bulletin for 2023–2024, with hypoDD3D relocations stored separately |
+| Event hypocenters | relocated: hypoDD for 18,574 events and NonLinLoc with source-specific station terms for 416; the other 240 keep the ROMPLUS (984–2022) or NIEP bulletin (2023–2024) solution, which the `raw_*` columns keep for every event |
 | Origin time | ROMPLUS 984–2022 or the current NIEP bulletin (`source_*_raw`) |
 | Magnitude | measured for this release (Mw, ML); see [`docs/DATASET.md`](docs/DATASET.md) |
 | Analyst picks | supplied separately by Alexandru Mărmureanu for this study; not part of ROMPLUS and not distributed while permission is reviewed |
-| ML-assisted repicks | RED-PAN 60 s, 3 s / 5 s P / S consistency window vs. NLLoc theoretical |
+| ML-assisted repicks | RED-PAN 60 s, searched within ±3 s (P) and ±5 s (S) of the analyst pick, or of the theoretical arrival (NonLinLoc, 3D model) when the analyst phase is missing |
 | Pick selection | higher-SNR among manual / RED-PAN; theoretical-only never used |
 | Sampling | resampled to 100 Hz on a uniform reference axis with median-pad fill. In dataset versions 1 to 3, 3,067 BH traces resampled from 20 or 50 Hz have one wrong sample at their end; version 4 repairs them; see [`docs/SEISBENCH_FORMAT.md`](docs/SEISBENCH_FORMAT.md#known-issues-in-the-earthquake-traces) for the cause and the repair |
 | Component order | **ZNE** on disk (canonical SeisBench order) |

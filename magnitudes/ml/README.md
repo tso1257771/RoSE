@@ -93,8 +93,8 @@ With one year left out, the scatter within the events of that year falls from 0.
 corrections to 0.232 with the corrections fitted on the other years. 18,361 events have an
 ML.
 
-Amplitude quality control: clipped observations (a flat top in raw counts at 24 bit full
-scale, 3 or more consecutive samples) are excluded from the fit and the event median.
+Amplitude quality control: clipped observations (a flat top in raw counts at 24 bit or 32 bit
+full scale, 3 or more consecutive samples) are excluded from the fit and the event median.
 Blow-ups are rejected by a 3·10⁴ mm ceiling and by their residual against the distance
 model, so large amplitudes that are real are kept. Components stuck at full scale are
 excluded (one horizontal of RO.LELR..HH).

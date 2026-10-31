@@ -369,7 +369,7 @@ def compute_t1(det_event: np.ndarray, det_noise: np.ndarray,
             "auc": float("nan"),
             "note": "T1 not evaluated: no negative windows (this script does not "
                     "read the RoSE noise chunks). "
-                    "Post-event coda (within EQT's S+1.4*(S-P) detection-positive "
+                    "Post-event coda (within EQT-RoSE's S+0.7*(S-P) detection-positive "
                     "label range) is not a valid negative; pure pre-event lead-in "
                     "is too short for a 60 s window. Pass --skip-t1 to suppress.",
         }
@@ -390,8 +390,8 @@ def compute_t1(det_event: np.ndarray, det_noise: np.ndarray,
         "noise_source": "post_event_coda",
         "warning": (
             "AUC may dip below 0.5 because EQT's training label marks "
-            "samples up to S + 1.4*(S-P) as event-positive, so the first "
-            "half of each coda window is still in-event by definition. "
+            "samples up to S + 0.7*(S-P) as event-positive (EQT-RoSE), so the "
+            "start of each coda window is still in-event by definition. "
             "Treat T1 numbers as advisory only; consider --skip-t1."
         ),
     }
