@@ -19,6 +19,7 @@
 #   sourcespec   S-wave spectral inversion, one run per event      (days, needs SourceSpec 1.8)
 #   station_fits collect the per station spectral fits             (minutes)
 #   mw           Mw catalog from the fits                          (seconds)
+#   window_test  Mw from plain SourceSpec windows, from saved runs (seconds; window_test.py run makes the runs)
 #   fit          -log A0 shapes and station terms, unanchored      (~1 h, sparse inversion)
 #   anchor       baseline shift onto Mw, writes the ML catalog     (minutes)   [default]
 #   conversion   the ML to Mw relation and its validity range      (minutes)   [default]
@@ -36,7 +37,7 @@ REPO="$(dirname "$HERE")"
 
 usage() {
     # the header comment of this file, which is the documentation
-    sed -n '3,31p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,32p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
 for arg in "$@"; do
@@ -71,6 +72,7 @@ stage() {
     sourcespec)   run "spectral inversion"            magnitudes/mw/sourcespec/run_sourcespec.py ;;
     station_fits) run "per station spectral fits"     magnitudes/mw/build_station_table.py ;;
     mw)           run "Mw catalog"                    magnitudes/mw/build_mw_catalog.py ;;
+    window_test)  run "plain SourceSpec window test"  magnitudes/mw/sourcespec/window_test.py compare ;;
     fit)          run "-log A0 and station terms"     magnitudes/ml/fit_ml.py ;;
     anchor)       run "baseline shift onto Mw"        magnitudes/ml/anchor_ml_to_mw.py ;;
     conversion)   run "ML to Mw relation"             magnitudes/ml/fit_ml_to_mw_conversion.py ;;
@@ -89,21 +91,47 @@ copy_tables() {
     local ml="$ROMANIA_ROOT/romania_ml/outputs"
     local mw="$ROMANIA_ROOT/romania_mw/outputs"
     local dst="$HERE/calibration"
-    local pair
-    for pair in \
-        "$ml/fit/parameter_table.csv:parameter_table.csv" \
-        "$ml/fit/station_terms.csv:station_terms.csv" \
-        "$ml/fit/anchor_events.csv:anchor_events.csv" \
-        "$ml/fit/ml_minus_mw_by_bin.csv:ml_minus_mw_by_bin.csv" \
-        "$ml/fit/clipped_fraction_by_magnitude.csv:clipped_fraction_by_magnitude.csv" \
-        "$ml/fit/report.json:fit_report.json" \
-        "$ml/fit/validation_extra.json:validation_extra.json" \
-        "$ml/conversion/conversion_coefficients.csv:conversion_coefficients.csv" \
-        "$ml/conversion/conversion_residuals_by_ml_bin.csv:conversion_residuals_by_ml_bin.csv" \
-        "$ml/conversion/report.json:conversion_report.json" \
-        "$mw/Mw_validation.yaml:Mw_validation.yaml" \
-        "$mw/usgs_cross_validation.csv:usgs_cross_validation.csv" \
-    ; do
+    local pairs=(
+        "$ml/fit/parameter_table.csv:parameter_table.csv"
+        "$ml/fit/station_terms.csv:station_terms.csv"
+        "$ml/fit/anchor_events.csv:anchor_events.csv"
+        "$ml/fit/ml_minus_mw_by_bin.csv:ml_minus_mw_by_bin.csv"
+        "$ml/fit/clipped_fraction_by_magnitude.csv:clipped_fraction_by_magnitude.csv"
+        "$ml/fit/report.json:fit_report.json"
+        "$ml/fit/validation_extra.json:validation_extra.json"
+        "$ml/conversion/conversion_coefficients.csv:conversion_coefficients.csv"
+        "$ml/conversion/conversion_residuals_by_ml_bin.csv:conversion_residuals_by_ml_bin.csv"
+        "$ml/conversion/report.json:conversion_report.json"
+        "$mw/Mw_validation.yaml:Mw_validation.yaml"
+        "$mw/usgs_cross_validation.csv:usgs_cross_validation.csv"
+        "$mw/window_test_summary.json:window_test_summary.json"
+        "$mw/window_test_comparison.csv:window_test_comparison.csv"
+    )
+    local pair src name root stale=0
+    # A published table must not name files by where they sit on the machine
+    # that made it. The drivers record paths relative to the working tree, so a
+    # table holding the tree's absolute path comes from an older run: rerun the
+    # stage that writes it. Nothing is copied until every table passes.
+    local roots=("$(cd "$ROMANIA_ROOT" && pwd -P)/")
+    if [[ "$ROMANIA_ROOT" == /* ]]; then
+        roots+=("${ROMANIA_ROOT%/}/")
+    fi
+    for pair in "${pairs[@]}"; do
+        src="${pair%%:*}"
+        [[ -f "$src" ]] || continue
+        for root in "${roots[@]}"; do
+            if grep -qF -- "$root" "$src"; then
+                echo "  $src contains the absolute path $root" >&2
+                stale=1
+                break
+            fi
+        done
+    done
+    if (( stale )); then
+        echo "Nothing copied. Rerun the stages that wrote these files." >&2
+        exit 1
+    fi
+    for pair in "${pairs[@]}"; do
         src="${pair%%:*}"
         name="${pair##*:}"
         if [[ -f "$src" ]]; then
@@ -113,6 +141,18 @@ copy_tables() {
             echo "  SKIPPED $name (no $src)" >&2
         fi
     done
+    # The published USGS table holds the USGS values only. The catalog's origin
+    # time, location, depth and ML stay out while the redistribution rights are
+    # reviewed (magnitudes/README.md).
+    if [[ -f "$dst/usgs_cross_validation.csv" ]]; then
+        python - "$dst/usgs_cross_validation.csv" <<'EOF'
+import sys
+import pandas as pd
+cols = ["event_index", "usgs_Mw", "usgs_pref_mag", "usgs_pref_type", "usgs_lat", "usgs_lon", "match_dt"]
+d = pd.read_csv(sys.argv[1], dtype={"event_index": str})
+d[cols].to_csv(sys.argv[1], index=False)
+EOF
+    fi
     echo
     echo "Now run the tests, which check the tables against the released catalog:"
     echo "  python -m pytest tests/test_magnitudes.py"

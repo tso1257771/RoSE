@@ -6,9 +6,11 @@ number, plus a systematic term, and its quality class records how well the
 mean is determined.
 
 The scatter of a handful of stations is itself a poor estimate of the scatter,
-so the per event station standard deviation is shrunk towards the value pooled
-over the whole catalog, :data:`STATION_STD_PRIOR`. An earthquake recorded at
-one site then gets the pooled scatter rather than a standard deviation of
+so the per event station standard deviation is shrunk towards a prescribed
+reference scatter, :data:`STATION_STD_PRIOR`. It is above the median station
+scatter of the released catalog (0.178), so the shrinkage raises rather than
+lowers the uncertainty of poorly recorded earthquakes. An earthquake recorded
+at one site gets the reference scatter rather than a standard deviation of
 zero. This is the reason the reported uncertainty of a one site earthquake is
 large but finite.
 
@@ -37,7 +39,7 @@ __all__ = [
     "mw_quality",
 ]
 
-STATION_STD_PRIOR = 0.245       # station scatter pooled over the catalog
+STATION_STD_PRIOR = 0.245       # prescribed reference scatter, above the catalog median of 0.178
 SIG_SYS_SMALL, SIG_SYS_LARGE = 0.18, 0.10
 MW_SYS_SMALL, MW_SYS_LARGE = 2.0, 3.8
 

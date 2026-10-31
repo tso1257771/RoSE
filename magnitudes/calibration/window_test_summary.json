@@ -1,0 +1,165 @@
+{
+ "n_events": 302,
+ "var_factor": 0.64,
+ "seed": 20261020,
+ "difference": "variant Mw minus released Mw",
+ "variants": {
+  "fixed": {
+   "all": {
+    "n": 302,
+    "median": -0.052,
+    "mean": -0.08,
+    "std": 0.131,
+    "frac_abs_gt_0.1": 0.34
+   },
+   "classes": {
+    "<2 crustal": {
+     "n": 40,
+     "median": -0.041,
+     "mean": -0.053,
+     "std": 0.113,
+     "frac_abs_gt_0.1": 0.28
+    },
+    "<2 slab": {
+     "n": 40,
+     "median": -0.019,
+     "mean": -0.026,
+     "std": 0.133,
+     "frac_abs_gt_0.1": 0.38
+    },
+    "2-3 crustal": {
+     "n": 40,
+     "median": -0.078,
+     "mean": -0.138,
+     "std": 0.182,
+     "frac_abs_gt_0.1": 0.45
+    },
+    "2-3 slab": {
+     "n": 40,
+     "median": -0.06,
+     "mean": -0.073,
+     "std": 0.122,
+     "frac_abs_gt_0.1": 0.35
+    },
+    "3-4 crustal": {
+     "n": 40,
+     "median": -0.18,
+     "mean": -0.19,
+     "std": 0.153,
+     "frac_abs_gt_0.1": 0.82
+    },
+    "3-4 slab": {
+     "n": 40,
+     "median": -0.056,
+     "mean": -0.065,
+     "std": 0.059,
+     "frac_abs_gt_0.1": 0.2
+    },
+    ">=4 crustal": {
+     "n": 12,
+     "median": -0.047,
+     "mean": -0.061,
+     "std": 0.071,
+     "frac_abs_gt_0.1": 0.17
+    },
+    ">=4 slab": {
+     "n": 47,
+     "median": -0.021,
+     "mean": -0.023,
+     "std": 0.035,
+     "frac_abs_gt_0.1": 0.02
+    }
+   }
+  },
+  "var": {
+   "all": {
+    "n": 301,
+    "median": 0.006,
+    "mean": 0.013,
+    "std": 0.155,
+    "frac_abs_gt_0.1": 0.2
+   },
+   "classes": {
+    "<2 crustal": {
+     "n": 40,
+     "median": 0.023,
+     "mean": 0.037,
+     "std": 0.131,
+     "frac_abs_gt_0.1": 0.33
+    },
+    "<2 slab": {
+     "n": 39,
+     "median": 0.128,
+     "mean": 0.142,
+     "std": 0.154,
+     "frac_abs_gt_0.1": 0.62
+    },
+    "2-3 crustal": {
+     "n": 40,
+     "median": -0.003,
+     "mean": -0.014,
+     "std": 0.125,
+     "frac_abs_gt_0.1": 0.28
+    },
+    "2-3 slab": {
+     "n": 40,
+     "median": -0.003,
+     "mean": 0.006,
+     "std": 0.067,
+     "frac_abs_gt_0.1": 0.17
+    },
+    "3-4 crustal": {
+     "n": 40,
+     "median": 0.007,
+     "mean": -0.058,
+     "std": 0.313,
+     "frac_abs_gt_0.1": 0.07
+    },
+    "3-4 slab": {
+     "n": 40,
+     "median": -0.004,
+     "mean": -0.012,
+     "std": 0.043,
+     "frac_abs_gt_0.1": 0.07
+    },
+    ">=4 crustal": {
+     "n": 12,
+     "median": 0.018,
+     "mean": 0.008,
+     "std": 0.03,
+     "frac_abs_gt_0.1": 0.0
+    },
+    ">=4 slab": {
+     "n": 47,
+     "median": -0.001,
+     "mean": 0.0,
+     "std": 0.021,
+     "frac_abs_gt_0.1": 0.0
+    }
+   }
+  }
+ },
+ "usgs_minus_mw": {
+  "released": {
+   "n": 17,
+   "mean": 0.123,
+   "std": 0.141,
+   "crustal": 0.202,
+   "slab": 0.079
+  },
+  "fixed": {
+   "n": 17,
+   "mean": 0.162,
+   "std": 0.17,
+   "crustal": 0.268,
+   "slab": 0.104
+  },
+  "var": {
+   "n": 17,
+   "mean": 0.121,
+   "std": 0.145,
+   "crustal": 0.204,
+   "slab": 0.076
+  }
+ }
+}

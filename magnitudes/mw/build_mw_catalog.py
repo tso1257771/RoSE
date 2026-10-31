@@ -13,8 +13,9 @@ Per-event uncertainty (rose.magnitudes.mw_catalog.mw_sigma):
     Mw_sigma = sqrt( sigma_stat^2 + sigma_sys(Mw)^2 )
     sigma_stat    : s_hat / sqrt(n), s_hat^2 = [(n-1) s^2 + 2 S0^2] / (n+1)
                     s = station std of Mw (SourceSpec weighted std), n = stations,
-                    S0 = the median within-event station std of the run
-                    (shrinks s for events with few stations)
+                    S0 = 0.245, a prescribed reference scatter above the median
+                    station std of the run (0.178), so events with few stations
+                    are shrunk towards a larger scatter
     sigma_sys(Mw) : linear in Mw between two bounds. 0.10 = station-distance
                     systematic (within-event distance trend of station Mw);
                     0.18 = 0.10 combined with the +-0.15 sensitivity of small-event

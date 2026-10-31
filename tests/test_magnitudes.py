@@ -739,3 +739,30 @@ def test_released_ml_needs_three_stations(catalog):
         pytest.skip("catalog does not carry ML_nstations")
     have = catalog.dropna(subset=["ML"])
     assert (have.ML_nstations >= 3).all()
+
+
+# --------------------------------------------------------------------------
+# the window test (magnitudes/mw/sourcespec/window_test.py)
+
+WINDOW_TEST_DIR = pathlib.Path(__file__).resolve().parents[1] / "magnitudes" / "calibration"
+
+
+def test_window_test_summary_follows_from_its_table(catalog):
+    """The window test summary quoted in the text is recomputed from the per
+    event table, and the table's released Mw is the catalog's Mw."""
+    import json
+
+    d = pd.read_csv(WINDOW_TEST_DIR / "window_test_comparison.csv", dtype={"event_index": str})
+    s = json.loads((WINDOW_TEST_DIR / "window_test_summary.json").read_text())
+    assert s["n_events"] == len(d) == d.event_index.nunique()
+    for v, block in s["variants"].items():
+        diff = d[f"Mw_{v}"] - d.Mw_released
+        assert block["all"]["n"] == int(diff.notna().sum())
+        assert block["all"]["median"] == pytest.approx(diff.median(), abs=6e-4)
+        for key, x in block["classes"].items():
+            m, regime = key.split(" ")
+            sel = diff[(d.mclass == m) & (d.regime == regime)].dropna()
+            assert x["n"] == len(sel), key
+            assert x["median"] == pytest.approx(sel.median(), abs=6e-4), key
+    released = catalog.set_index("event_index").Mw.reindex(d.event_index)
+    assert np.allclose(d.Mw_released.to_numpy(), released.to_numpy(), atol=1e-4)

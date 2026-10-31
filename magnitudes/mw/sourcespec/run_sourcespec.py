@@ -86,7 +86,7 @@ DSIGMA = 1.0e6     # Pa, window-design stress drop
 WIN_MIN, WIN_MAX = 5.0, 30.0
 F1_MIN, F1_MAX = 0.05, 0.5
 FC_DROP_SHORTP = 1.0   # fc_exp < 1 Hz (ML >~ 4.4): drop EH/SH
-FC_NO_CLIPCHECK = 2.0  # fc_exp > 2 Hz (ML <~ 3.6): no clipping detection
+FC_NO_CLIPCHECK = 2.0  # fc_exp > 2 Hz (ML < 3.8): no clipping detection
 HYPO_DIST_MAX_KM = 300.0
 BP_MIN_BROADB, BP_MIN_ACC = 0.05, 0.10   # pre-filter floors (Hz)
 

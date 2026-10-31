@@ -7,12 +7,12 @@ magnitude the difference between them is zero by construction and is not a check
 
 ## Mw
 
-SourceSpec 1.8 S wave spectral inversion (Brune omega-square, t* per station, 1/r spreading, stations <= 300 km hypocentral), RED-PAN-Motion S windows with a minimum length that depends on magnitude. No external magnitude enters Mw or its uncertainty, and no depth correction is applied. Compared with USGS Mww/Mwr, which is not fitted: USGS minus Mw = +0.12 +- 0.14 (n = 17), an offset that is significant on that sample and is larger before 2019 than after. Mw_sigma = sqrt(station term^2 + systematic^2), systematic 0.10-0.18.
+SourceSpec 1.8 (Satriano 2024, doi:10.5281/zenodo.3688587) S wave spectral inversion (Brune omega-square, t* per station, 1/r spreading, stations <= 300 km hypocentral), RED-PAN-Motion S windows with a minimum length that depends on magnitude. No external magnitude enters Mw or its uncertainty, and no depth correction is applied. Compared with USGS Mww/Mwr, which is not fitted: USGS minus Mw = +0.12 +- 0.14 (n = 17), an offset that is significant on that sample and is larger before 2019 than after. Mw_sigma = sqrt(station scatter^2 + systematic^2), systematic 0.10-0.18.
 
 | Column | Meaning |
 |---|---|
 | `Mw` | moment magnitude, SourceSpec spectral inversion |
-| `Mw_sigma` | uncertainty, station term and systematic combined (1 sigma) |
+| `Mw_sigma` | uncertainty, station scatter and systematic combined (1 sigma) |
 | `Mw_quality` | `A`, `B` or `C`. A: at least 5 distinct sites, few t* at the lower t* bound, corner frequency inside the search range, standard error < 0.15. B: at least 3 sites. C: 1 or 2 sites |
 | `Mw_nstations` | distinct recording sites used. The two instruments of one site, BH and HH for example, are fitted separately but count once |
 | `Mw_fc_Hz` | corner frequency, in Hz. Reported for Mw >= 3.5 only (192 events). Below that the spectrum is band-limited and fc is not interpreted, so empty means not reported, not unmeasurable |

@@ -67,7 +67,8 @@ def main():
         rule="C = Huber intercept of (Mw - ML) on (Mw - 4.0), Mw in [3.5, 4.5], quality A/B, "
              "no saturation risk, fc >= 1.25 Hz or unknown, n_sta >= 5",
         fixed_point_before=dict(R_km=100.0, neg_log_a0=3.0),
-        mw_catalogue=dict(path=str(MW), sha256=hashlib.sha256(MW.read_bytes()).hexdigest(),
+        mw_catalogue=dict(path=MW.relative_to(PROJECT).as_posix(),   # not this machine's path
+                          sha256=hashlib.sha256(MW.read_bytes()).hexdigest(),
                           mtime_utc=datetime.fromtimestamp(MW.stat().st_mtime, timezone.utc).isoformat(),
                           magnitude_column="Mw (SourceSpec)"),
         created_utc=datetime.now(timezone.utc).isoformat(),

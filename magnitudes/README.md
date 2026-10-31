@@ -46,6 +46,7 @@ unchanged from their own repositories, so a reader can see what was run. Their
 | `clipped_fraction_by_magnitude.csv` | share of amplitudes clipped, against magnitude |
 | `usgs_cross_validation.csv`, `Mw_validation.yaml` | comparison with USGS Mww/Mwr, reported and not fitted. The CSV holds the USGS values only; the catalog origin time, location and ML are in the RoSE event table |
 | `fit_report.json`, `conversion_report.json`, `validation_extra.json` | the full run records, including the sensitivity tests |
+| `window_test_comparison.csv`, `window_test_summary.json` | the window test: Mw of 302 events from unmodified SourceSpec windows, per event and summarized ([`mw/README.md`](mw/README.md)). The table gives the depth regime, not the depth |
 
 `tests/test_magnitudes.py` checks these tables against a local event table when
 that table is available.

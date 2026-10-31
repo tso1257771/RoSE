@@ -256,7 +256,7 @@ The unit suite exercises the `rose` package directly (no large dataset needed):
 
 ```bash
 pip install -e ".[dev]"
-pytest tests/ -q          # 129 tests
+pytest tests/ -q          # 130 tests
 ```
 
 `tests/test_splits.py` pins the deterministic split partition bit-for-bit.
