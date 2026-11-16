@@ -41,7 +41,7 @@ produces them (`phase_picking/benchmark/`).
 | **Fine-tune EQT / PhaseNet on RoSE**              | [Training & benchmarking](#training--benchmarking) below + `phase_picking/training/` |
 | Run a single picker on RoSE / STEAD                | `phase_picking/benchmark/bench_pickers_rose.py`, `bench_stead_test.py` |
 | Build the SeisBench bundle from the native HDF5    | [`docs/DATASET.md`](docs/DATASET.md) + `rose.convert.convert_all` |
-| **Pick which magnitude to use, Mw or ML**          | [`docs/MAGNITUDES.md`](docs/MAGNITUDES.md) |
+| **Pick which magnitude to use**                    | [`docs/MAGNITUDES.md`](docs/MAGNITUDES.md) |
 | Apply the released magnitude scale to another earthquake | `rose.magnitudes` — see [`magnitudes/README.md`](magnitudes/README.md) |
 | Reproduce the magnitude calibration tables         | `ROMANIA_ROOT=… bash magnitudes/regenerate_magnitudes.sh` (needs the driver inputs, which are not published; see [`magnitudes/README.md`](magnitudes/README.md#rerunning-the-drivers)) |
 | Deposit or update the Zenodo records                | [`docs/ZENODO.md`](docs/ZENODO.md) |
@@ -181,7 +181,7 @@ everyone.
 
 ## Benchmark headlines
 
-Threshold 0.30, on the RoSE (Romanian local-earthquake; dataset version 4) and STEAD test sets.
+Threshold 0.30, on the RoSE (Romanian local-earthquake; dataset version 4, whose waveforms and splits version 5 keeps) and STEAD test sets.
 Full tables — all 9 models (the 3 bundled checkpoints + off-the-shelf EQT /
 PhaseNet baselines), all 6 thresholds, onset residuals, plus the EQT-RoSE
 Münchmeyer-Section-3 numbers — are in [`results/README.md`](phase_picking/results/README.md);
@@ -222,8 +222,11 @@ bash phase_picking/benchmark/regenerate_results.sh                # full run
 bash phase_picking/benchmark/regenerate_results.sh --num-test 200 # quick subset
 ```
 
-Splits use `rose.splits.hash_split` (salt `ROMPLUS-singleEQ-v1`) — every
-trace of one earthquake stays in the same split, no event-level leakage.
+Splits use `rose.splits.hash_split` (salt `ROMPLUS-singleEQ-v1`), so every
+trace of one event stays in the same split. 45 pairs of events are one
+earthquake entered twice in the bulletin, and 23 of these pairs are in
+different splits (70 test traces); they are listed in
+[`docs/SEISBENCH_FORMAT.md`](docs/SEISBENCH_FORMAT.md#known-issues-in-the-earthquake-traces).
 PyTorch checkpoints are loaded via `rose.checkpoint_io.safe_torch_load`
 (`weights_only=True`). The RED-PAN `.hdf5` is a Keras model — verify against
 `phase_picking/models/SHA256SUMS` before loading from untrusted sources.
@@ -305,7 +308,7 @@ RoSE/                              # ── the RoSE software toolkit
 |---|---|
 | Event hypocenters | relocated: hypoDD for 18,574 events and NonLinLoc with source-specific station terms for 416; the other 240 keep the ROMPLUS (984–2022) or NIEP bulletin (2023–2024) solution, which the `raw_*` columns keep for every event |
 | Origin time | ROMPLUS 984–2022 or the current NIEP bulletin (`source_*_raw`) |
-| Magnitude | measured for this release (Mw, ML); see [`docs/DATASET.md`](docs/DATASET.md) |
+| Magnitude | dataset version 5: ML and Mw of the ROMPLUS catalog and of NIEP, side by side. Versions 2 to 4 also have Mw and ML measured for this dataset; see [`docs/MAGNITUDES.md`](docs/MAGNITUDES.md) |
 | Analyst picks | supplied separately by Alexandru Mărmureanu for this study; not part of ROMPLUS and not distributed while permission is reviewed |
 | ML-assisted repicks | RED-PAN 60 s, searched within ±3 s (P) and ±5 s (S) of the analyst pick, or of the theoretical arrival (NonLinLoc, 3D model) when the analyst phase is missing |
 | Pick selection | higher-SNR among manual / RED-PAN; theoretical-only never used |

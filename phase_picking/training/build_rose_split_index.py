@@ -7,7 +7,8 @@ partition as any RED-PAN checkpoint trained on this corpus.
 
 What it does (per year metadata{year}.csv):
   * Event traces (source_id present) → hash_split(source_id, salt=ROMPLUS-...)
-    so all stations of one earthquake land in the same split (no leakage).
+    so all stations of one event land in the same split (45 pairs of events
+    are one earthquake entered twice; see docs/SEISBENCH_FORMAT.md).
   * Noise / source_id-less rows → independent Bernoulli draw (safe because
     these traces have no shared source).
   * Maps RED-PAN's "val" → SeisBench's "dev".

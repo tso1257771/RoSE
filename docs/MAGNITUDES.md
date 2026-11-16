@@ -1,6 +1,12 @@
 # Magnitude fields produced for the RoSE event table
 
-The local event table contains two measured magnitudes,
+Data version 5 does not contain the measured magnitudes described here. Its
+event table has only the ROMPLUS and NIEP bulletin magnitudes; see
+[Bulletin columns](#bulletin-columns). This page describes the Mw and ML of
+data versions 2 to 4, with the numbers of version 4, and the scales that
+`rose.magnitudes` and `magnitudes/calibration/` implement.
+
+The version 4 event table contains two measured magnitudes,
 19,188 events with Mw and 18,361 with ML out of 19,230.
 The two scales are reported separately. ML is anchored to Mw at Mw 4.0, so at that
 magnitude the difference between them is zero by construction and is not a check.
@@ -56,12 +62,22 @@ their spectrum clears the noise. At the other end the catalogue contains
 does not constrain the behaviour of any model in the range a warning system
 exists for.
 
-## NIEP bulletin columns
+## Bulletin columns
 
-`ML_ROMPLUS` and `Mw_ROMPLUS` are the NIEP bulletin magnitudes, kept for
-continuity with the published catalogue. 4,117 events have neither.
-The two are equal in 932 rows, so `Mw_ROMPLUS` is not an independent
-moment magnitude. Neither column enters `Mw` or `ML`.
+`ML_ROMPLUS` and `Mw_ROMPLUS` are the ROMPLUS magnitudes. In version 4, 4,117
+events have neither, and the two are equal in 932 rows. Neither column enters
+`Mw` or `ML`.
+
+Version 5 takes `ML_ROMPLUS` and `Mw_ROMPLUS` from the ROMPLUS file of
+2026-08-24 (18,295 of 19,230 events) and adds `ML_NIEP`, the ML of the NIEP
+analyst bulletin (19,076 events), and `Mw_NIEP`, the Mw of the NIEP FDSN event
+service (118 events). Its preferred magnitude `source_magnitude` is the ROMPLUS
+ML, or the NIEP ML for the 858 events that ROMPLUS does not list. 77 events
+have no magnitude. The NIEP ML equals the ROMPLUS ML in 17,224 of the 18,218
+events that have both. In the 118 events with both Mw, NIEP Mw and ROMPLUS Mw
+differ by 0.48 in the median and by up to 1.44. ROMPLUS gives the same value
+for ML and Mw in 962 events, so `Mw_ROMPLUS` is not an independent moment
+magnitude.
 
 ## Usual selections
 

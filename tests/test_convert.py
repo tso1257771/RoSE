@@ -262,6 +262,75 @@ def test_convert_year_empty_magnitude_type_when_neither_scale(synthetic_year, tm
     assert (df["source_ml_warning"] == -1).all()
 
 
+def test_convert_year_catalog_without_measured_magnitudes(synthetic_year, tmp_path):
+    """A catalog with only the ROMPLUS magnitudes (data version 5) gives the
+    ROMPLUS ML as the preferred magnitude and none of the measured columns."""
+    from rose import convert_year
+    from rose.convert import MEASURED_MAGNITUDE_COLUMNS
+
+    counts, physical, out_dir, _catalog = synthetic_year
+    bulletin = tmp_path / "bulletin_catalog.csv"
+    pd.DataFrame([{"event_index": "2099_0000001", "ML_ROMPLUS": 2.5, "Mw_ROMPLUS": 2.7},
+                  {"event_index": "2099_0000002", "ML_ROMPLUS": None, "Mw_ROMPLUS": None}]
+                 ).to_csv(bulletin, index=False)
+
+    convert_year(
+        src_h5=str(counts),
+        out_dir=str(out_dir),
+        chunk_label="2099",
+        physical_h5=str(physical),
+        catalog_csv=str(bulletin),
+        bucket_size=1024,
+        overwrite=True,
+    )
+    df = pd.read_csv(out_dir / "metadata2099.csv")
+    assert not set(MEASURED_MAGNITUDE_COLUMNS) & set(df.columns)
+    first = df[df["source_id"] == "2099_0000001"].iloc[0]
+    assert first["source_magnitude"] == pytest.approx(2.5)
+    assert first["source_magnitude_type"] == "ml"
+    assert first["source_mw_romplus"] == pytest.approx(2.7)
+    second = df[df["source_id"] == "2099_0000002"]
+    assert second["source_magnitude"].isna().all()
+    assert (second["source_magnitude_type"].fillna("") == "").all()
+    assert "source_ml_niep" not in df.columns
+    assert "source_mw_niep" not in df.columns
+
+
+def test_convert_year_catalog_with_niep_magnitudes(synthetic_year, tmp_path):
+    """Where the catalog has the NIEP ML and Mw, both are written next to the
+    ROMPLUS values. The preferred magnitude is the ROMPLUS ML, and the NIEP ML
+    only where ROMPLUS gives none."""
+    from rose import convert_year
+
+    counts, physical, out_dir, _catalog = synthetic_year
+    bulletin = tmp_path / "bulletin_catalog.csv"
+    pd.DataFrame([{"event_index": "2099_0000001", "ML_ROMPLUS": 2.5, "Mw_ROMPLUS": 2.7,
+                   "ML_NIEP": 2.4, "Mw_NIEP": 3.1},
+                  {"event_index": "2099_0000002", "ML_ROMPLUS": None, "Mw_ROMPLUS": None,
+                   "ML_NIEP": 0.8, "Mw_NIEP": None}]).to_csv(bulletin, index=False)
+
+    convert_year(
+        src_h5=str(counts),
+        out_dir=str(out_dir),
+        chunk_label="2099",
+        physical_h5=str(physical),
+        catalog_csv=str(bulletin),
+        bucket_size=1024,
+        overwrite=True,
+    )
+    df = pd.read_csv(out_dir / "metadata2099.csv")
+    first = df[df["source_id"] == "2099_0000001"]
+    assert (first["source_magnitude"] == 2.5).all()
+    assert (first["source_ml_niep"] == 2.4).all()
+    assert (first["source_mw_niep"] == 3.1).all()
+    second = df[df["source_id"] == "2099_0000002"]
+    assert second["source_ml_romplus"].isna().all()
+    assert (second["source_ml_niep"] == 0.8).all()
+    assert second["source_mw_niep"].isna().all()
+    assert (second["source_magnitude"] == 0.8).all()
+    assert (second["source_magnitude_type"] == "ml").all()
+
+
 def test_convert_year_rejects_missing_catalog(synthetic_year, tmp_path):
     """A dataset without magnitudes is not a valid release, so refuse to build one."""
     from rose import convert_year

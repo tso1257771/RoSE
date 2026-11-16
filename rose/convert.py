@@ -111,6 +111,16 @@ def _stack_components(station_group, npts: int) -> np.ndarray | None:
     return arr
 
 
+#: Columns of the magnitudes measured in this project. Data version 5 and later
+#: have none of them, so they are written only when the catalog has them.
+MEASURED_MAGNITUDE_COLUMNS = (
+    "source_magnitude_uncertainty",
+    "source_mw", "source_mw_sigma", "source_mw_quality", "source_mw_nstations",
+    "source_mw_fc_hz",
+    "source_ml", "source_ml_nstations", "source_ml_warning",
+)
+
+
 def _build_metadata(
     event_id: str,
     event_attrs: dict,
@@ -169,8 +179,11 @@ def _build_metadata(
         "source_latitude_deg": _float(_attr(event_attrs, "latitude")),
         "source_longitude_deg": _float(_attr(event_attrs, "longitude")),
         "source_depth_km": _float(_attr(event_attrs, "depth")),
-        # Magnitudes are filled from the released catalog below. Mw is the
-        # preferred scale; ML is used only where no Mw could be measured.
+        # Magnitudes are filled from the released catalog below. Where the
+        # catalog has measured magnitudes (data versions 2 to 4), Mw is the
+        # preferred scale and ML is used only where no Mw could be measured.
+        # Otherwise the preferred magnitude is the ROMPLUS ML, or the NIEP
+        # bulletin ML where ROMPLUS gives none.
         "source_magnitude": np.nan,
         "source_magnitude_type": "",
         "source_magnitude_uncertainty": np.nan,
@@ -184,6 +197,8 @@ def _build_metadata(
         "source_ml_warning": -1,
         "source_ml_romplus": np.nan,
         "source_mw_romplus": np.nan,
+        "source_ml_niep": np.nan,
+        "source_mw_niep": np.nan,
         "source_catalog": _attr(event_attrs, "source"),
         "source_gap_deg": _float(_attr(event_attrs, "gap")),
         "source_tres_mae_s": _float(_attr(event_attrs, "TRes_MAE")),
@@ -211,6 +226,9 @@ def _build_metadata(
         region = srow.get("region")
         md["station_region"] = "" if region is None else str(region)
 
+    measured = catalog_df is None or "Mw" in catalog_df.columns or "ML" in catalog_df.columns
+    niep = catalog_df is not None and "ML_NIEP" in catalog_df.columns
+    niep_mw = catalog_df is not None and "Mw_NIEP" in catalog_df.columns
     if catalog_df is not None and str(event_id) in catalog_df.index:
         crow = catalog_df.loc[str(event_id)]
         mw = _float(crow.get("Mw"))
@@ -226,6 +244,8 @@ def _build_metadata(
         md["source_ml_warning"] = _int(crow.get("ML_warning"), default=-1)
         md["source_ml_romplus"] = _float(crow.get("ML_ROMPLUS"))
         md["source_mw_romplus"] = _float(crow.get("Mw_ROMPLUS"))
+        md["source_ml_niep"] = _float(crow.get("ML_NIEP"))
+        md["source_mw_niep"] = _float(crow.get("Mw_NIEP"))
         # Preferred magnitude: Mw where measured, otherwise ML. The type field
         # always names the scale actually stored in source_magnitude.
         if not np.isnan(mw):
@@ -235,6 +255,19 @@ def _build_metadata(
         elif not np.isnan(ml):
             md["source_magnitude"] = ml
             md["source_magnitude_type"] = "ml"
+        elif not measured:
+            for col in ("source_ml_romplus", "source_ml_niep"):
+                if not np.isnan(md[col]):
+                    md["source_magnitude"] = md[col]
+                    md["source_magnitude_type"] = "ml"
+                    break
+    if not measured:
+        for col in MEASURED_MAGNITUDE_COLUMNS:
+            del md[col]
+    if not niep:
+        del md["source_ml_niep"]
+    if not niep_mw:
+        del md["source_mw_niep"]
 
     if physical_info is not None:
         md["trace_status_physical"] = physical_info.get("status_physical", "unknown")

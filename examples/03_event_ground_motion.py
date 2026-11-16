@@ -686,7 +686,7 @@ def main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--event", default="2018_0000140",
-                        help="RoSE source_id (default: the Mw 5.55 Vrancea slab event of 2018-10-28).")
+                        help="RoSE source_id (default: the Vrancea slab event of 2018-10-28, ROMPLUS Mw 5.5).")
     parser.add_argument("--n-show", type=int, default=20,
                         help="How many of the closest stations to draw on the record section.")
     parser.add_argument("--coda-method", default="arias", choices=["arias", "envelope"],

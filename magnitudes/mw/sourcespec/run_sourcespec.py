@@ -93,6 +93,25 @@ BP_MIN_BROADB, BP_MIN_ACC = 0.05, 0.10   # pre-filter floors (Hz)
 log = logging.getLogger("run_sourcespec")
 
 
+def merged_inventory() -> Path:
+    """One StationXML file with every station of the response archive, which
+    SourceSpec reads. The archive of data version 5 has one file per station
+    only, so the merged file is written from them when it is absent."""
+    if not INVENTORY.exists():
+        from obspy import Inventory, read_inventory
+
+        inv = Inventory(networks=[], source="RoSE")
+        for path in sorted(INVENTORY.parent.glob("*/*.xml")):
+            inv += read_inventory(str(path))
+        if not len(inv):
+            raise FileNotFoundError(f"no station files under {INVENTORY.parent}")
+        tmp = INVENTORY.with_suffix(".tmp")
+        inv.write(str(tmp), format="STATIONXML")
+        os.replace(tmp, INVENTORY)
+        log.info("wrote %s from the station files", INVENTORY)
+    return INVENTORY
+
+
 def event_overrides(ml: float) -> dict:
     """Window / band overrides for one event, derived from catalog ML."""
     m0 = 10 ** (1.5 * ml + 9.1)
@@ -267,6 +286,7 @@ def main():
         events = sorted(p.name for p in BUNDLES.iterdir())
 
     OUT_ROOT.mkdir(parents=True, exist_ok=True)
+    merged_inventory()
     done = set()
     if RESULTS_JSONL.exists():
         for ln in RESULTS_JSONL.read_text().splitlines():

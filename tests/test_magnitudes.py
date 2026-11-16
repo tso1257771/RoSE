@@ -764,5 +764,7 @@ def test_window_test_summary_follows_from_its_table(catalog):
             sel = diff[(d.mclass == m) & (d.regime == regime)].dropna()
             assert x["n"] == len(sel), key
             assert x["median"] == pytest.approx(sel.median(), abs=6e-4), key
+    if "Mw" not in catalog:
+        pytest.skip("catalog does not carry Mw")
     released = catalog.set_index("event_index").Mw.reindex(d.event_index)
     assert np.allclose(d.Mw_released.to_numpy(), released.to_numpy(), atol=1e-4)

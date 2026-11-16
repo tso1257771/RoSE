@@ -7,9 +7,8 @@ downstream tomography. See RED-PAN/ for the supported picker.
 End-to-end workflow using the published SeisBench-format dataset:
 
     1. Open `data/rose` with `RoSE`.
-    2. Pick out event 2018_0000140 (Mw 5.55, ~153 km depth, ~68 stations).
-       The bulletin ML for this event is 5.8; the released Mw is 5.5569.
-       Note it carries ML_warning = 1 (corner frequency 0.74 Hz < 1.25 Hz).
+    2. Pick out event 2018_0000140 (ROMPLUS ML 5.8 and Mw 5.5, ~153 km depth,
+       ~68 stations).
     3. Reconstruct an ObsPy Stream from the bucketed waveforms.
     4. Run `EQTransformer.from_pretrained("instance")`.
     5. Plot a record section with catalog and model picks overlaid; report

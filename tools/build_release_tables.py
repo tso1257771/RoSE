@@ -3,8 +3,10 @@
 
 The event table is the released ``Enhanced_ROMPLUS_catalog.csv`` of the data
 record, which carries the released magnitudes; pass it with ``--catalog-csv``. The pick table is the merged analyst and RED-PAN
-pick set, with the two magnitudes measured for this release joined on so that
-a user working pick by pick has them without merging the event table first.
+pick set. Where the catalog has the two magnitudes measured in this project
+(data versions 2 to 4), they are joined on so that a user working pick by pick
+has them without merging the event table first. From data version 5 the
+catalog has only the bulletin magnitudes and nothing is joined.
 
 The uncertainty, the quality class and the station counts are not carried
 across. They describe the event rather than the pick, and the event table has
@@ -39,7 +41,8 @@ PICK_MAGNITUDES = ["Mw", "ML"]
 #: Fields that stay in the event table only. The uncertainty, the quality
 #: class and the station counts describe the event, not the pick.
 EVENT_ONLY = ["Mw_sigma", "Mw_quality", "Mw_nstations", "Mw_fc_Hz",
-              "ML_nstations", "ML_warning", "Mw_ROMPLUS", "ML_ROMPLUS"]
+              "ML_nstations", "ML_warning", "Mw_ROMPLUS", "ML_ROMPLUS", "ML_NIEP",
+              "Mw_NIEP"]
 
 
 def load_catalog(path: Path | None) -> tuple[pd.DataFrame, Path]:
@@ -49,13 +52,6 @@ def load_catalog(path: Path | None) -> tuple[pd.DataFrame, Path]:
             df = pd.read_csv(p, dtype={"event_index": str})
             if df.event_index.duplicated().any():
                 raise ValueError(f"{p} repeats event_index")
-            missing = [c for c in PICK_MAGNITUDES if c not in df.columns]
-            if missing:
-                raise ValueError(
-                    f"{p} has no {missing} column. This is the catalog from "
-                    "before the magnitudes were released. Use the catalog of "
-                    "the data record."
-                )
             print(f"catalog: {p}")
             return df, Path(p)
     raise FileNotFoundError("no event catalog found; pass --catalog-csv")
@@ -68,8 +64,9 @@ def build_picks(picks_csv: Path, cat: pd.DataFrame) -> tuple[pd.DataFrame, dict]
     # Drop any previously joined copy so a rerun cannot stack columns.
     picks = picks.drop(columns=[c for c in PICK_MAGNITUDES + EVENT_ONLY
                                 if c in picks.columns], errors="ignore")
-    if PICK_MAGNITUDES:
-        picks = picks.merge(cat[["event_index"] + PICK_MAGNITUDES],
+    joined = [c for c in PICK_MAGNITUDES if c in cat.columns]
+    if joined:
+        picks = picks.merge(cat[["event_index"] + joined],
                             on="event_index", how="left")
 
     orphans = int((~picks.event_index.isin(cat.event_index)).sum())
@@ -80,6 +77,7 @@ def build_picks(picks_csv: Path, cat: pd.DataFrame) -> tuple[pd.DataFrame, dict]
         "added": [c for c in picks.columns if c not in before],
         "removed": [c for c in before if c not in picks.columns],
         "orphan_picks": orphans,
+        "joined": joined,
     }
     return picks, stats
 
@@ -106,11 +104,12 @@ def main() -> int:
         print(f"no pick table at {picks_csv}", file=sys.stderr)
         return 2
 
-    print(f"events : {len(cat):,}  with Mw {int(cat.Mw.notna().sum()):,}  "
-          f"with ML {int(cat.ML.notna().sum()):,}")
+    print(f"events : {len(cat):,}  " + "  ".join(
+        f"with {c} {int(cat[c].notna().sum()):,}"
+        for c in PICK_MAGNITUDES + ["ML_ROMPLUS", "ML_NIEP"] if c in cat.columns))
     picks, s = build_picks(picks_csv, cat)
     print(f"picks  : {s['rows']:,}  columns {s['columns_before']} -> {s['columns_after']}")
-    print(f"         joined onto picks: {PICK_MAGNITUDES or 'nothing'}")
+    print(f"         joined onto picks: {s['joined'] or 'nothing'}")
     print(f"         event table only : {EVENT_ONLY}")
     if s["added"]:
         print(f"         added  : {s['added']}")

@@ -55,7 +55,8 @@ catalog SAC archive.
 | `time` | str | Catalog origin time of the solution named in `source` |
 | `event_time_utc` | str | Same, kept as ISO string |
 | `latitude`, `longitude`, `depth` | float | Hypocenter (deg, deg, km) |
-| `ML_ROMPLUS`, `Mw_ROMPLUS` | float | NIEP bulletin magnitudes, kept for continuity. Not used to calibrate the measured magnitudes below |
+| `ML_ROMPLUS`, `Mw_ROMPLUS` | float | ML and Mw of the ROMPLUS catalog. Version 5 takes them from the ROMPLUS file of 2026-08-24 (18,295 events). Not used to calibrate the measured magnitudes below |
+| `ML_NIEP`, `Mw_NIEP` | float | Version 5 and later: ML of the NIEP analyst bulletin (19,076 events) and Mw of the NIEP FDSN event service (118 events) |
 | `Mw` | float | Moment magnitude from S-wave spectral inversion (SourceSpec 1.8). 19,188 events |
 | `Mw_sigma` | float | Combined station-scatter and systematic uncertainty (1 sigma) |
 | `Mw_quality` | str | `A` (>=5 sites, std. err. < 0.15), `B` (>=3 sites), `C` (1-2 sites) |
@@ -69,10 +70,21 @@ catalog SAC archive.
 | `Nsta`, `Npha` | int | Stations / phases used by the relocation |
 | `gap` | float | Azimuthal gap in degrees |
 | `TRes_MAE`, `TRes_MAD` | float | Travel-time residual statistics (s) |
-
 | `year` | int | Convenience |
 
-**Which magnitude to use.** `Mw` is the default for anything where magnitude
+`Mw` to `ML_warning` are the magnitudes measured for this dataset. They are in
+data versions 2 to 4 only, and the converter writes the matching metadata
+columns only when the event table has them.
+
+**Which magnitude to use.** Data version 5 has only the bulletin magnitudes.
+Its preferred magnitude is the ROMPLUS ML, or the NIEP ML where ROMPLUS gives
+none. The NIEP ML equals the ROMPLUS ML in 17,224 of the 18,218 events that
+have both, and differs by more than 0.1 in 91. The two Mw columns differ: in
+the 118 events with both, NIEP Mw and ROMPLUS Mw differ by 0.48 in the median
+and by up to 1.44. ROMPLUS gives the same value for ML and Mw in 962 events, so
+`Mw_ROMPLUS` is not an independent moment magnitude.
+
+In versions 2 to 4, `Mw` is the default for anything where magnitude
 stands for the size of the source, including ground-motion work and ML labels:
 it is proportional to moment wherever the corner frequency is resolved and does
 not saturate over this catalog's range. `ML` is provided for continuity with the

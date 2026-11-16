@@ -19,7 +19,7 @@ not these inputs.
 | Path | Used for |
 |---|---|
 | `seisbench_integration/data/rose/{metadata,waveforms}YYYY.{csv,hdf5}` | RoSE waveforms (counts) and the metadata of each trace, including the P and S picks |
-| `seisbench_integration/data/rose_stationxml/<NET>/<STA>.xml` (and `_merged_for_sourcespec.xml`) | instrument responses and response epochs |
+| `seisbench_integration/data/rose_stationxml/<NET>/<STA>.xml` | instrument responses and response epochs |
 | `seisbench_integration/data/Enhanced_ROMPLUS_catalog.csv` | event origins (hypoDD3D) and the ROMPLUS reference ML |
 | `romania_mw/outputs/Mw_catalog.csv` | SourceSpec Mw, its uncertainty, quality and fc, for the anchor and the conversion |
 | `romania_mw/outputs/usgs_cross_validation.csv` | USGS Mw, quoted in this README as a comparison. No driver here reads it |

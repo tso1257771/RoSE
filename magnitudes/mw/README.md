@@ -20,7 +20,7 @@ not these inputs.
 | Path | Used for |
 |---|---|
 | `sac/<year>/<num>/` | raw SAC waveforms per event |
-| `seisbench_integration/data/rose_stationxml/_merged_for_sourcespec.xml` | merged StationXML for the spectral inversion |
+| `seisbench_integration/data/rose_stationxml/_merged_for_sourcespec.xml` | merged StationXML for the spectral inversion. `run_sourcespec.py` writes it from the station files `<NET>/<STA>.xml` when it is absent |
 | `outputs/reloc_results_hypoDD3D/Enhanced_ROMPLUS_picks.csv` | P and S picks for the event bundles |
 | `outputs/reloc_results_hypoDD3D/Enhanced_ROMPLUS_catalog.csv` | hypoDD3D relocations and the catalogue magnitude used only for window design |
 | `romania_mw/data/all_events/` | origin and picks per event, built by [`sourcespec/extract_all_events.py`](sourcespec/extract_all_events.py) from the two files above |

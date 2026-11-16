@@ -91,11 +91,10 @@ it raises on missing-response traces so you can filter or skip cleanly.
 | `source_id` | `event_index` |
 | `source_origin_time` | catalog (relocated) origin time |
 | `source_latitude_deg`, `source_longitude_deg`, `source_depth_km` | hypocenter of the solution named in `source_catalog` |
-| `source_magnitude`, `source_magnitude_type` | preferred magnitude and the scale it is on: `mw` where a moment magnitude was measured, otherwise `ml`, empty if neither |
-| `source_magnitude_uncertainty` | `Mw_sigma` when the preferred magnitude is Mw |
-| `source_mw`, `source_mw_sigma`, `source_mw_quality`, `source_mw_nstations`, `source_mw_fc_hz` | moment magnitude and its quality fields. `source_mw_nstations` is `-1` when the event has no moment magnitude |
-| `source_ml`, `source_ml_nstations`, `source_ml_warning` | local magnitude and its quality fields. The two integer fields are `-1` when the event has no local magnitude |
-| `source_ml_romplus`, `source_mw_romplus` | NIEP bulletin magnitudes, for continuity only |
+| `source_magnitude`, `source_magnitude_type` | preferred magnitude and the scale it is on. From version 5 it is the ROMPLUS ML, or the NIEP ML where ROMPLUS gives none, and the type is `ml`. Both are empty for the 77 events with neither (447 traces). In versions 2 to 4 the type is `mw` where a moment magnitude was measured, otherwise `ml`, empty if neither |
+| `source_ml_romplus`, `source_mw_romplus` | ML and Mw of the ROMPLUS catalog. From version 5 they come from the ROMPLUS file of 2026-08-24 (18,295 events); see *Version 5* below |
+| `source_ml_niep`, `source_mw_niep` | version 5 and later: ML of the NIEP analyst bulletin (19,076 events) and Mw of the NIEP FDSN event service (118 events, 2017 to 2020) |
+| `source_magnitude_uncertainty`, `source_mw`, `source_mw_sigma`, `source_mw_quality`, `source_mw_nstations`, `source_mw_fc_hz`, `source_ml`, `source_ml_nstations`, `source_ml_warning` | versions 2 to 4 only: the moment and local magnitudes measured for this dataset and their quality fields ([`MAGNITUDES.md`](MAGNITUDES.md)). `source_magnitude_uncertainty` is `Mw_sigma` when the preferred magnitude is Mw. The integer fields are `-1` when the event has no magnitude on that scale |
 | `source_catalog` | `hypoDD_3D` / `SSST` / `ROMPLUS` |
 | `source_gap_deg` | azimuthal gap |
 | `source_tres_mae_s`, `source_tres_mad_s` | travel-time residual statistics |
@@ -131,8 +130,10 @@ data.filter(data.metadata["trace_chunk"].isin(["2018", "2019", "2020"]),
 
 The published metadata carry a `split` column, `train`, `val` or `test`, set
 per event by `rose.splits.hash_split` (salt `ROMPLUS-singleEQ-v1`), so all
-traces of one earthquake share a split and a noise window has the split of its
-reference event. SeisBench calls the validation split `dev`: its own
+traces of one event share a split and a noise window has the split of its
+reference event. 45 pairs of events are one earthquake entered twice, and 23 of
+these pairs are in different splits; see *Earthquakes entered twice* below.
+SeisBench calls the validation split `dev`: its own
 `WaveformDataset.dev()` finds no trace here, while `RoSE.dev()` and
 `RoSE.train_dev_test()` take `val` and `dev` alike. For another split,
 overwrite the column, e.g. by year:
@@ -271,6 +272,101 @@ columns `Mw`, `Mw_sigma`, `Mw_quality`, `Mw_nstations`, `Mw_fc_Hz`, `ML`,
 `source_magnitude` and `source_magnitude_uncertainty`. The splits and all other
 columns are those of version 3.
 
+*Version 5.* Dataset version 5 has no magnitude measured for this dataset. Its
+catalog, pick table and metadata files drop the measured columns listed above
+and give the magnitudes of the two bulletins side by side. `ML_ROMPLUS` and
+`Mw_ROMPLUS` come from the ROMPLUS file `romplus.txt` published by NIEP,
+updated 2026-08-24. A ROMPLUS row is given to the event with the same bulletin
+origin time (to 0.01 s) and epicentre (17,918 events). An event left over takes
+the closest unused row within 5 s and 0.3 degrees (377 events). No row is given
+to two events. 18,295 of the 19,230 events have ROMPLUS ML and Mw. Compared with
+version 4, 15,086 events keep the same two values, 3,209 gain them, and 27 lose
+them. Each of the 27 is one event of a pair in *Earthquakes entered twice*,
+whose ROMPLUS row now goes to the other event only. `ML_NIEP` is the ML of the
+NIEP analyst bulletin (19,076 events). `Mw_NIEP` is the Mw of the NIEP FDSN
+event service (118 events from 2017 to 2020, all with ROMPLUS values). The
+preferred magnitude `source_magnitude` is the ROMPLUS ML, or the NIEP ML for the
+858 events that ROMPLUS does not list, and 77 events have no magnitude. The
+response archive no longer contains `_merged_for_sourcespec.xml`, a merge of
+the 211 station files made for the Mw calculation.
+`magnitudes/mw/sourcespec/run_sourcespec.py` writes it from the station files
+when it is missing. The waveform files, the splits and all other columns are
+those of version 4.
+
+**Earthquakes entered twice (all versions).** 45 pairs of events (90 events,
+890 traces) are one earthquake listed twice in the NIEP bulletin. Every
+released pick was compared with the picks of all other events at the same
+station and phase, whatever their origin times. In each pair the two events
+have released arrivals within 1 s at two or more of the same station phases,
+and their traces on the 293 station streams they share overlap by at least
+82 %. In 35 pairs the analyst picks are the same. In the other 10 the analyst
+picks of one event are shifted by a median of 0.7 to 4.8 s, but the released
+arrivals of the two events still agree within 1 s at two or more station
+phases. The relocated origin times of the two events differ by less
+than 5 s in every pair. Because the split is set by event, 23 pairs are in
+different splits: 13 train and val, 8 train and test, and 2 val and test. They
+share 180 pairs of traces across splits, of which 70 are test traces (0.2 % of
+the 32,374). In 43 pairs only one event has ROMPLUS magnitudes. The published
+benchmark uses the splits as released. Users who need strictly separate splits
+can drop one event of each pair or move both events into one split.
+
+Distinct earthquakes close in time also share records. 1,649 of the 32,374
+test traces (5.1 %) overlap in time a train or val trace of another event at
+the same station. No noise window overlaps an earthquake trace of another
+split.
+
+| Event A | Event B | Analyst picks | Splits | Shared streams |
+|---|---|---|---|---|
+| `2014_0001272` | `2014_0001273` | shifted 2.5 s | **test / train** | 8 |
+| `2015_0000224` | `2015_0000335` | shifted 2.9 s | **train / val** | 5 |
+| `2015_0001304` | `2015_0001305` | shifted 4.8 s | train | 5 |
+| `2015_0001550` | `2015_0001551` | same | train | 14 |
+| `2015_0001692` | `2015_0001693` | same | **test / train** | 4 |
+| `2016_0000020` | `2016_0000021` | same | train | 2 |
+| `2016_0000041` | `2016_0000042` | same | train | 3 |
+| `2016_0000055` | `2016_0000056` | same | **train / val** | 15 |
+| `2016_0000404` | `2016_0000405` | same | train | 6 |
+| `2016_0000422` | `2016_0000423` | same | train | 5 |
+| `2016_0000531` | `2016_0000532` | same | **train / val** | 9 |
+| `2016_0000687` | `2016_0000688` | same | **val / train** | 17 |
+| `2016_0000719` | `2016_0000720` | same | **test / train** | 12 |
+| `2016_0000809` | `2016_0000810` | same | **train / val** | 17 |
+| `2016_0000931` | `2016_0000932` | shifted 1.2 s | train | 3 |
+| `2016_0001090` | `2016_0001091` | same | **train / val** | 4 |
+| `2016_0001115` | `2016_0001116` | same | train | 4 |
+| `2016_0001134` | `2016_0001135` | same | **train / val** | 3 |
+| `2016_0001142` | `2016_0001143` | same | train | 2 |
+| `2016_0001150` | `2016_0001151` | same | train | 5 |
+| `2016_0001290` | `2016_0001291` | shifted 0.7 s | train | 2 |
+| `2016_0001310` | `2016_0001311` | same | **train / test** | 5 |
+| `2016_0001328` | `2016_0001331` | same | train | 2 |
+| `2016_0001372` | `2016_0001373` | same | **val / test** | 5 |
+| `2016_0001383` | `2016_0001384` | same | **val / test** | 7 |
+| `2016_0001602` | `2016_0001603` | same | **train / val** | 4 |
+| `2016_0001604` | `2016_0001605` | same | train | 3 |
+| `2016_0001725` | `2016_0001726` | same | train | 6 |
+| `2017_0000295` | `2017_0000296` | shifted 2.9 s | **train / val** | 5 |
+| `2017_0000679` | `2017_0000681` | same | train | 4 |
+| `2017_0000694` | `2017_0000695` | same | train | 7 |
+| `2017_0000704` | `2017_0000705` | same | **val / train** | 9 |
+| `2017_0000744` | `2017_0000745` | shifted 1.5 s | **train / test** | 5 |
+| `2017_0001159` | `2017_0001160` | same | train | 5 |
+| `2017_0001180` | `2017_0001191` | shifted 1.0 s | train | 8 |
+| `2017_0001202` | `2017_0001213` | shifted 0.8 s | **train / test** | 7 |
+| `2017_0001224` | `2017_0001235` | shifted 1.1 s | train | 5 |
+| `2017_0001305` | `2017_0001306` | same | train | 12 |
+| `2018_0000219` | `2018_0000220` | same | **train / test** | 12 |
+| `2018_0000716` | `2018_0000718` | same | **train / test** | 5 |
+| `2018_0000866` | `2018_0000867` | same | train | 5 |
+| `2018_0001025` | `2018_0001026` | same | **train / val** | 7 |
+| `2020_0000683` | `2020_0000684` | same | **val / train** | 6 |
+| `2020_0000875` | `2020_0000878` | same | train | 5 |
+| `2023_0004052` | `2023_0004053` | same | **train / val** | 9 |
+
+"Analyst picks" is `same` when the median shift of the analyst picks between
+the two events is at most 0.5 s, and gives that median otherwise. "Shared streams" counts the station streams
+with a trace of both events.
+
 ## Noise chunks
 
 Dataset version 3 (10.5281/zenodo.23681945) carries 89,693 noise windows in
@@ -315,11 +411,10 @@ mix differs from the earthquake traces (more HH, fewer BH).
 
 The metadata columns are those above with `trace_category = "noise"`, the
 pick sample and time columns empty, `trace_*_in_window` False, and `path_*`
-and `source_*` empty, except the five integer columns `source_nsta`,
-`source_npha`, `source_mw_nstations`, `source_ml_nstations` and
-`source_ml_warning`, which hold `-1`. The earthquake tables use `-1` for
-"none" only in the last three; their `source_nsta` and `source_npha` are never
-`-1`. `station_*`, `trace_sensitivity_*`, `trace_unit_physical`,
+and `source_*` empty, except `source_nsta` and `source_npha`, which hold
+`-1`. In versions 2 to 4, `source_mw_nstations`, `source_ml_nstations` and
+`source_ml_warning` also hold `-1`. The earthquake tables never have `-1` in
+`source_nsta` and `source_npha`. `station_*`, `trace_sensitivity_*`, `trace_unit_physical`,
 `trace_status_physical` and `split` are copied from the earthquake trace of
 the same event and station (same instrument at the same time), so a noise
 window of a test event is in the test split; windows whose
@@ -340,7 +435,7 @@ sensitivities from the StationXML archive. `trace_name_original` is
 Load the noise alone with `RoSE(path, chunks=[f"noise{y}" for y in range(2014, 2025)])`,
 both classes with `RoSE(path, include_noise=True)`, and select on `trace_category`.
 
-Known issues in the noise windows of versions 3 and 4 (the same noise files):
+Known issues in the noise windows of versions 3 to 5 (the same noise waveforms):
 
 * `station_location_code` is `0.0` instead of `00` in the two IU.ANTO windows
   `2016_0000415_IU.ANTO.00.BH_pre100` and `2022_0000708_IU.ANTO.00.BH_pre100`.
