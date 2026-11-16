@@ -321,7 +321,7 @@ RoSE/                              # ── the RoSE software toolkit
 
 ## Citation
 
-**Toolkit (this repository) — v0.4.3.** Cite the concept DOI
+**Toolkit (this repository) — v0.4.4.** Cite the concept DOI
 [`10.5281/zenodo.20250669`](https://doi.org/10.5281/zenodo.20250669), which always
 resolves to the newest version, and name the version you used. The v0.4.3 record
 is [`10.5281/zenodo.23840686`](https://doi.org/10.5281/zenodo.23840686), the v0.4.2 record
@@ -336,7 +336,7 @@ record is [`10.5281/zenodo.20250670`](https://doi.org/10.5281/zenodo.20250670).
   author    = {Liao, Wu-Yu and Manea, Elena-Florinela and M{\u a}rmureanu, Alexandru and Lee, En-Jui},
   title     = {{RoSE — Romanian SEismic Dataset Toolkit}},
   year      = 2026,
-  version   = {v0.4.3},
+  version   = {v0.4.4},
   publisher = {Zenodo},
   doi       = {10.5281/zenodo.20250669},
   url       = {https://doi.org/10.5281/zenodo.20250669}
