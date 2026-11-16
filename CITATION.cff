@@ -56,6 +56,9 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.23840686"
     description: "Version DOI for v0.4.3"
+  - type: doi
+    value: "10.5281/zenodo.24269651"
+    description: "Version DOI for v0.4.4"
 keywords:
   - seismology
   - phase picking
