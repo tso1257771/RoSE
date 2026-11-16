@@ -5,7 +5,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
-title: "RoSE — Romanian SEismic Dataset (toolkit)"
+title: "RoSE — Romanian SEismic Dataset Toolkit"
 abstract: >
   Python toolkit, three published deep-learning phase pickers
   (EQT-RoSE, PhaseNet-RoSE, RED-PAN-60s), and the benchmark pipeline
@@ -72,10 +72,11 @@ keywords:
   - Vrancea
 references:
   - type: data
-    title: "RoSE — Romanian SEismic Dataset (waveforms, picks and event catalog)"
+    title: "RoSE: a Romanian seismic waveform dataset with enhanced phase labels"
     # concept DOI (all versions); version 3, 10.5281/zenodo.23681945, is the
     # first whose noise metadata match the noise waveforms; version 4,
-    # 10.5281/zenodo.23809729, repairs one end sample in 3,537 earthquake traces
+    # 10.5281/zenodo.23809729, repairs one end sample in 3,537 earthquake traces;
+    # version 5, 10.5281/zenodo.24268413, gives the ROMPLUS and NIEP magnitudes
     doi: "10.5281/zenodo.23153183"
     authors:
       - family-names: "Liao"

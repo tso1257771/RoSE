@@ -1,5 +1,5 @@
 {
-  "title": "RoSE — Romanian SEismic Dataset (waveforms, picks and event catalog)",
+  "title": "RoSE: a Romanian seismic waveform dataset with enhanced phase labels",
   "description": "This record is temporarily restricted while the authors review third-party redistribution rights. The review covers NIEP event fields for 2023 and 2024, analyst phase picks, waveform files, StationXML files, and response metadata. ROMPLUS 984-2022 is an event catalog released under CC BY 4.0. That license does not cover phase picks, waveforms, response metadata, or later NIEP products. The record will remain restricted until the applicable rights holders provide written terms and the files can be separated by license.",
   "upload_type": "dataset",
   "creators": [
